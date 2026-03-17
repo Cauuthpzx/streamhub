@@ -216,38 +216,49 @@
 
 ---
 
-## IV. BẢNG TỔNG HỢP
+## IV. BẢNG TỔNG HỢP (cập nhật 2026-03-17)
 
-| # | Tính năng | Backend | Frontend | Ưu tiên | Phụ thuộc ngoài |
+| # | Tính năng | Backend | Frontend | Test | Trạng thái |
 |---|---|---|---|---|---|
-| 1 | Đăng ký / Đăng nhập | ✅ Có sẵn | ✅ Có sẵn | — | Không |
-| 2 | Quản lý phòng (CRUD + password) | ✅ Có sẵn | ✅ Có sẵn | — | Không |
-| 3 | Video / Audio call | ✅ Có sẵn | ✅ Có sẵn | — | Không |
-| 4 | Screen share | ✅ Có sẵn | ✅ Có sẵn | — | Không |
-| 5 | Đa ngôn ngữ (i18n) | — | ✅ Có sẵn | — | Không |
-| 6 | **Chat / Nhắn tin** | ✅ Có sẵn | ❌ Chưa có | **1** | Không |
-| 7 | **Quản lý participant** | ✅ Có sẵn (6 API) | ❌ Chưa có | **2** | Không |
-| 8 | **Ghi hình / Recording** | ✅ Có sẵn (9 API) | ❌ Chưa có | **3** | Egress service + Redis |
-| 9 | **RTMP/WHIP Ingest** | ✅ Có sẵn (10 API) | ❌ Chưa có | **4** | Ingress service + Redis |
-| 10 | **Di chuyển participant** | ✅ Có sẵn (2 API) | ❌ Chưa có | **5** | Không |
-| 11 | **Cập nhật room metadata** | ✅ Có sẵn (1 API) | ❌ Chưa có | **6** | Không |
-| 12 | **RPC giữa participants** | ✅ Có sẵn (1 API) | ❌ Chưa có | **7** | Không |
-| 13 | **AI Agent Workers** | ✅ Có sẵn (7 API) | ❌ Chưa có | **8** | Agent worker app |
-| 14 | **SIP / Gọi điện** | ✅ Có sẵn (17 API) | ❌ Chưa có | **9** | SIP service + provider |
+| 1 | Đăng ký / Đăng nhập | ✅ 3 endpoints | ✅ Login + Register | ✅ 24 tests | ✅ XONG |
+| 2 | Quản lý phòng (CRUD + password + max) | ✅ 2 endpoints | ✅ Create/List/Delete/Join | ✅ 8 tests | ✅ XONG |
+| 3 | Video / Audio call | ✅ LiveKit RTC | ✅ Camera + Mic + Grid | — | ✅ XONG |
+| 4 | Screen share | ✅ LiveKit RTC | ✅ Toggle screen share | — | ✅ XONG |
+| 5 | Chat real-time + lịch sử | ✅ 2 endpoints + DataChannel | ✅ RoomChat + history | ✅ 12 tests | ✅ XONG |
+| 6 | Quản lý participant | ✅ 6 Twirp RPC | ✅ List/Kick/Mute panel | — | ✅ XONG |
+| 7 | Đa ngôn ngữ (EN/VI/ZH) | ✅ i18n keys | ✅ vue-i18n + switcher | — | ✅ XONG |
+| 8 | Dark / Light mode | — | ✅ ThemeToggle + useTheme | — | ✅ XONG |
+| 9 | Tooltip component | — | ✅ AppTooltip (12 vị trí) | — | ✅ XONG |
+| 10 | Logo + Branding | — | ✅ AppLogo SVG animated | — | ✅ XONG |
+| 11 | Graceful fallback (no cam/mic) | — | ✅ 3-level fallback | — | ✅ XONG |
+| 12 | Room timeout 30 ngày | ✅ EmptyTimeout fix | — | — | ✅ XONG |
+| 13 | **Ghi hình / Recording** | ✅ 9 Twirp RPC | ❌ Chưa có | — | ⏳ Cần Egress service |
+| 14 | **RTMP/WHIP Ingest** | ✅ 10 endpoints | ❌ Chưa có | — | ⏳ Cần Ingress service |
+| 15 | **Di chuyển participant** | ✅ 2 Twirp RPC | ❌ Chưa có | — | Làm ngay được |
+| 16 | **Cập nhật room metadata** | ✅ 1 Twirp RPC | ❌ Chưa có | — | Làm ngay được |
+| 17 | **RPC giữa participants** | ✅ 1 Twirp RPC | ❌ Chưa có | — | Làm ngay được |
+| 18 | **AI Agent Workers** | ✅ 7 API | ❌ Chưa có | — | ⏳ Cần agent worker app |
+| 19 | **SIP / Gọi điện** | ✅ 17 Twirp RPC | ❌ Chưa có | — | ⏳ Cần SIP service |
+
+**Tổng: 12/19 tính năng XONG | 67 tests PASS (49 backend + 18 frontend)**
 
 ---
 
-## V. ĐỀ XUẤT TRIỂN KHAI TIẾP
+## V. TÍNH NĂNG CHƯA LÀM — THỨ TỰ ƯU TIÊN
 
-**Không cần phụ thuộc ngoài (làm ngay):**
-1. Chat (SendData + DataChannel) → tác động lớn nhất
-2. Participant management (list/kick/mute) → admin cần thiết
-3. Di chuyển participant → breakout rooms
-4. Cập nhật room metadata → UX
-5. RPC giữa participants → nâng cao
+**Làm ngay được (không cần service ngoài):**
+
+| # | Tính năng | Backend API | Độ khó |
+|---|---|---|---|
+| 1 | Di chuyển participant giữa phòng | `MoveParticipant`, `ForwardParticipant` | Thấp |
+| 2 | Cập nhật room metadata (đổi tên/mô tả) | `UpdateRoomMetadata` | Thấp |
+| 3 | RPC giữa participants | `PerformRpc` | Trung bình |
 
 **Cần deploy thêm service:**
-6. Recording → cần livekit-egress
-7. RTMP Ingest → cần livekit-ingress
-8. AI Agents → cần viết worker app
-9. SIP → cần livekit-sip + SIP provider
+
+| # | Tính năng | Service cần | Độ khó |
+|---|---|---|---|
+| 4 | Ghi hình / Recording | [livekit-egress](https://github.com/livekit/egress) + Redis | Trung bình |
+| 5 | RTMP/WHIP Ingest (OBS stream vào) | [livekit-ingress](https://github.com/livekit/ingress) + Redis | Trung bình |
+| 6 | AI Agent Workers | Viết agent worker (Python/Node) | Cao |
+| 7 | SIP / Gọi điện thoại | [livekit-sip](https://github.com/livekit/sip) + SIP provider | Cao |

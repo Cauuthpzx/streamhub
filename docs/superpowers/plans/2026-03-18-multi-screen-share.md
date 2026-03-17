@@ -34,63 +34,42 @@
 
 ## Task 1: Add i18n keys (all 3 locales)
 
+**Status: PARTIALLY DONE** — `screenLayout.grid/tabs/spotlight/title` đã có. Chỉ cần thêm `chat.screenSharing`.
+
 **Files:**
 - Modify: `Frontend/src/locales/en.json`
 - Modify: `Frontend/src/locales/vi.json`
 - Modify: `Frontend/src/locales/zh.json`
 
-- [ ] **Step 1: Add keys to en.json**
+- [ ] **Step 1: Verify existing keys**
 
-After `"download": "Download"` in `chat` section, add:
-```json
-"screenSharing": "{name} is sharing screen"
+Confirm `screenLayout` section exists in all 3 locales with keys: `title`, `grid`, `tabs`, `spotlight`. Run:
+```bash
+grep -A5 '"screenLayout"' Frontend/src/locales/en.json Frontend/src/locales/vi.json Frontend/src/locales/zh.json
 ```
 
-Add new top-level section after `egress`:
+- [ ] **Step 2: Add `chat.screenSharing` key to en.json**
+
+In the `chat` section, add after `"shareScreen": "Share screen"`:
 ```json
-"screenLayout": {
-  "title": "Screen layout",
-  "grid": "Grid",
-  "tabs": "Tabs",
-  "spotlight": "Spotlight"
-}
+"screenSharing": "{name} is sharing screen",
 ```
 
-- [ ] **Step 2: Add keys to vi.json**
-
-Same locations:
+- [ ] **Step 3: Add to vi.json**
 ```json
-"screenSharing": "{name} đang chia sẻ màn hình"
-```
-```json
-"screenLayout": {
-  "title": "Bố cục màn hình",
-  "grid": "Lưới",
-  "tabs": "Tab",
-  "spotlight": "Nổi bật"
-}
+"screenSharing": "{name} đang chia sẻ màn hình",
 ```
 
-- [ ] **Step 3: Add keys to zh.json**
-
-Same locations:
+- [ ] **Step 4: Add to zh.json**
 ```json
-"screenSharing": "{name} 正在共享屏幕"
-```
-```json
-"screenLayout": {
-  "title": "屏幕布局",
-  "grid": "网格",
-  "tabs": "标签页",
-  "spotlight": "聚焦"
-}
+"screenSharing": "{name} 正在共享屏幕",
 ```
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add Frontend/src/locales/en.json Frontend/src/locales/vi.json Frontend/src/locales/zh.json
-git commit -m "feat(i18n): thêm keys cho multi screen share layout"
+git commit -m "feat(i18n): thêm chat.screenSharing key cho multi screen share"
 ```
 
 ---

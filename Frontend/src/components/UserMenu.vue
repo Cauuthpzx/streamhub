@@ -18,7 +18,6 @@ const displayName = ref('')
 const avatar = ref('')
 const avatarX = ref(0.5)
 const avatarY = ref(0.5)
-const avatarScale = ref(1)
 
 onMounted(async () => {
   const cached = getProfile()
@@ -34,7 +33,6 @@ function applyProfile(p) {
   avatar.value = p.avatar || ''
   avatarX.value = p.avatar_x || 0.5
   avatarY.value = p.avatar_y || 0.5
-  avatarScale.value = p.avatar_scale || 1
 }
 
 function handleLogout() {
@@ -65,7 +63,7 @@ async function saveEdit() {
       avatar: avatar.value,
       avatar_x: avatarX.value,
       avatar_y: avatarY.value,
-      avatar_scale: avatarScale.value,
+      avatar_scale: 1,
     })
     window.dispatchEvent(new Event('profile-updated'))
     dialogOpen.value = false
@@ -82,7 +80,7 @@ async function saveEdit() {
         <img
           :src="`/avatars/${avatar}.webp`"
           class="w-full h-full object-cover"
-          :style="{ objectPosition: `${avatarX * 100}% ${avatarY * 100}%`, transform: `scale(${avatarScale})` }"
+          :style="{ objectPosition: `${avatarX * 100}% ${avatarY * 100}%` }"
           :alt="displayName || username"
         />
       </div>
@@ -139,33 +137,61 @@ async function saveEdit() {
             </button>
           </div>
 
-          <!-- Avatar picker -->
+          <!-- Avatar preview + display name (stacked, centered) -->
+          <div class="flex flex-col items-center gap-3 mb-4">
+            <!-- Preview -->
+            <div
+              v-if="avatar"
+              class="w-20 h-20 rounded-full overflow-hidden border-2 border-indigo-400 shadow-lg shrink-0"
+            >
+              <img
+                :src="`/avatars/${avatar}.webp`"
+                class="w-full h-full object-cover"
+                :style="{ objectPosition: `${avatarX * 100}% ${avatarY * 100}%` }"
+                :alt="displayName || username"
+              />
+            </div>
+            <div v-else class="w-20 h-20 rounded-full bg-gray-100 dark:bg-gray-700 border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center shrink-0">
+              <span class="text-2xl font-bold text-gray-300 dark:text-gray-600">{{ (username || '?')[0].toUpperCase() }}</span>
+            </div>
+
+            <!-- Display name input -->
+            <div class="w-full">
+              <label class="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1 text-center">{{ t('profile.displayName') }}</label>
+              <input
+                v-model="displayName"
+                :placeholder="username"
+                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-center"
+              />
+            </div>
+          </div>
+
+          <!-- Avatar grid picker -->
           <AvatarPicker
             v-model="avatar"
             v-model:offsetX="avatarX"
             v-model:offsetY="avatarY"
-            v-model:scale="avatarScale"
           />
 
-          <!-- Display name -->
-          <div class="mt-4">
-            <label class="text-xs text-gray-500 dark:text-gray-400 mb-1.5 block font-medium">{{ t('profile.displayName') }}</label>
-            <input
-              v-model="displayName"
-              :placeholder="username"
-              class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-            />
+          <!-- Actions -->
+          <div class="flex gap-2 mt-4">
+            <button
+              @click="closeDialog"
+              :disabled="saving"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <X class="w-4 h-4" :stroke-width="2" />
+              {{ t('room.cancel') }}
+            </button>
+            <button
+              @click="saveEdit"
+              :disabled="saving"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Save class="w-4 h-4" :stroke-width="2" />
+              {{ saving ? t('profile.saving') : t('profile.save') }}
+            </button>
           </div>
-
-          <!-- Save button -->
-          <button
-            @click="saveEdit"
-            :disabled="saving"
-            class="mt-4 w-full flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
-          >
-            <Save class="w-4 h-4" :stroke-width="2" />
-            {{ saving ? t('profile.saving') : t('profile.save') }}
-          </button>
         </div>
       </div>
     </Transition>

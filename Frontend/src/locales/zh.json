@@ -62,6 +62,9 @@
     "passwordRequiredDesc": "{name} 需要密码才能加入。",
     "enterPassword": "输入房间密码",
     "passwordIsRequired": "密码为必填项",
+    "editMetadata": "编辑房间信息",
+    "metadataPlaceholder": "房间描述或备注...",
+    "save": "保存",
     "unlimited": "∞",
     "connectFailed": "无法连接房间"
   },
@@ -90,7 +93,12 @@
     "kick": "移出房间",
     "mute": "静音",
     "unmute": "取消静音",
-    "empty": "暂无参与者"
+    "empty": "暂无参与者",
+    "moveBtn": "移至其他房间",
+    "moveTo": "将 {name} 移至：",
+    "move": "移动",
+    "selectRoom": "选择房间",
+    "noOtherRooms": "没有其他可用房间"
   },
   "error": {
     "methodNotAllowed": "方法不允许",

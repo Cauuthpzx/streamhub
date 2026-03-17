@@ -62,6 +62,9 @@
     "passwordRequiredDesc": "{name} requires a password to join.",
     "enterPassword": "Enter room password",
     "passwordIsRequired": "Password is required",
+    "editMetadata": "Edit room info",
+    "metadataPlaceholder": "Room description or notes...",
+    "save": "Save",
     "unlimited": "∞",
     "connectFailed": "Failed to connect to room"
   },
@@ -90,7 +93,12 @@
     "kick": "Remove from room",
     "mute": "Mute",
     "unmute": "Unmute",
-    "empty": "No participants"
+    "empty": "No participants",
+    "moveBtn": "Move to another room",
+    "moveTo": "Move {name} to:",
+    "move": "Move",
+    "selectRoom": "Select a room",
+    "noOtherRooms": "No other rooms available"
   },
   "error": {
     "methodNotAllowed": "Method not allowed",

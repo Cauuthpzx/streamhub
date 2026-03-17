@@ -2,9 +2,9 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, LogOut, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen } from 'lucide-vue-next'
+import { Video, LogOut, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil } from 'lucide-vue-next'
 import { getUsername, logout } from '../services/auth'
-import { listRooms, createRoom, deleteRoom } from '../services/room'
+import { listRooms, createRoom, deleteRoom, updateRoomMetadata } from '../services/room'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import AppLogo from '../components/AppLogo.vue'
@@ -92,6 +92,29 @@ function confirmJoin() {
   sessionStorage.setItem(`room_password:${joinTarget.value.name}`, joinPassword.value)
   showJoinDialog.value = false
   router.push(`/room/${joinTarget.value.name}`)
+}
+
+// edit room metadata dialog
+const showEditDialog = ref(false)
+const editTarget = ref(null)
+const editMetadata = ref('')
+
+function openEditDialog(room) {
+  editTarget.value = room
+  editMetadata.value = room.metadata || ''
+  showEditDialog.value = true
+}
+
+async function handleEditMetadata() {
+  if (!editTarget.value) return
+  error.value = ''
+  try {
+    await updateRoomMetadata(editTarget.value.name, editMetadata.value)
+    showEditDialog.value = false
+    await fetchRooms()
+  } catch (e) {
+    error.value = e.message
+  }
 }
 
 function handleLogout() {
@@ -257,6 +280,14 @@ onMounted(fetchRooms)
               <LogIn class="w-3.5 h-3.5" :stroke-width="2" />
               {{ t('room.join') }}
             </button>
+            <AppTooltip :content="t('room.editMetadata')" position="top">
+              <button
+                @click="openEditDialog(room)"
+                class="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 rounded-md transition-colors cursor-pointer"
+              >
+                <Pencil class="w-4 h-4" :stroke-width="1.8" />
+              </button>
+            </AppTooltip>
             <AppTooltip :content="t('room.delete')" position="top">
               <button
                 @click="handleDelete(room.name)"
@@ -302,6 +333,32 @@ onMounted(fetchRooms)
           >
             {{ t('room.join') }}
           </button>
+        </div>
+      </div>
+    </div>
+    <!-- Edit metadata dialog -->
+    <div v-if="showEditDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showEditDialog = false">
+      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+        <div class="flex items-center gap-2 mb-4">
+          <Pencil class="w-5 h-5 text-indigo-500" :stroke-width="2" />
+          <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('room.editMetadata') }}</h3>
+        </div>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-3">{{ editTarget?.name }}</p>
+        <textarea
+          v-model="editMetadata"
+          :placeholder="t('room.metadataPlaceholder')"
+          rows="4"
+          class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 resize-none mb-4 cursor-text"
+        ></textarea>
+        <div class="flex gap-2 justify-end">
+          <button
+            @click="showEditDialog = false"
+            class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          >{{ t('room.cancel') }}</button>
+          <button
+            @click="handleEditMetadata"
+            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+          >{{ t('room.save') }}</button>
         </div>
       </div>
     </div>

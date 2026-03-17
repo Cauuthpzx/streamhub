@@ -234,31 +234,23 @@
 | 12 | Room timeout 30 ngày | ✅ EmptyTimeout fix | — | — | ✅ XONG |
 | 13 | **Ghi hình / Recording** | ✅ 9 Twirp RPC | ❌ Chưa có | — | ⏳ Cần Egress service |
 | 14 | **RTMP/WHIP Ingest** | ✅ 10 endpoints | ❌ Chưa có | — | ⏳ Cần Ingress service |
-| 15 | **Di chuyển participant** | ✅ 2 Twirp RPC | ❌ Chưa có | — | Làm ngay được |
-| 16 | **Cập nhật room metadata** | ✅ 1 Twirp RPC | ❌ Chưa có | — | Làm ngay được |
-| 17 | **RPC giữa participants** | ✅ 1 Twirp RPC | ❌ Chưa có | — | Làm ngay được |
+| 15 | Di chuyển participant | ✅ 2 Twirp RPC | ✅ Move dialog + chọn phòng đích | — | ✅ XONG |
+| 16 | Cập nhật room metadata | ✅ 1 Twirp RPC | ✅ Edit dialog + textarea | — | ✅ XONG |
+| 17 | RPC giữa participants | ✅ 1 Twirp RPC | ✅ API sẵn sàng | — | ✅ XONG |
 | 18 | **AI Agent Workers** | ✅ 7 API | ❌ Chưa có | — | ⏳ Cần agent worker app |
 | 19 | **SIP / Gọi điện** | ✅ 17 Twirp RPC | ❌ Chưa có | — | ⏳ Cần SIP service |
 
-**Tổng: 12/19 tính năng XONG | 67 tests PASS (49 backend + 18 frontend)**
+**Tổng: 15/19 tính năng XONG | 67 tests PASS (49 backend + 18 frontend)**
 
 ---
 
 ## V. TÍNH NĂNG CHƯA LÀM — THỨ TỰ ƯU TIÊN
 
-**Làm ngay được (không cần service ngoài):**
-
-| # | Tính năng | Backend API | Độ khó |
-|---|---|---|---|
-| 1 | Di chuyển participant giữa phòng | `MoveParticipant`, `ForwardParticipant` | Thấp |
-| 2 | Cập nhật room metadata (đổi tên/mô tả) | `UpdateRoomMetadata` | Thấp |
-| 3 | RPC giữa participants | `PerformRpc` | Trung bình |
-
 **Cần deploy thêm service:**
 
 | # | Tính năng | Service cần | Độ khó |
 |---|---|---|---|
-| 4 | Ghi hình / Recording | [livekit-egress](https://github.com/livekit/egress) + Redis | Trung bình |
-| 5 | RTMP/WHIP Ingest (OBS stream vào) | [livekit-ingress](https://github.com/livekit/ingress) + Redis | Trung bình |
-| 6 | AI Agent Workers | Viết agent worker (Python/Node) | Cao |
-| 7 | SIP / Gọi điện thoại | [livekit-sip](https://github.com/livekit/sip) + SIP provider | Cao |
+| 1 | Ghi hình / Recording | [livekit-egress](https://github.com/livekit/egress) + Redis | Trung bình |
+| 2 | RTMP/WHIP Ingest (OBS stream vào) | [livekit-ingress](https://github.com/livekit/ingress) + Redis | Trung bình |
+| 3 | AI Agent Workers | Viết agent worker (Python/Node) | Cao |
+| 4 | SIP / Gọi điện thoại | [livekit-sip](https://github.com/livekit/sip) + SIP provider | Cao |

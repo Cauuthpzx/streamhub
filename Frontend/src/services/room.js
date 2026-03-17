@@ -74,6 +74,18 @@ export async function muteTrack(room, identity, trackSid, muted) {
   })
 }
 
+export async function moveParticipant(room, identity, destinationRoom) {
+  return twirpCall('MoveParticipant', {
+    room,
+    identity,
+    destination_room: destinationRoom,
+  })
+}
+
+export async function updateRoomMetadata(room, metadata) {
+  return twirpCall('UpdateRoomMetadata', { room, metadata })
+}
+
 export async function sendChatMessage(room, text) {
   const res = await fetch(`${AUTH_BASE}/chat/send`, {
     method: 'POST',

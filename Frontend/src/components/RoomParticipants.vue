@@ -1,9 +1,9 @@
 <script setup>
-import { ref, toRaw, watch } from 'vue'
+import { ref, toRaw, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoIcon, VideoOff, UserX } from 'lucide-vue-next'
+import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft } from 'lucide-vue-next'
 import { Track } from 'livekit-client'
-import { removeParticipant, muteTrack } from '../services/room'
+import { removeParticipant, muteTrack, moveParticipant, listRooms } from '../services/room'
 
 const { t } = useI18n()
 
@@ -17,20 +17,18 @@ const emit = defineEmits(['participantRemoved'])
 
 const participantList = ref([])
 const actionError = ref('')
+const moveTarget = ref(null) // { identity }
+const moveDestination = ref('')
+const availableRooms = ref([])
 
 function buildList() {
   if (!props.room) return
   const r = toRaw(props.room)
   const list = []
-
-  // local participant first
   list.push(buildEntry(r.localParticipant, true))
-
-  // remote participants
   r.remoteParticipants.forEach((p) => {
     list.push(buildEntry(p, false))
   })
-
   participantList.value = list
 }
 
@@ -38,7 +36,6 @@ function buildEntry(p, isLocal) {
   let audioMuted = true
   let videoMuted = true
   let audioTrackSid = ''
-  let videoTrackSid = ''
 
   p.audioTrackPublications.forEach((pub) => {
     if (pub.source === Track.Source.Microphone) {
@@ -49,19 +46,10 @@ function buildEntry(p, isLocal) {
   p.videoTrackPublications.forEach((pub) => {
     if (pub.source === Track.Source.Camera) {
       videoMuted = pub.isMuted
-      videoTrackSid = pub.trackSid
     }
   })
 
-  return {
-    identity: p.identity,
-    sid: p.sid,
-    isLocal,
-    audioMuted,
-    videoMuted,
-    audioTrackSid,
-    videoTrackSid,
-  }
+  return { identity: p.identity, sid: p.sid, isLocal, audioMuted, videoMuted, audioTrackSid }
 }
 
 async function handleKick(identity) {
@@ -79,17 +67,38 @@ async function handleToggleMute(identity, trackSid, currentMuted) {
   actionError.value = ''
   try {
     await muteTrack(props.roomName, identity, trackSid, !currentMuted)
-    // livekit-client will fire events to update state, rebuild after short delay
     setTimeout(buildList, 300)
   } catch (e) {
     actionError.value = e.message
   }
 }
 
-// rebuild list when room changes or periodically via events
+async function openMoveDialog(identity) {
+  moveTarget.value = { identity }
+  moveDestination.value = ''
+  actionError.value = ''
+  try {
+    const rooms = await listRooms()
+    availableRooms.value = rooms.filter((r) => r.name !== props.roomName)
+  } catch (_) {
+    availableRooms.value = []
+  }
+}
+
+async function handleMove() {
+  if (!moveTarget.value || !moveDestination.value) return
+  actionError.value = ''
+  try {
+    await moveParticipant(props.roomName, moveTarget.value.identity, moveDestination.value)
+    moveTarget.value = null
+    buildList()
+  } catch (e) {
+    actionError.value = e.message
+  }
+}
+
 watch(() => props.room, buildList, { immediate: true })
 
-// refresh list on any participant/track events
 watch(() => props.room, (r, oldR) => {
   const events = ['participantConnected', 'participantDisconnected', 'trackMuted', 'trackUnmuted', 'trackSubscribed', 'trackUnsubscribed', 'localTrackPublished', 'localTrackUnpublished']
   if (oldR) events.forEach((e) => toRaw(oldR).off(e, buildList))
@@ -102,6 +111,32 @@ watch(() => props.room, (r, oldR) => {
     <!-- Error -->
     <div v-if="actionError" class="px-3 py-2 text-xs text-red-400 bg-red-900/20 border-b border-gray-200 dark:border-gray-700">
       {{ actionError }}
+    </div>
+
+    <!-- Move dialog -->
+    <div v-if="moveTarget" class="px-3 py-2 bg-indigo-50 dark:bg-indigo-900/20 border-b border-gray-200 dark:border-gray-700">
+      <p class="text-xs text-gray-700 dark:text-gray-300 mb-2">
+        {{ t('participants.moveTo', { name: moveTarget.identity }) }}
+      </p>
+      <div class="flex gap-2">
+        <select
+          v-model="moveDestination"
+          class="flex-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+          <option value="" disabled>{{ t('participants.selectRoom') }}</option>
+          <option v-for="r in availableRooms" :key="r.name" :value="r.name">{{ r.name }}</option>
+        </select>
+        <button
+          @click="handleMove"
+          :disabled="!moveDestination"
+          class="text-xs px-2.5 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-40 cursor-pointer transition-colors"
+        >{{ t('participants.move') }}</button>
+        <button
+          @click="moveTarget = null"
+          class="text-xs px-2 py-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
+        >{{ t('room.cancel') }}</button>
+      </div>
+      <p v-if="availableRooms.length === 0" class="text-[10px] text-gray-400 mt-1">{{ t('participants.noOtherRooms') }}</p>
     </div>
 
     <!-- List -->
@@ -120,7 +155,7 @@ watch(() => props.room, (r, oldR) => {
         </div>
 
         <div class="flex items-center gap-1 shrink-0">
-          <!-- Audio status / mute toggle -->
+          <!-- Audio mute toggle -->
           <AppTooltip :content="p.audioMuted ? t('participants.unmute') : t('participants.mute')" position="top">
             <button
               v-if="!p.isLocal && p.audioTrackSid"
@@ -142,6 +177,16 @@ watch(() => props.room, (r, oldR) => {
             <VideoOff v-if="p.videoMuted" class="w-3.5 h-3.5" :stroke-width="1.8" />
             <VideoIcon v-else class="w-3.5 h-3.5" :stroke-width="1.8" />
           </span>
+
+          <!-- Move to another room -->
+          <AppTooltip v-if="!p.isLocal" :content="t('participants.moveBtn')" position="top">
+            <button
+              @click="openMoveDialog(p.identity)"
+              class="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 cursor-pointer transition-colors"
+            >
+              <ArrowRightLeft class="w-3.5 h-3.5" :stroke-width="1.8" />
+            </button>
+          </AppTooltip>
 
           <!-- Kick -->
           <AppTooltip v-if="!p.isLocal" :content="t('participants.kick')" position="top">

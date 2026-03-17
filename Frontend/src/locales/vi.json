@@ -62,6 +62,9 @@
     "passwordRequiredDesc": "{name} yêu cầu mật khẩu để tham gia.",
     "enterPassword": "Nhập mật khẩu phòng",
     "passwordIsRequired": "Mật khẩu là bắt buộc",
+    "editMetadata": "Chỉnh sửa thông tin phòng",
+    "metadataPlaceholder": "Mô tả hoặc ghi chú phòng...",
+    "save": "Lưu",
     "unlimited": "∞",
     "connectFailed": "Không thể kết nối phòng"
   },
@@ -90,7 +93,12 @@
     "kick": "Mời ra khỏi phòng",
     "mute": "Tắt tiếng",
     "unmute": "Bật tiếng",
-    "empty": "Không có người tham gia"
+    "empty": "Không có người tham gia",
+    "moveBtn": "Chuyển sang phòng khác",
+    "moveTo": "Chuyển {name} đến:",
+    "move": "Chuyển",
+    "selectRoom": "Chọn phòng",
+    "noOtherRooms": "Không có phòng nào khác"
   },
   "error": {
     "methodNotAllowed": "Phương thức không được phép",

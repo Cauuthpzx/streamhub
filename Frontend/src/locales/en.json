@@ -85,7 +85,12 @@
     "leave": "Leave room",
     "loadingHistory": "Loading messages...",
     "panel": "Chat & Participants",
-    "noDevices": "No camera or microphone detected"
+    "noDevices": "No camera or microphone detected",
+    "raiseHand": "Raise hand",
+    "reactions": "Reactions",
+    "pin": "Pin",
+    "unpin": "Unpin",
+    "fullscreen": "Fullscreen"
   },
   "participants": {
     "title": "Participants",
@@ -99,6 +104,21 @@
     "move": "Move",
     "selectRoom": "Select a room",
     "noOtherRooms": "No other rooms available"
+  },
+  "prejoin": {
+    "title": "Ready to join?",
+    "joinNow": "Join now",
+    "camOff": "Camera is off"
+  },
+  "devices": {
+    "title": "Device settings",
+    "microphone": "Microphone",
+    "camera": "Camera",
+    "speaker": "Speaker",
+    "unknownDevice": "Unknown device",
+    "noMicrophone": "No microphone detected",
+    "noCamera": "No camera detected",
+    "noSpeaker": "No speaker detected"
   },
   "error": {
     "methodNotAllowed": "Method not allowed",

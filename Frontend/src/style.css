@@ -16,3 +16,34 @@ textarea,
 .dark [contenteditable] {
   caret-color: #f3f4f6;
 }
+
+/* Reaction float animation */
+@keyframes float-up {
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  70% { opacity: 1; transform: translateY(-200px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-300px) scale(0.8); }
+}
+.animate-float-up {
+  animation: float-up 3s ease-out forwards;
+}
+
+/* Hand wave animation */
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(20deg); }
+  75% { transform: rotate(-10deg); }
+}
+.animate-wave {
+  display: inline-block;
+  animation: wave 0.8s ease-in-out infinite;
+}
+
+/* Fade transition */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* Reaction float transition group */
+.reaction-float-enter-active { transition: all 0.2s ease-out; }
+.reaction-float-leave-active { transition: all 0.3s ease-in; }
+.reaction-float-enter-from { opacity: 0; transform: scale(0.5); }
+.reaction-float-leave-to { opacity: 0; }

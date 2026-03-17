@@ -67,38 +67,9 @@
 
 ---
 
-## III. TÍNH NĂNG BACKEND CÓ SẴN — CHƯA CÓ FRONTEND
+## III. CÁC TÍNH NĂNG CẦN SERVICE BÊN NGOÀI (CHƯA LÀM)
 
-### Ưu tiên 1 — Chat / Nhắn tin trong phòng
-
-| Backend API | Mô tả | Loại |
-|---|---|---|
-| `RoomService.SendData` | Gửi tin nhắn binary/text đến room hoặc participant cụ thể | Twirp RPC |
-| DataChannel (livekit-client SDK) | Gửi/nhận data real-time qua WebRTC DataChannel | Client SDK |
-| `participant_data_track.go` | 5 methods: PublishDataTrack, UnpublishDataTrack, UpdateDataSubscription, onReceivedDataTrackMessage, GetNextSubscribedDataTrackHandle | Internal |
-
-**Backend:** ✅ Sẵn sàng 100% — cần viết Frontend.
-**Cần làm:** Chat component, data channel integration trong RoomView.
-
----
-
-### Ưu tiên 2 — Quản lý Participant trong phòng
-
-| Backend API | Mô tả | Loại |
-|---|---|---|
-| `RoomService.ListParticipants` | Danh sách tất cả participant trong phòng | Twirp RPC |
-| `RoomService.GetParticipant` | Thông tin chi tiết 1 participant | Twirp RPC |
-| `RoomService.RemoveParticipant` | Kick participant khỏi phòng | Twirp RPC |
-| `RoomService.MutePublishedTrack` | Mute/unmute track của participant từ xa | Twirp RPC |
-| `RoomService.UpdateParticipant` | Cập nhật metadata, tên, attributes | Twirp RPC |
-| `RoomService.UpdateSubscriptions` | Điều khiển track nào participant subscribe | Twirp RPC |
-
-**Backend:** ✅ Sẵn sàng 100% — 6 endpoints, cần viết Frontend.
-**Cần làm:** Participant list sidebar, kick button, mute button, admin panel.
-
----
-
-### Ưu tiên 3 — Ghi hình / Recording (Egress)
+### 1 — Ghi hình / Recording (Egress)
 
 | Backend API | Mô tả | Loại |
 |---|---|---|
@@ -112,13 +83,11 @@
 | `Egress.ListEgress` | Danh sách job ghi hình đang/đã chạy | Twirp RPC |
 | `Egress.StopEgress` | Dừng ghi hình | Twirp RPC |
 
-**Backend:** ✅ Sẵn sàng 100% — 9 endpoints, cần Egress service riêng (chạy ngoài) + Frontend.
-**Cần làm:** Recording UI (start/stop/list), cấu hình output (file/S3/GCS).
-**Lưu ý:** Cần deploy thêm [livekit-egress](https://github.com/livekit/egress) service + Redis.
+**Backend:** ✅ 9 Twirp RPC sẵn sàng. **Cần:** [livekit-egress](https://github.com/livekit/egress) + Redis + Frontend UI.
 
 ---
 
-### Ưu tiên 4 — RTMP / WHIP Ingest (Ingress)
+### 2 — RTMP / WHIP Ingest (Ingress)
 
 | Backend API | Mô tả | Loại |
 |---|---|---|
@@ -130,47 +99,11 @@
 | `/whip/v1/{id}` (PATCH) | ICE trickle/restart | HTTP |
 | `/whip/v1/{id}` (DELETE) | Terminate WHIP session | HTTP |
 
-**Backend:** ✅ Sẵn sàng 100% — 4 Twirp + 6 HTTP endpoints.
-**Cần làm:** Ingress management UI, RTMP URL generator, WHIP stream status.
-**Lưu ý:** Cần deploy thêm [livekit-ingress](https://github.com/livekit/ingress) service + Redis.
+**Backend:** ✅ 4 Twirp + 3 HTTP sẵn sàng. **Cần:** [livekit-ingress](https://github.com/livekit/ingress) + Redis + Frontend UI.
 
 ---
 
-### Ưu tiên 5 — Di chuyển Participant giữa các phòng
-
-| Backend API | Mô tả | Loại |
-|---|---|---|
-| `RoomService.MoveParticipant` | Di chuyển participant sang phòng khác | Twirp RPC |
-| `RoomService.ForwardParticipant` | Forward participant đến destination room | Twirp RPC |
-
-**Backend:** ✅ Sẵn sàng 100% — 2 endpoints.
-**Cần làm:** UI chọn phòng đích, xác nhận di chuyển.
-
----
-
-### Ưu tiên 6 — Cập nhật Room metadata
-
-| Backend API | Mô tả | Loại |
-|---|---|---|
-| `RoomService.UpdateRoomMetadata` | Cập nhật metadata phòng khi đang chạy | Twirp RPC |
-
-**Backend:** ✅ Sẵn sàng 100% — 1 endpoint.
-**Cần làm:** UI chỉnh sửa thông tin phòng.
-
----
-
-### Ưu tiên 7 — RPC giữa Participants
-
-| Backend API | Mô tả | Loại |
-|---|---|---|
-| `RoomService.PerformRpc` | Thực thi RPC command lên participant | Twirp RPC |
-
-**Backend:** ✅ Sẵn sàng 100% — 1 endpoint.
-**Cần làm:** Tuỳ use case (remote control, commands).
-
----
-
-### Ưu tiên 8 — AI Agent Workers
+### 3 — AI Agent Workers
 
 | Backend API | Mô tả | Loại |
 |---|---|---|
@@ -182,13 +115,11 @@
 | `AgentService.JobTerminate` | Dừng job | Internal RPC |
 | `AgentService.CheckEnabled` | Kiểm tra agent capabilities | Internal RPC |
 
-**Backend:** ✅ Sẵn sàng 100% — 3 Twirp + 4 internal.
-**Cần làm:** Agent worker SDK, dispatch UI, job monitoring.
-**Lưu ý:** Cần viết agent worker (Python/Node) ngoài server.
+**Backend:** ✅ 3 Twirp + 4 internal sẵn sàng. **Cần:** Agent worker app (Python/Node) + Frontend UI.
 
 ---
 
-### Ưu tiên 9 — SIP / Gọi điện thoại
+### 4 — SIP / Gọi điện thoại
 
 | Backend API | Mô tả | Loại |
 |---|---|---|
@@ -210,9 +141,7 @@
 | `SIP.TransferSIPParticipant` | Chuyển cuộc gọi sang số khác | Twirp RPC |
 | `SIP.CreateSIPTrunk` | Tạo trunk (legacy) | Twirp RPC |
 
-**Backend:** ✅ Sẵn sàng 100% — 17 endpoints.
-**Cần làm:** SIP management UI, dial pad, trunk config.
-**Lưu ý:** Cần deploy thêm [livekit-sip](https://github.com/livekit/sip) service + SIP provider.
+**Backend:** ✅ 17 Twirp RPC sẵn sàng. **Cần:** [livekit-sip](https://github.com/livekit/sip) + SIP provider + Frontend UI.
 
 ---
 
@@ -223,7 +152,7 @@
 | 1 | Đăng ký / Đăng nhập | ✅ 3 endpoints | ✅ Login + Register | ✅ 24 tests | ✅ XONG |
 | 2 | Quản lý phòng (CRUD + password + max) | ✅ 2 endpoints | ✅ Create/List/Delete/Join | ✅ 8 tests | ✅ XONG |
 | 3 | Video / Audio call | ✅ LiveKit RTC | ✅ Camera + Mic + Grid + toRaw fix | — | ✅ XONG |
-| 4 | Screen share + PiP (Zoom/OBS style) | ✅ LiveKit RTC | ✅ PiP layout + camera overlay | — | ✅ XONG |
+| 4 | Screen share + PiP (Zoom/OBS style) | ✅ LiveKit RTC | ✅ PiP layout + reattach fix | — | ✅ XONG |
 | 5 | Chat real-time + lịch sử | ✅ 2 endpoints + DataChannel | ✅ RoomChat + history | ✅ 12 tests | ✅ XONG |
 | 6 | Quản lý participant | ✅ 6 Twirp RPC | ✅ List/Kick/Mute panel | — | ✅ XONG |
 | 7 | Đa ngôn ngữ (EN/VI/ZH) | ✅ i18n keys | ✅ vue-i18n + switcher | — | ✅ XONG |

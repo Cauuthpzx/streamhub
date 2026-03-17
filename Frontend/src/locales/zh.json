@@ -85,7 +85,12 @@
     "leave": "离开房间",
     "loadingHistory": "正在加载消息...",
     "panel": "聊天与参与者",
-    "noDevices": "未检测到摄像头或麦克风"
+    "noDevices": "未检测到摄像头或麦克风",
+    "raiseHand": "举手",
+    "reactions": "表情回应",
+    "pin": "固定",
+    "unpin": "取消固定",
+    "fullscreen": "全屏"
   },
   "participants": {
     "title": "参与者",
@@ -99,6 +104,21 @@
     "move": "移动",
     "selectRoom": "选择房间",
     "noOtherRooms": "没有其他可用房间"
+  },
+  "prejoin": {
+    "title": "准备加入？",
+    "joinNow": "立即加入",
+    "camOff": "摄像头已关闭"
+  },
+  "devices": {
+    "title": "设备设置",
+    "microphone": "麦克风",
+    "camera": "摄像头",
+    "speaker": "扬声器",
+    "unknownDevice": "未知设备",
+    "noMicrophone": "未检测到麦克风",
+    "noCamera": "未检测到摄像头",
+    "noSpeaker": "未检测到扬声器"
   },
   "error": {
     "methodNotAllowed": "方法不允许",

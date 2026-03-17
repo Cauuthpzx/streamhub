@@ -85,7 +85,12 @@
     "leave": "Rời phòng",
     "loadingHistory": "Đang tải tin nhắn...",
     "panel": "Trò chuyện & Người tham gia",
-    "noDevices": "Không phát hiện camera hoặc micro"
+    "noDevices": "Không phát hiện camera hoặc micro",
+    "raiseHand": "Giơ tay",
+    "reactions": "Biểu cảm",
+    "pin": "Ghim",
+    "unpin": "Bỏ ghim",
+    "fullscreen": "Toàn màn hình"
   },
   "participants": {
     "title": "Người tham gia",
@@ -99,6 +104,21 @@
     "move": "Chuyển",
     "selectRoom": "Chọn phòng",
     "noOtherRooms": "Không có phòng nào khác"
+  },
+  "prejoin": {
+    "title": "Sẵn sàng tham gia?",
+    "joinNow": "Tham gia ngay",
+    "camOff": "Camera đã tắt"
+  },
+  "devices": {
+    "title": "Cài đặt thiết bị",
+    "microphone": "Micro",
+    "camera": "Camera",
+    "speaker": "Loa",
+    "unknownDevice": "Thiết bị không xác định",
+    "noMicrophone": "Không tìm thấy micro",
+    "noCamera": "Không tìm thấy camera",
+    "noSpeaker": "Không tìm thấy loa"
   },
   "error": {
     "methodNotAllowed": "Phương thức không được phép",

@@ -7,10 +7,10 @@ import {
   RoomEvent,
   Track,
   VideoPresets,
+  ConnectionQuality,
   createLocalTracks,
 } from 'livekit-client'
 import {
-  Video,
   Mic,
   MicOff,
   VideoIcon,
@@ -20,11 +20,20 @@ import {
   MonitorUp,
   MonitorOff,
   MessageSquare,
+  Hand,
+  Smile,
+  Pin,
+  Maximize,
+  Settings,
 } from 'lucide-vue-next'
 import { getLivekitToken, getUsername } from '../services/auth'
 import RoomChat from '../components/RoomChat.vue'
 import RoomParticipants from '../components/RoomParticipants.vue'
 import AppLogo from '../components/AppLogo.vue'
+import DeviceSettings from '../components/DeviceSettings.vue'
+import ConnectionBars from '../components/ConnectionBars.vue'
+import PreJoinScreen from '../components/PreJoinScreen.vue'
+import { useReactions } from '../composables/useReactions'
 
 const route = useRoute()
 const router = useRouter()
@@ -34,8 +43,10 @@ const username = getUsername()
 
 const room = ref(null) // stores LiveKit Room — use toRaw(room.value) for SDK calls
 
+const showPreJoin = ref(true)
+const preJoinSettings = ref(null)
 const connected = ref(false)
-const connecting = ref(true)
+const connecting = ref(false)
 const error = ref('')
 const participants = ref([])
 const micEnabled = ref(true)
@@ -45,10 +56,62 @@ const panelOpen = ref(false)
 const panelTab = ref('chat') // 'chat' | 'participants'
 const unreadCount = ref(0)
 const screenShareTrack = ref(null) // active screen share { track, identity }
+const activeSpeakers = ref(new Set()) // identities of current speakers
+const pinnedSid = ref(null) // pinned participant sid for spotlight
+const fullscreenSid = ref(null) // participant sid in fullscreen
+const connectionQualities = ref({}) // { identity: 'excellent' | 'good' | 'poor' | 'lost' }
+const showReactionPicker = ref(false)
+const showDeviceSettings = ref(false)
+const REACTIONS = ['👍', '👏', '🎉', '❤️', '😂', '😮', '🔥', '💯']
+
+const {
+  activeReactions,
+  raisedHands,
+  sendReaction,
+  toggleHand,
+  setupListeners: setupReactionListeners,
+  cleanupListeners: cleanupReactionListeners,
+} = useReactions(room, username)
+
+function pickReaction(emoji) {
+  sendReaction(emoji)
+  showReactionPicker.value = false
+}
+
+function togglePin(sid) {
+  pinnedSid.value = pinnedSid.value === sid ? null : sid
+  nextTick(() => reattachAllVideos())
+}
+
+function toggleFullscreen(sid) {
+  if (fullscreenSid.value === sid) {
+    fullscreenSid.value = null
+    if (document.fullscreenElement) document.exitFullscreen()
+  } else {
+    fullscreenSid.value = sid
+    const el = document.getElementById(`tile-${sid}`)
+    if (el && el.requestFullscreen) el.requestFullscreen()
+  }
+}
+
+// exit fullscreen when ESC pressed (browser fires fullscreenchange)
+function onFullscreenChange() {
+  if (!document.fullscreenElement) fullscreenSid.value = null
+}
 
 function getLivekitUrl() {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
   return `${proto}://${window.location.hostname}:7880`
+}
+
+function handlePreJoin(settings) {
+  preJoinSettings.value = settings
+  showPreJoin.value = false
+  connectRoom()
+}
+
+function handlePreJoinCancel() {
+  router.push('/home')
 }
 
 async function connectRoom() {
@@ -76,22 +139,39 @@ async function connectRoom() {
     r.on(RoomEvent.LocalTrackPublished, handleParticipantUpdate)
     r.on(RoomEvent.LocalTrackUnpublished, handleParticipantUpdate)
     r.on(RoomEvent.Disconnected, handleDisconnect)
+    r.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers)
+    r.on(RoomEvent.ConnectionQualityChanged, handleConnectionQuality)
+
+    // notification sounds
+    r.on(RoomEvent.ParticipantConnected, () => playJoinSound())
+    r.on(RoomEvent.ParticipantDisconnected, () => playLeaveSound())
 
     // track unread chat messages
     r.on(RoomEvent.DataReceived, () => {
-      if (!panelOpen.value || panelTab.value !== 'chat') unreadCount.value++
+      if (!panelOpen.value || panelTab.value !== 'chat') {
+        unreadCount.value++
+        playChatSound()
+      }
     })
 
     await r.connect(getLivekitUrl(), access_token)
 
-    // try camera + mic, fall back gracefully if devices unavailable
+    // publish tracks based on pre-join settings
+    const pj = preJoinSettings.value || { micOn: true, camOn: true }
     try {
-      const tracks = await createLocalTracks({ audio: true, video: true })
-      for (const track of tracks) {
-        await r.localParticipant.publishTrack(track)
+      const trackOpts = { audio: pj.micOn, video: pj.camOn }
+      if (pj.audioDeviceId && pj.micOn) trackOpts.audio = { deviceId: { exact: pj.audioDeviceId } }
+      if (pj.videoDeviceId && pj.camOn) trackOpts.video = { deviceId: { exact: pj.videoDeviceId } }
+      if (pj.micOn || pj.camOn) {
+        const tracks = await createLocalTracks(trackOpts)
+        for (const track of tracks) {
+          await r.localParticipant.publishTrack(track)
+        }
       }
+      micEnabled.value = pj.micOn
+      camEnabled.value = pj.camOn
     } catch (_) {
-      // try audio only
+      // fallback: try audio only
       try {
         const tracks = await createLocalTracks({ audio: true, video: false })
         for (const track of tracks) {
@@ -99,7 +179,6 @@ async function connectRoom() {
         }
         camEnabled.value = false
       } catch (__) {
-        // no devices available — join without media
         camEnabled.value = false
         micEnabled.value = false
       }
@@ -107,6 +186,7 @@ async function connectRoom() {
 
     room.value = r
     connected.value = true
+    setupReactionListeners()
     updateParticipants()
     await nextTick()
     attachLocalVideo()
@@ -131,11 +211,23 @@ function handleParticipantUpdate() {
   updateParticipants()
 }
 
+function handleActiveSpeakers(speakers) {
+  activeSpeakers.value = new Set(speakers.map((s) => s.identity))
+}
+
+function handleConnectionQuality(quality, participant) {
+  const map = { [ConnectionQuality.Excellent]: 'excellent', [ConnectionQuality.Good]: 'good', [ConnectionQuality.Poor]: 'poor', [ConnectionQuality.Lost]: 'lost' }
+  connectionQualities.value = { ...connectionQualities.value, [participant.identity]: map[quality] || 'unknown' }
+}
+
 function handleTrackSubscribed(track, _publication, participant) {
   updateParticipants()
   if (track.source === Track.Source.ScreenShare) {
     screenShareTrack.value = { track, identity: participant.identity }
-    nextTick(() => attachScreenShare(track))
+    nextTick(() => {
+      attachScreenShare(track)
+      reattachAllVideos()
+    })
   } else {
     nextTick(() => attachRemoteTrack(track, participant))
   }
@@ -147,6 +239,8 @@ function handleTrackUnsubscribed(track) {
     screenShareTrack.value = null
     const container = document.getElementById('screen-share-container')
     if (container) container.innerHTML = ''
+    // layout switched back to grid — re-attach cameras
+    nextTick(() => reattachAllVideos())
   }
   const el = document.getElementById(`track-${track.sid}`)
   if (el) el.remove()
@@ -174,6 +268,21 @@ function attachLocalVideo() {
       el.style.transform = 'scaleX(-1)'
       container.appendChild(el)
     }
+  })
+}
+
+function reattachAllVideos() {
+  const r = toRaw(room.value)
+  if (!r) return
+  // re-attach local camera
+  attachLocalVideo()
+  // re-attach all remote camera tracks
+  r.remoteParticipants.forEach((p) => {
+    p.videoTrackPublications.forEach((pub) => {
+      if (pub.track && pub.source === Track.Source.Camera) {
+        attachRemoteTrack(pub.track, p)
+      }
+    })
   })
 }
 
@@ -245,13 +354,19 @@ async function toggleScreen() {
       r.localParticipant.videoTrackPublications.forEach((pub) => {
         if (pub.track && pub.track.source === Track.Source.ScreenShare) {
           screenShareTrack.value = { track: pub.track, identity: username }
-          nextTick(() => attachScreenShare(pub.track))
+          nextTick(() => {
+            attachScreenShare(pub.track)
+            reattachAllVideos()
+          })
         }
       })
     } else {
       screenShareTrack.value = null
       const container = document.getElementById('screen-share-container')
       if (container) container.innerHTML = ''
+      // layout switched back to grid — re-attach camera videos into new containers
+      await nextTick()
+      reattachAllVideos()
     }
   } catch (_) {
     // user cancelled
@@ -273,15 +388,79 @@ async function leaveRoom() {
   router.push('/home')
 }
 
-onMounted(connectRoom)
+function handleKeyboard(e) {
+  // skip if user is typing in an input/textarea
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return
+  if (!connected.value) return
+  switch (e.key.toLowerCase()) {
+    case 'm': toggleMic(); break
+    case 'v': toggleCam(); break
+    case 's': toggleScreen(); break
+    case 'h': toggleHand(); break
+    case 'l': leaveRoom(); break
+  }
+}
+
+// notification sounds via Web Audio API
+const audioCtx = ref(null)
+
+function playTone(freq, duration = 0.15) {
+  if (!audioCtx.value) audioCtx.value = new AudioContext()
+  const ctx = audioCtx.value
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.frequency.value = freq
+  osc.type = 'sine'
+  gain.gain.value = 0.15
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration)
+  osc.start()
+  osc.stop(ctx.currentTime + duration)
+}
+
+function playJoinSound() { playTone(880, 0.12) }
+function playLeaveSound() { playTone(440, 0.15) }
+function playChatSound() {
+  if (!audioCtx.value) audioCtx.value = new AudioContext()
+  const ctx = audioCtx.value
+  const osc = ctx.createOscillator()
+  const gain = ctx.createGain()
+  osc.connect(gain)
+  gain.connect(ctx.destination)
+  osc.frequency.value = 660
+  osc.type = 'sine'
+  gain.gain.value = 0.1
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1)
+  osc.start()
+  osc.stop(ctx.currentTime + 0.1)
+}
+
+onMounted(() => {
+  document.addEventListener('fullscreenchange', onFullscreenChange)
+  document.addEventListener('keydown', handleKeyboard)
+})
 
 onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', onFullscreenChange)
+  document.removeEventListener('keydown', handleKeyboard)
+  cleanupReactionListeners()
   if (room.value) toRaw(room.value).disconnect()
 })
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+    <!-- Pre-join screen -->
+    <PreJoinScreen
+      v-if="showPreJoin"
+      :room-name="roomName"
+      :username="username"
+      @join="handlePreJoin"
+      @cancel="handlePreJoinCancel"
+    />
+
+    <template v-else>
     <!-- Header -->
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-gray-900/40">
       <div class="px-4 h-[45px] flex items-center justify-between">
@@ -319,7 +498,19 @@ onUnmounted(() => {
     </div>
 
     <!-- Main content: video grid + chat -->
-    <div v-else class="flex-1 flex overflow-hidden">
+    <div v-else class="flex-1 flex overflow-hidden relative">
+      <!-- Floating reactions overlay -->
+      <div class="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+        <TransitionGroup name="reaction-float">
+          <div
+            v-for="r in activeReactions"
+            :key="r.id"
+            class="absolute bottom-20 text-4xl animate-float-up"
+            :style="{ left: r.x + '%' }"
+          >{{ r.emoji }}</div>
+        </TransitionGroup>
+      </div>
+
       <!-- Video area -->
       <div class="flex-1 p-4 overflow-auto flex flex-col gap-3">
         <!-- Screen share mode: PiP layout like Zoom/OBS -->
@@ -332,7 +523,8 @@ onUnmounted(() => {
             <div
               v-for="{ participant, isLocal } in participants"
               :key="'pip-' + participant.sid"
-              class="relative w-[180px] h-[120px] bg-gray-800 rounded-lg overflow-hidden shadow-xl border border-gray-700/50 transition-all hover:scale-105"
+              class="relative w-[180px] h-[120px] bg-gray-800 rounded-lg overflow-hidden shadow-xl transition-all hover:scale-105"
+              :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : 'border border-gray-700/50'"
             >
               <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
               <div class="absolute inset-0 flex items-center justify-center z-0">
@@ -341,8 +533,10 @@ onUnmounted(() => {
                 </div>
               </div>
               <div class="absolute bottom-1 left-1 bg-black/70 rounded px-1.5 py-0.5 text-[10px] text-white z-20 flex items-center gap-1">
+                <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
                 {{ participant.identity }}
                 <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
+                <ConnectionBars :quality="connectionQualities[participant.identity]" />
               </div>
               <div class="absolute top-1 right-1 flex items-center gap-0.5 z-20">
                 <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
@@ -359,52 +553,124 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <!-- Normal mode: camera grid (no screen share) -->
-        <div
-          v-else
-          class="grid gap-3 flex-1"
-          :class="{
-            'grid-cols-1': participants.length === 1,
-            'grid-cols-2': participants.length === 2,
-            'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4,
-            'grid-cols-3 grid-rows-2': participants.length >= 5,
-          }"
-        >
-          <div
-            v-for="{ participant, isLocal } in participants"
-            :key="participant.sid"
-            class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden min-h-[200px]"
-          >
-            <!-- Video container -->
-            <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
-
-            <!-- Avatar fallback -->
-            <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
-              <div class="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
-                {{ (participant.identity || '?')[0].toUpperCase() }}
+        <!-- Normal mode: pinned spotlight or camera grid -->
+        <template v-else>
+          <!-- Pinned spotlight layout -->
+          <div v-if="pinnedSid" class="flex gap-3 flex-1">
+            <!-- Pinned main video -->
+            <div
+              v-for="{ participant, isLocal } in participants.filter(p => p.participant.sid === pinnedSid)"
+              :key="'pinned-' + participant.sid"
+              :id="`tile-${participant.sid}`"
+              class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden flex-1 transition-shadow duration-300"
+              :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
+            >
+              <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
+              <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
+                <div class="w-20 h-20 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl font-semibold text-gray-500 dark:text-gray-300">
+                  {{ (participant.identity || '?')[0].toUpperCase() }}
+                </div>
               </div>
-              <div v-if="isLocal && !camEnabled && !micEnabled" class="text-xs text-gray-400 dark:text-gray-500">
-                {{ t('chat.noDevices') }}
+              <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
+                <div class="bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
+                  <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
+                  {{ participant.identity }}
+                  <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
+                </div>
+              </div>
+              <!-- Tile controls -->
+              <div class="absolute top-2 right-2 flex gap-1 z-20 opacity-0 hover-parent:opacity-100 transition-opacity">
+                <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer"><Pin class="w-3.5 h-3.5 text-amber-400" :stroke-width="2" /></button>
+                <button @click="toggleFullscreen(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer"><Maximize class="w-3.5 h-3.5 text-white" :stroke-width="2" /></button>
               </div>
             </div>
-
-            <!-- Name + status bar -->
-            <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
-              <div class="bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
-                {{ participant.identity }}
-                <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
-              </div>
-              <div class="flex items-center gap-1">
-                <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
-                  <MicOff class="w-3 h-3 text-white" :stroke-width="2" />
-                </span>
-                <span v-if="isLocal && !camEnabled" class="bg-red-500/80 rounded p-0.5">
-                  <VideoOff class="w-3 h-3 text-white" :stroke-width="2" />
-                </span>
+            <!-- Side strip of other participants -->
+            <div class="flex flex-col gap-2 w-[200px] shrink-0">
+              <div
+                v-for="{ participant } in participants.filter(p => p.participant.sid !== pinnedSid)"
+                :key="'side-' + participant.sid"
+                :id="`tile-${participant.sid}`"
+                class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden h-[130px] transition-shadow duration-300 group"
+                :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
+              >
+                <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
+                <div class="absolute inset-0 flex items-center justify-center z-0">
+                  <div class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-semibold text-gray-500 dark:text-gray-300">
+                    {{ (participant.identity || '?')[0].toUpperCase() }}
+                  </div>
+                </div>
+                <div class="absolute bottom-1 left-1 bg-black/60 rounded px-1.5 py-0.5 text-[10px] text-white z-20 flex items-center gap-1">
+                  <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
+                  {{ participant.identity }}
+                </div>
+                <div class="absolute top-1 right-1 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-0.5 cursor-pointer"><Pin class="w-3 h-3 text-white" :stroke-width="2" /></button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+
+          <!-- Standard grid (no pin) -->
+          <div
+            v-else
+            class="grid gap-3 flex-1"
+            :class="{
+              'grid-cols-1': participants.length === 1,
+              'grid-cols-2': participants.length === 2,
+              'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4,
+              'grid-cols-3 grid-rows-2': participants.length >= 5,
+            }"
+          >
+            <div
+              v-for="{ participant, isLocal } in participants"
+              :key="participant.sid"
+              :id="`tile-${participant.sid}`"
+              class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden min-h-[200px] transition-shadow duration-300 group"
+              :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
+            >
+              <!-- Video container -->
+              <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
+
+              <!-- Avatar fallback -->
+              <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
+                <div class="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
+                  {{ (participant.identity || '?')[0].toUpperCase() }}
+                </div>
+                <div v-if="isLocal && !camEnabled && !micEnabled" class="text-xs text-gray-400 dark:text-gray-500">
+                  {{ t('chat.noDevices') }}
+                </div>
+              </div>
+
+              <!-- Tile controls (pin + fullscreen) — show on hover -->
+              <div class="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer">
+                  <Pin class="w-3.5 h-3.5 text-white" :stroke-width="2" />
+                </button>
+                <button @click="toggleFullscreen(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer">
+                  <Maximize class="w-3.5 h-3.5 text-white" :stroke-width="2" />
+                </button>
+              </div>
+
+              <!-- Name + status bar -->
+              <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
+                <div class="bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
+                  <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
+                  {{ participant.identity }}
+                  <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
+                  <ConnectionBars :quality="connectionQualities[participant.identity]" />
+                </div>
+                <div class="flex items-center gap-1">
+                  <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
+                    <MicOff class="w-3 h-3 text-white" :stroke-width="2" />
+                  </span>
+                  <span v-if="isLocal && !camEnabled" class="bg-red-500/80 rounded p-0.5">
+                    <VideoOff class="w-3 h-3 text-white" :stroke-width="2" />
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </template>
       </div>
 
       <!-- Side panel with tabs -->
@@ -497,6 +763,44 @@ onUnmounted(() => {
           </button>
         </AppTooltip>
 
+        <!-- Raise hand -->
+        <AppTooltip :content="t('chat.raiseHand')" position="top">
+          <button
+            @click="toggleHand"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            :class="raisedHands.has(username) ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
+          >
+            <Hand class="w-4.5 h-4.5" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
+
+        <!-- Reactions -->
+        <div class="relative">
+          <AppTooltip :content="t('chat.reactions')" position="top">
+            <button
+              @click="showReactionPicker = !showReactionPicker"
+              class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              :class="showReactionPicker ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
+            >
+              <Smile class="w-4.5 h-4.5" :stroke-width="1.8" />
+            </button>
+          </AppTooltip>
+          <!-- Picker popup -->
+          <Transition name="fade">
+            <div
+              v-if="showReactionPicker"
+              class="absolute bottom-14 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 px-2 py-1.5 flex gap-1 z-50"
+            >
+              <button
+                v-for="emoji in REACTIONS"
+                :key="emoji"
+                @click="pickReaction(emoji)"
+                class="w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-center text-xl cursor-pointer transition-colors"
+              >{{ emoji }}</button>
+            </div>
+          </Transition>
+        </div>
+
         <!-- Panel toggle (Chat + Participants) -->
         <AppTooltip :content="t('chat.panel')" position="top">
           <button
@@ -512,6 +816,16 @@ onUnmounted(() => {
           </button>
         </AppTooltip>
 
+        <!-- Device settings -->
+        <AppTooltip :content="t('devices.title')" position="top">
+          <button
+            @click="showDeviceSettings = true"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
+          >
+            <Settings class="w-4.5 h-4.5" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
+
         <AppTooltip :content="t('chat.leave')" position="top">
           <button
             @click="leaveRoom"
@@ -522,5 +836,8 @@ onUnmounted(() => {
         </AppTooltip>
       </div>
     </div>
+    <!-- Device settings dialog -->
+    <DeviceSettings v-if="showDeviceSettings" :room="room" @close="showDeviceSettings = false" />
+    </template>
   </div>
 </template>

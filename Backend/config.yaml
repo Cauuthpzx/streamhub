@@ -1,0 +1,15 @@
+port: 7880
+
+keys:
+  devkey: secret
+
+user_auth:
+  jwt_secret: "stream-hub-dev-secret-key-at-least-32chars!"
+  token_expiry: 24h
+  min_username_length: 3
+  min_password_length: 6
+
+development: true
+
+logging:
+  level: debug

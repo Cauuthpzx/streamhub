@@ -129,7 +129,7 @@ func TestRegister_DuplicateUsername(t *testing.T) {
 
 	require.Equal(t, http.StatusConflict, w.Code)
 	resp := parseJSON(w)
-	require.Contains(t, resp["error"], "already exists")
+	require.Contains(t, resp["error"], "userAlreadyExists")
 }
 
 func TestRegister_EmptyUsername(t *testing.T) {
@@ -143,7 +143,7 @@ func TestRegister_EmptyUsername(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	resp := parseJSON(w)
-	require.Contains(t, resp["error"], "empty")
+	require.Contains(t, resp["error"], "Empty")
 }
 
 func TestRegister_EmptyPassword(t *testing.T) {
@@ -157,7 +157,7 @@ func TestRegister_EmptyPassword(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	resp := parseJSON(w)
-	require.Contains(t, resp["error"], "empty")
+	require.Contains(t, resp["error"], "Empty")
 }
 
 func TestRegister_UsernameTooShort(t *testing.T) {
@@ -171,7 +171,7 @@ func TestRegister_UsernameTooShort(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	resp := parseJSON(w)
-	require.Contains(t, resp["error"], "too short")
+	require.Contains(t, resp["error"], "TooShort")
 }
 
 func TestRegister_PasswordTooShort(t *testing.T) {
@@ -185,7 +185,7 @@ func TestRegister_PasswordTooShort(t *testing.T) {
 
 	require.Equal(t, http.StatusBadRequest, w.Code)
 	resp := parseJSON(w)
-	require.Contains(t, resp["error"], "too short")
+	require.Contains(t, resp["error"], "TooShort")
 }
 
 func TestRegister_MethodNotAllowed(t *testing.T) {

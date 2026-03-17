@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import {
   Room,
   RoomEvent,
@@ -18,11 +19,15 @@ import {
   Users,
   MonitorUp,
   MonitorOff,
+  MessageSquare,
 } from 'lucide-vue-next'
 import { getLivekitToken, getUsername } from '../services/auth'
+import RoomChat from '../components/RoomChat.vue'
+import AppLogo from '../components/AppLogo.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 const roomName = route.params.name
 const username = getUsername()
 
@@ -34,9 +39,8 @@ const participants = ref([])
 const micEnabled = ref(true)
 const camEnabled = ref(true)
 const screenEnabled = ref(false)
-
-// track elements: map of participant SID -> { video, audio, screen }
-const videoElements = ref({})
+const chatOpen = ref(false)
+const unreadCount = ref(0)
 
 function getLivekitUrl() {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -48,7 +52,6 @@ async function connectRoom() {
   error.value = ''
 
   try {
-    // get room password from sessionStorage if set (for password-protected rooms)
     const roomPassword = sessionStorage.getItem(`room_password:${roomName}`)
     if (roomPassword) sessionStorage.removeItem(`room_password:${roomName}`)
 
@@ -70,12 +73,32 @@ async function connectRoom() {
     r.on(RoomEvent.LocalTrackUnpublished, handleParticipantUpdate)
     r.on(RoomEvent.Disconnected, handleDisconnect)
 
+    // track unread chat messages
+    r.on(RoomEvent.DataReceived, () => {
+      if (!chatOpen.value) unreadCount.value++
+    })
+
     await r.connect(getLivekitUrl(), access_token)
 
-    // publish local camera & mic
-    const tracks = await createLocalTracks({ audio: true, video: true })
-    for (const track of tracks) {
-      await r.localParticipant.publishTrack(track)
+    // try camera + mic, fall back gracefully if devices unavailable
+    try {
+      const tracks = await createLocalTracks({ audio: true, video: true })
+      for (const track of tracks) {
+        await r.localParticipant.publishTrack(track)
+      }
+    } catch (_) {
+      // try audio only
+      try {
+        const tracks = await createLocalTracks({ audio: true, video: false })
+        for (const track of tracks) {
+          await r.localParticipant.publishTrack(track)
+        }
+        camEnabled.value = false
+      } catch (__) {
+        // no devices available — join without media
+        camEnabled.value = false
+        micEnabled.value = false
+      }
     }
 
     room.value = r
@@ -84,7 +107,7 @@ async function connectRoom() {
     await nextTick()
     attachLocalVideo()
   } catch (e) {
-    error.value = e.message || 'Failed to connect'
+    error.value = e.message || t('room.connectFailed')
   } finally {
     connecting.value = false
   }
@@ -93,9 +116,7 @@ async function connectRoom() {
 function updateParticipants() {
   if (!room.value) return
   const r = room.value
-  const list = [
-    { participant: r.localParticipant, isLocal: true },
-  ]
+  const list = [{ participant: r.localParticipant, isLocal: true }]
   r.remoteParticipants.forEach((p) => {
     list.push({ participant: p, isLocal: false })
   })
@@ -111,7 +132,7 @@ function handleTrackSubscribed(track, _publication, participant) {
   nextTick(() => attachRemoteTrack(track, participant))
 }
 
-function handleTrackUnsubscribed(track, _publication, participant) {
+function handleTrackUnsubscribed(track) {
   updateParticipants()
   const el = document.getElementById(`track-${track.sid}`)
   if (el) el.remove()
@@ -144,12 +165,10 @@ function attachLocalVideo() {
 
 function attachRemoteTrack(track, participant) {
   if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) {
-    const containerId = `video-${participant.sid}`
-    const container = document.getElementById(containerId)
+    const container = document.getElementById(`video-${participant.sid}`)
     if (!container) return
 
     if (track.kind === Track.Kind.Video) {
-      // clear old video elements
       container.querySelectorAll('video').forEach((v) => v.remove())
       const el = track.attach()
       el.id = `track-${track.sid}`
@@ -187,140 +206,179 @@ async function toggleScreen() {
     await room.value.localParticipant.setScreenShareEnabled(!screenEnabled.value)
     screenEnabled.value = !screenEnabled.value
   } catch (_) {
-    // user cancelled screen share picker
+    // user cancelled
   }
 }
 
+function toggleChat() {
+  chatOpen.value = !chatOpen.value
+  if (chatOpen.value) unreadCount.value = 0
+}
+
 async function leaveRoom() {
-  if (room.value) {
-    await room.value.disconnect()
-  }
+  if (room.value) await room.value.disconnect()
   router.push('/home')
 }
 
 onMounted(connectRoom)
 
 onUnmounted(() => {
-  if (room.value) {
-    room.value.disconnect()
-  }
+  if (room.value) room.value.disconnect()
 })
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-900 flex flex-col">
+  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
     <!-- Header -->
-    <header class="bg-gray-800 border-b border-gray-700">
-      <div class="max-w-full mx-auto px-4 h-[45px] flex items-center justify-between">
-        <div class="flex items-center gap-2.5">
-          <div class="w-7 h-7 bg-indigo-600 rounded-lg flex items-center justify-center">
-            <Video class="w-3.5 h-3.5 text-white" :stroke-width="2" />
-          </div>
-          <span class="font-semibold text-white text-sm">{{ roomName }}</span>
-          <span class="flex items-center gap-1 text-xs text-gray-400 ml-2">
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="px-4 h-[45px] flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <AppLogo :height="26" :show-tagline="false" />
+          <span class="text-gray-300 dark:text-gray-600">|</span>
+          <span class="font-semibold text-gray-900 dark:text-white text-sm">{{ roomName }}</span>
+          <span class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
             <Users class="w-3 h-3" :stroke-width="2" />
             {{ participants.length }}
           </span>
         </div>
-        <span class="text-sm text-gray-400">{{ username }}</span>
+        <span class="text-sm text-gray-500 dark:text-gray-400">{{ username }}</span>
       </div>
     </header>
 
-    <!-- Connecting / Error -->
+    <!-- Connecting -->
     <div v-if="connecting" class="flex-1 flex items-center justify-center">
       <div class="text-center">
         <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p class="text-gray-400 mt-4 text-sm">Connecting to {{ roomName }}...</p>
+        <p class="text-gray-500 dark:text-gray-400 mt-4 text-sm">{{ t('chat.connecting', { room: roomName }) }}</p>
       </div>
     </div>
 
+    <!-- Error -->
     <div v-else-if="error" class="flex-1 flex items-center justify-center">
       <div class="text-center">
-        <p class="text-red-400 mb-4">{{ error }}</p>
+        <p class="text-red-500 dark:text-red-400 mb-4">{{ error }}</p>
         <button
           @click="router.push('/home')"
-          class="px-4 py-2 text-sm text-white bg-gray-700 rounded-lg hover:bg-gray-600 cursor-pointer"
+          class="px-4 py-2 text-sm text-white bg-gray-600 dark:bg-gray-700 rounded-lg hover:bg-gray-500 dark:hover:bg-gray-600 cursor-pointer"
         >
-          Back to rooms
+          {{ t('chat.backToRooms') }}
         </button>
       </div>
     </div>
 
-    <!-- Video grid -->
-    <div v-else class="flex-1 p-4 overflow-auto">
-      <div
-        class="grid gap-3 h-full"
-        :class="{
-          'grid-cols-1': participants.length === 1,
-          'grid-cols-2': participants.length === 2,
-          'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4,
-          'grid-cols-3 grid-rows-2': participants.length >= 5,
-        }"
-      >
+    <!-- Main content: video grid + chat -->
+    <div v-else class="flex-1 flex overflow-hidden">
+      <!-- Video grid -->
+      <div class="flex-1 p-4 overflow-auto">
         <div
-          v-for="{ participant, isLocal } in participants"
-          :key="participant.sid"
-          class="relative bg-gray-800 rounded-lg overflow-hidden min-h-[200px]"
+          class="grid gap-3 h-full"
+          :class="{
+            'grid-cols-1': participants.length === 1,
+            'grid-cols-2': participants.length === 2,
+            'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4,
+            'grid-cols-3 grid-rows-2': participants.length >= 5,
+          }"
         >
-          <!-- Video container -->
-          <div :id="`video-${participant.sid}`" class="absolute inset-0"></div>
-
-          <!-- No video fallback -->
-          <div class="absolute inset-0 flex items-center justify-center">
-            <div class="w-16 h-16 bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-300">
-              {{ (participant.identity || '?')[0].toUpperCase() }}
+          <div
+            v-for="{ participant, isLocal } in participants"
+            :key="participant.sid"
+            class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden min-h-[200px]"
+          >
+            <div :id="`video-${participant.sid}`" class="absolute inset-0"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
+                {{ (participant.identity || '?')[0].toUpperCase() }}
+              </div>
+            </div>
+            <div class="absolute bottom-2 left-2 bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
+              {{ participant.identity }}
+              <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
             </div>
           </div>
-
-          <!-- Name label -->
-          <div class="absolute bottom-2 left-2 bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
-            {{ participant.identity }}
-            <span v-if="isLocal" class="text-indigo-400">(you)</span>
-          </div>
         </div>
+      </div>
+
+      <!-- Chat panel -->
+      <div
+        v-if="chatOpen"
+        class="w-80 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800 shrink-0"
+      >
+        <div class="h-[45px] flex items-center justify-between px-3 border-b border-gray-200 dark:border-gray-700">
+          <span class="text-sm font-medium text-gray-900 dark:text-white">{{ t('chat.title') }}</span>
+          <button
+            @click="chatOpen = false"
+            class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer"
+          >{{ t('chat.close') }}</button>
+        </div>
+        <RoomChat
+          v-if="room"
+          :room="room"
+          :room-name="roomName"
+          :username="username"
+          class="flex-1 min-h-0"
+        />
       </div>
     </div>
 
     <!-- Controls bar -->
-    <div v-if="connected" class="bg-gray-800 border-t border-gray-700 py-3">
+    <div v-if="connected" class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-3">
       <div class="flex items-center justify-center gap-3">
-        <button
-          @click="toggleMic"
-          class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-          :class="micEnabled ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
-          :title="micEnabled ? 'Mute mic' : 'Unmute mic'"
-        >
-          <Mic v-if="micEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
-          <MicOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
-        </button>
+        <AppTooltip :content="micEnabled ? t('chat.muteMic') : t('chat.unmuteMic')" position="top">
+          <button
+            @click="toggleMic"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            :class="micEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
+          >
+            <Mic v-if="micEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <MicOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
 
-        <button
-          @click="toggleCam"
-          class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-          :class="camEnabled ? 'bg-gray-700 hover:bg-gray-600 text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
-          :title="camEnabled ? 'Turn off camera' : 'Turn on camera'"
-        >
-          <VideoIcon v-if="camEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
-          <VideoOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
-        </button>
+        <AppTooltip :content="camEnabled ? t('chat.camOff') : t('chat.camOn')" position="top">
+          <button
+            @click="toggleCam"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            :class="camEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
+          >
+            <VideoIcon v-if="camEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <VideoOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
 
-        <button
-          @click="toggleScreen"
-          class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-          :class="screenEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-700 hover:bg-gray-600 text-white'"
-          title="Share screen"
-        >
-          <MonitorUp v-if="!screenEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
-          <MonitorOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
-        </button>
+        <AppTooltip :content="t('chat.shareScreen')" position="top">
+          <button
+            @click="toggleScreen"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            :class="screenEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
+          >
+            <MonitorUp v-if="!screenEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <MonitorOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
 
-        <button
-          @click="leaveRoom"
-          class="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
-          title="Leave room"
-        >
-          <PhoneOff class="w-4.5 h-4.5" :stroke-width="1.8" />
-        </button>
+        <!-- Chat toggle -->
+        <AppTooltip :content="t('chat.title')" position="top">
+          <button
+            @click="toggleChat"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer relative"
+            :class="chatOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
+          >
+            <MessageSquare class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <span
+              v-if="unreadCount > 0 && !chatOpen"
+              class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
+            >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+          </button>
+        </AppTooltip>
+
+        <AppTooltip :content="t('chat.leave')" position="top">
+          <button
+            @click="leaveRoom"
+            class="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
+          >
+            <PhoneOff class="w-4.5 h-4.5" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
       </div>
     </div>
   </div>

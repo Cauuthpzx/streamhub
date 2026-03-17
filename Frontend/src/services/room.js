@@ -20,7 +20,7 @@ export async function createRoom(name, { maxParticipants = 0, password = '' } = 
     }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to create room')
+  if (!res.ok) throw new Error(data.error || 'error.roomCreateFailed')
   return data
 }
 
@@ -30,7 +30,7 @@ export async function listRooms() {
     headers: authHeaders(),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to list rooms')
+  if (!res.ok) throw new Error(data.error || 'error.roomListFailed')
   return data.rooms || []
 }
 
@@ -47,6 +47,28 @@ export async function deleteRoom(name) {
     body: JSON.stringify({ room: name }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.msg || data.message || 'Failed to delete room')
+  if (!res.ok) throw new Error(data.msg || data.message || 'error.roomDeleteFailed')
   return data
+}
+
+export async function sendChatMessage(room, text) {
+  const res = await fetch(`${AUTH_BASE}/chat/send`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room, text }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to send message')
+  return data
+}
+
+export async function getChatHistory(room, limit = 100) {
+  const res = await fetch(`${AUTH_BASE}/chat/history`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room, limit }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to load history')
+  return data.messages || []
 }

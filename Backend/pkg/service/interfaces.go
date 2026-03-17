@@ -115,6 +115,19 @@ type UserStore interface {
 	LoadRoomPassword(ctx context.Context, roomName string) (string, error)
 	DeleteRoomPassword(ctx context.Context, roomName string) error
 	RoomHasPassword(ctx context.Context, roomName string) (bool, error)
+
+	// Chat message history
+	StoreChatMessage(ctx context.Context, roomName string, msg *ChatMessage) error
+	LoadChatMessages(ctx context.Context, roomName string, limit int) ([]*ChatMessage, error)
+}
+
+// ChatMessage represents a single chat message in a room
+type ChatMessage struct {
+	ID        string `json:"id"`
+	RoomName  string `json:"room_name"`
+	Sender    string `json:"sender"`
+	Text      string `json:"text"`
+	Timestamp int64  `json:"timestamp"`
 }
 
 // UserRecord represents a registered user account

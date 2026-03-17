@@ -28,13 +28,22 @@ CÔNG NGHỆ HIỆN ĐẠI NHẤT  ĐƯỢC ÁP DỤNG VỚI CODE TOÀN VẸN NH
 - Router: Vue Router 4, lazy-loaded views
 - API proxy: Vite proxies `/auth` -> backend
 
-## i18n (BẮT BUỘC)
-- **KHÔNG hardcode text ở bất kỳ đâu** — UI, logs, errors, placeholders, toasts, API responses
+## i18n (BẮT BUỘC - KHÔNG NGOẠI LỆ)
+- **KHÔNG hardcode text ở bất kỳ đâu** — UI, logs, errors, placeholders, toasts, API responses, console.log, logger.Infow/Warnw/Errorw
 - 3 ngôn ngữ: English (en), 中文 (zh), Tiếng Việt (vi)
 - Frontend: dùng `vue-i18n`, mọi text phải dùng `t('key')` trong `<script setup>` hoặc `$t('key')` trong `<template>`
-- Backend: dùng i18n key cho log messages và API response messages
+- Frontend console.log: dùng i18n key, KHÔNG viết chuỗi trực tiếp
+- Backend Go logger: dùng i18n message key, KHÔNG hardcode string trong logger.Infow(), logger.Warnw(), logger.Errorw()
+- Backend API responses: error message và success message đều dùng i18n key
 - Locale files: `Frontend/src/locales/{en,zh,vi}.json`
 - Áp dụng ngay từ dòng code đầu tiên, không refactor sau
+- **KỂ CẢ log debug, log info, log warning, log error — TẤT CẢ phải dùng i18n key**
+
+## CẤM tự sửa assets của developer
+- KHÔNG sửa SVG logo, hình ảnh, assets mà developer cung cấp (viewBox, tọa độ, kích thước, màu, structure)
+- KHÔNG tạo thêm phiên bản mới từ assets gốc mà không hỏi
+- Muốn thay đổi bất kỳ thành phần nào developer đưa vào → PHẢI HỎI TRƯỚC
+- Chỉ được wrap trong component và thêm CSS theme (dark/light), KHÔNG đổi nội dung gốc
 
 ## Code Style Rules
 - Follow existing LiveKit server conventions exactly

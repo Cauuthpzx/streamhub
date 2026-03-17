@@ -16,6 +16,7 @@ package service
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"time"
@@ -69,6 +70,8 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/token", s.handleToken)
 	mux.HandleFunc("/auth/room/create", s.handleRoomCreate)
 	mux.HandleFunc("/auth/room/list", s.handleRoomList)
+	mux.HandleFunc("/auth/room/chat/send", s.handleChatSend)
+	mux.HandleFunc("/auth/room/chat/history", s.handleChatHistory)
 }
 
 // request/response types
@@ -100,7 +103,7 @@ type UserClaims struct {
 
 func (s *UserAuthService) handleRegister(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
 		return
 	}
 
@@ -111,7 +114,7 @@ func (s *UserAuthService) handleRegister(w http.ResponseWriter, r *http.Request)
 
 	var req registerRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "invalid request body"})
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
 		return
 	}
 
@@ -136,8 +139,8 @@ func (s *UserAuthService) handleRegister(w http.ResponseWriter, r *http.Request)
 	// check if user already exists
 	exists, err := s.userStore.UserExists(r.Context(), req.Username)
 	if err != nil {
-		logger.Errorw("failed to check user existence", err)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		logger.Errorw("log.userCheckFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
 	}
 	if exists {
@@ -148,8 +151,8 @@ func (s *UserAuthService) handleRegister(w http.ResponseWriter, r *http.Request)
 	// hash password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		logger.Errorw("failed to hash password", err)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		logger.Errorw("log.hashPasswordFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
 	}
 
@@ -160,20 +163,20 @@ func (s *UserAuthService) handleRegister(w http.ResponseWriter, r *http.Request)
 		CreatedAt:    time.Now().Unix(),
 	}
 	if err := s.userStore.StoreUser(r.Context(), user); err != nil {
-		logger.Errorw("failed to store user", err)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		logger.Errorw("log.storeUserFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
 	}
 
 	// generate token
 	token, err := s.generateToken(req.Username)
 	if err != nil {
-		logger.Errorw("failed to generate token", err)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		logger.Errorw("log.generateTokenFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
 	}
 
-	logger.Infow("user registered", "username", req.Username)
+	logger.Infow("log.userRegistered", "username", req.Username)
 	writeJSON(w, http.StatusCreated, authResponse{
 		Token:    token,
 		Username: req.Username,
@@ -182,7 +185,7 @@ func (s *UserAuthService) handleRegister(w http.ResponseWriter, r *http.Request)
 
 func (s *UserAuthService) handleLogin(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
 		return
 	}
 
@@ -193,7 +196,7 @@ func (s *UserAuthService) handleLogin(w http.ResponseWriter, r *http.Request) {
 
 	var req loginRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "invalid request body"})
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
 		return
 	}
 
@@ -222,12 +225,12 @@ func (s *UserAuthService) handleLogin(w http.ResponseWriter, r *http.Request) {
 	// generate token
 	token, err := s.generateToken(req.Username)
 	if err != nil {
-		logger.Errorw("failed to generate token", err)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		logger.Errorw("log.generateTokenFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
 	}
 
-	logger.Infow("user logged in", "username", req.Username)
+	logger.Infow("log.userLoggedIn", "username", req.Username)
 	writeJSON(w, http.StatusOK, authResponse{
 		Token:    token,
 		Username: req.Username,
@@ -268,12 +271,12 @@ type tokenResponse struct {
 
 func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
 		return
 	}
 
 	if s.apiKey == "" || s.apiSecret == "" {
-		writeJSON(w, http.StatusServiceUnavailable, errorResponse{Error: "API keys not configured"})
+		writeJSON(w, http.StatusServiceUnavailable, errorResponse{Error: "error.apiKeysNotConfigured"})
 		return
 	}
 
@@ -293,8 +296,8 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 	if req.Room != "" {
 		hasPassword, err := s.userStore.RoomHasPassword(r.Context(), req.Room)
 		if err != nil && err != ErrRoomNotFound {
-			logger.Errorw("failed to check room password", err, "room", req.Room)
-			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+			logger.Errorw("log.checkRoomPasswordFailed", err, "room", req.Room)
+			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 			return
 		}
 		if hasPassword {
@@ -304,7 +307,7 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 			}
 			storedHash, err := s.userStore.LoadRoomPassword(r.Context(), req.Room)
 			if err != nil {
-				writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+				writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 				return
 			}
 			if err := bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(req.Password)); err != nil {
@@ -332,12 +335,12 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 
 	accessToken, err := at.ToJWT()
 	if err != nil {
-		logger.Errorw("failed to generate LiveKit token", err, "username", username)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		logger.Errorw("log.generateLivekitTokenFailed", err, "username", username)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
 	}
 
-	logger.Debugw("issued LiveKit token", "username", username, "room", req.Room)
+	logger.Debugw("log.issuedLivekitToken", "username", username, "room", req.Room)
 	writeJSON(w, http.StatusOK, tokenResponse{
 		AccessToken: accessToken,
 		Username:    username,
@@ -367,7 +370,7 @@ type roomListResponse struct {
 
 func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
 		return
 	}
 
@@ -379,7 +382,7 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 
 	var req roomCreateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "invalid request body"})
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
 		return
 	}
 
@@ -400,7 +403,7 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 		DepartureTimeout: 20,
 	})
 	if err != nil {
-		logger.Errorw("failed to create room", err, "username", username, "room", req.Name)
+		logger.Errorw("log.createRoomFailed", err, "username", username, "room", req.Name)
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: err.Error()})
 		return
 	}
@@ -409,18 +412,18 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 	if req.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
-			logger.Errorw("failed to hash room password", err)
-			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+			logger.Errorw("log.hashRoomPasswordFailed", err)
+			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 			return
 		}
 		if err := s.userStore.StoreRoomPassword(r.Context(), req.Name, string(hashedPassword)); err != nil {
-			logger.Errorw("failed to store room password", err, "room", req.Name)
-			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+			logger.Errorw("log.storeRoomPasswordFailed", err, "room", req.Name)
+			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 			return
 		}
 	}
 
-	logger.Infow("room created", "username", username, "room", req.Name, "hasPassword", req.Password != "", "maxParticipants", req.MaxParticipants)
+	logger.Infow("log.roomCreated", "username", username, "room", req.Name, "hasPassword", req.Password != "", "maxParticipants", req.MaxParticipants)
 	writeJSON(w, http.StatusCreated, roomInfo{
 		SID:             room.Sid,
 		Name:            room.Name,
@@ -433,7 +436,7 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 
 func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost && r.Method != http.MethodGet {
-		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
 		return
 	}
 
@@ -450,8 +453,8 @@ func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request)
 
 	resp, err := s.roomService.ListRooms(ctx, &livekit.ListRoomsRequest{})
 	if err != nil {
-		logger.Errorw("failed to list rooms", err)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		logger.Errorw("log.listRoomsFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
 	}
 
@@ -469,6 +472,99 @@ func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request)
 	}
 
 	writeJSON(w, http.StatusOK, roomListResponse{Rooms: rooms})
+}
+
+// chat types
+
+type chatSendRequest struct {
+	Room string `json:"room"`
+	Text string `json:"text"`
+}
+
+type chatHistoryRequest struct {
+	Room  string `json:"room"`
+	Limit int    `json:"limit,omitempty"`
+}
+
+type chatHistoryResponse struct {
+	Messages []*ChatMessage `json:"messages"`
+}
+
+func (s *UserAuthService) handleChatSend(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req chatSendRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	if req.Room == "" || req.Text == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	msg := &ChatMessage{
+		ID:        fmt.Sprintf("%d-%s", time.Now().UnixNano(), username),
+		RoomName:  req.Room,
+		Sender:    username,
+		Text:      req.Text,
+		Timestamp: time.Now().UnixMilli(),
+	}
+
+	if err := s.userStore.StoreChatMessage(r.Context(), req.Room, msg); err != nil {
+		logger.Errorw("log.storeChatFailed", err, "room", req.Room)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, msg)
+}
+
+func (s *UserAuthService) handleChatHistory(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost && r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	_, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req chatHistoryRequest
+	if r.Body != nil {
+		json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	if req.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	limit := req.Limit
+	if limit <= 0 {
+		limit = 100
+	}
+
+	messages, err := s.userStore.LoadChatMessages(r.Context(), req.Room, limit)
+	if err != nil {
+		logger.Errorw("log.loadChatFailed", err, "room", req.Room)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, chatHistoryResponse{Messages: messages})
 }
 
 // verifyUserToken extracts and validates the user JWT from Authorization header

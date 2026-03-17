@@ -164,7 +164,7 @@ func TestToken_ProtectedRoom_WrongPassword(t *testing.T) {
 	)
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	resp := parseJSON(w)
-	require.Contains(t, resp["error"], "incorrect")
+	require.Contains(t, resp["error"], "roomPasswordIncorrect")
 }
 
 func TestToken_ProtectedRoom_MissingPassword(t *testing.T) {
@@ -186,5 +186,5 @@ func TestToken_ProtectedRoom_MissingPassword(t *testing.T) {
 	)
 	require.Equal(t, http.StatusUnauthorized, w.Code)
 	resp := parseJSON(w)
-	require.Contains(t, resp["error"], "required")
+	require.Contains(t, resp["error"], "roomPasswordRequired")
 }

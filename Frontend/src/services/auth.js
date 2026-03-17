@@ -7,7 +7,7 @@ export async function register(username, password) {
     body: JSON.stringify({ username, password }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Registration failed')
+  if (!res.ok) throw new Error(data.error || 'auth.registerFailed')
   return data
 }
 
@@ -18,7 +18,7 @@ export async function login(username, password) {
     body: JSON.stringify({ username, password }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Login failed')
+  if (!res.ok) throw new Error(data.error || 'auth.loginFailed')
   return data
 }
 
@@ -58,6 +58,6 @@ export async function getLivekitToken(room = '', password = '') {
     body: JSON.stringify(body),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to get token')
+  if (!res.ok) throw new Error(data.error || 'auth.tokenFailed')
   return data
 }

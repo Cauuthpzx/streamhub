@@ -27,6 +27,10 @@ const (
 	UsersKey = "users"
 	// RoomPasswordsKey is a hash of roomName => password hash
 	RoomPasswordsKey = "room_passwords"
+	// RoomChatPrefix is the prefix for room chat message lists
+	RoomChatPrefix = "room_chat:"
+	// MaxChatHistory is the max number of messages to keep per room
+	MaxChatHistory = 200
 )
 
 // RedisUserStore implements UserStore backed by Redis
@@ -89,10 +93,44 @@ func (s *RedisUserStore) RoomHasPassword(ctx context.Context, roomName string) (
 	return s.rc.HExists(ctx, RoomPasswordsKey, roomName).Result()
 }
 
+func (s *RedisUserStore) StoreChatMessage(ctx context.Context, roomName string, msg *ChatMessage) error {
+	data, err := json.Marshal(msg)
+	if err != nil {
+		return err
+	}
+	key := RoomChatPrefix + roomName
+	pipe := s.rc.Pipeline()
+	pipe.RPush(ctx, key, string(data))
+	pipe.LTrim(ctx, key, -MaxChatHistory, -1)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+func (s *RedisUserStore) LoadChatMessages(ctx context.Context, roomName string, limit int) ([]*ChatMessage, error) {
+	key := RoomChatPrefix + roomName
+	if limit <= 0 || limit > MaxChatHistory {
+		limit = MaxChatHistory
+	}
+	results, err := s.rc.LRange(ctx, key, int64(-limit), -1).Result()
+	if err != nil {
+		return nil, err
+	}
+	messages := make([]*ChatMessage, 0, len(results))
+	for _, data := range results {
+		var msg ChatMessage
+		if err := json.Unmarshal([]byte(data), &msg); err != nil {
+			continue
+		}
+		messages = append(messages, &msg)
+	}
+	return messages, nil
+}
+
 // LocalUserStore implements UserStore backed by in-memory map (single-node only)
 type LocalUserStore struct {
 	users         map[string]*UserRecord
 	roomPasswords map[string]string
+	chatMessages  map[string][]*ChatMessage
 	lock          sync.RWMutex
 }
 
@@ -100,6 +138,7 @@ func NewLocalUserStore() *LocalUserStore {
 	return &LocalUserStore{
 		users:         make(map[string]*UserRecord),
 		roomPasswords: make(map[string]string),
+		chatMessages:  make(map[string][]*ChatMessage),
 	}
 }
 
@@ -156,4 +195,30 @@ func (s *LocalUserStore) RoomHasPassword(_ context.Context, roomName string) (bo
 	defer s.lock.RUnlock()
 	_, ok := s.roomPasswords[roomName]
 	return ok, nil
+}
+
+func (s *LocalUserStore) StoreChatMessage(_ context.Context, roomName string, msg *ChatMessage) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.chatMessages[roomName] = append(s.chatMessages[roomName], msg)
+	if len(s.chatMessages[roomName]) > MaxChatHistory {
+		s.chatMessages[roomName] = s.chatMessages[roomName][len(s.chatMessages[roomName])-MaxChatHistory:]
+	}
+	return nil
+}
+
+func (s *LocalUserStore) LoadChatMessages(_ context.Context, roomName string, limit int) ([]*ChatMessage, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	msgs := s.chatMessages[roomName]
+	if limit <= 0 || limit > len(msgs) {
+		limit = len(msgs)
+	}
+	if limit == 0 {
+		return []*ChatMessage{}, nil
+	}
+	start := len(msgs) - limit
+	result := make([]*ChatMessage, limit)
+	copy(result, msgs[start:])
+	return result, nil
 }

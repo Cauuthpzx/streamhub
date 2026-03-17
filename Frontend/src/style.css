@@ -1,1 +1,18 @@
 @import "tailwindcss";
+
+/* Enable class-based dark mode for Tailwind v4 */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Ensure text cursor is always visible on inputs */
+input,
+textarea,
+[contenteditable] {
+  caret-color: #111827;
+  cursor: text;
+}
+
+.dark input,
+.dark textarea,
+.dark [contenteditable] {
+  caret-color: #f3f4f6;
+}

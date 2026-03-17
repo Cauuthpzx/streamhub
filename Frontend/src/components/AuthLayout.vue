@@ -1,48 +1,53 @@
 <script setup>
-import { Video, Zap, Monitor, ShieldCheck } from 'lucide-vue-next'
+import { Zap, Monitor, ShieldCheck } from 'lucide-vue-next'
+import { useI18n } from 'vue-i18n'
+import LanguageSwitcher from './LanguageSwitcher.vue'
+import ThemeToggle from './ThemeToggle.vue'
+import AppLogo from './AppLogo.vue'
+
+const { t } = useI18n()
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 flex">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
     <!-- Left panel - branding -->
-    <div class="hidden lg:flex lg:w-1/2 bg-white items-center justify-center border-r border-gray-200">
-      <div class="max-w-md text-center px-8">
-        <div class="mb-8">
-          <div class="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-200">
-            <Video class="w-8 h-8 text-white" :stroke-width="1.8" />
-          </div>
+    <div class="hidden lg:flex lg:w-1/2 bg-white dark:bg-gray-800 items-center justify-center border-r border-gray-200 dark:border-gray-700">
+      <div class="max-w-md px-8">
+        <div class="mb-6">
+          <AppLogo :height="40" />
         </div>
-        <h1 class="text-3xl font-bold text-gray-900 mb-3">Stream HUB</h1>
-        <p class="text-gray-500 text-base leading-relaxed">
-          Real-time video streaming platform powered by WebRTC.
-          Connect, share, and collaborate seamlessly.
+        <p class="text-gray-500 dark:text-gray-400 text-base leading-relaxed">
+          {{ t('app.tagline') }}
         </p>
-        <div class="mt-10 flex items-center justify-center gap-6 text-sm text-gray-400">
+        <div class="mt-10 flex items-center gap-6 text-sm text-gray-400 dark:text-gray-500">
           <span class="flex items-center gap-1.5">
             <Zap class="w-3.5 h-3.5 text-green-400" />
-            Low latency
+            {{ t('features.lowLatency') }}
           </span>
           <span class="flex items-center gap-1.5">
             <Monitor class="w-3.5 h-3.5 text-blue-400" />
-            HD quality
+            {{ t('features.hdQuality') }}
           </span>
           <span class="flex items-center gap-1.5">
             <ShieldCheck class="w-3.5 h-3.5 text-purple-400" />
-            Secure
+            {{ t('features.secure') }}
           </span>
         </div>
       </div>
     </div>
 
     <!-- Right panel - form -->
-    <div class="flex-1 flex items-center justify-center px-6 py-12">
+    <div class="flex-1 flex items-center justify-center px-6 py-12 relative">
+      <!-- Theme + Language switcher -->
+      <div class="absolute top-4 right-6 flex items-center gap-2">
+        <ThemeToggle />
+        <LanguageSwitcher />
+      </div>
+
       <div class="w-full max-w-sm">
         <!-- Mobile logo -->
-        <div class="lg:hidden text-center mb-8">
-          <div class="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center mx-auto shadow-lg shadow-indigo-200 mb-3">
-            <Video class="w-6 h-6 text-white" :stroke-width="1.8" />
-          </div>
-          <h1 class="text-xl font-bold text-gray-900">Stream HUB</h1>
+        <div class="lg:hidden flex justify-center mb-8">
+          <AppLogo :height="36" :show-tagline="false" />
         </div>
 
         <slot />

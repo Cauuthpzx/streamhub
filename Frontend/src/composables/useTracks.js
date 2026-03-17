@@ -48,8 +48,8 @@ export function useTracks(room) {
     }
   }
 
-  function attachScreenShare(track) {
-    const container = document.getElementById('screen-share-container')
+  function attachScreenShareByIdentity(track, identity) {
+    const container = document.getElementById(`screen-share-${identity}`)
     if (!container) return
     container.innerHTML = ''
     const el = track.attach()
@@ -73,5 +73,5 @@ export function useTracks(room) {
     })
   }
 
-  return { attachLocalVideo, attachRemoteTrack, attachScreenShare, reattachAll }
+  return { attachLocalVideo, attachRemoteTrack, attachScreenShareByIdentity, reattachAll }
 }

@@ -44,6 +44,7 @@ const screenEnabled = ref(false)
 const panelOpen = ref(false)
 const panelTab = ref('chat') // 'chat' | 'participants'
 const unreadCount = ref(0)
+const screenShareTrack = ref(null) // active screen share { track, identity }
 
 function getLivekitUrl() {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -132,11 +133,21 @@ function handleParticipantUpdate() {
 
 function handleTrackSubscribed(track, _publication, participant) {
   updateParticipants()
-  nextTick(() => attachRemoteTrack(track, participant))
+  if (track.source === Track.Source.ScreenShare) {
+    screenShareTrack.value = { track, identity: participant.identity }
+    nextTick(() => attachScreenShare(track))
+  } else {
+    nextTick(() => attachRemoteTrack(track, participant))
+  }
 }
 
 function handleTrackUnsubscribed(track) {
   updateParticipants()
+  if (track.source === Track.Source.ScreenShare) {
+    screenShareTrack.value = null
+    const container = document.getElementById('screen-share-container')
+    if (container) container.innerHTML = ''
+  }
   const el = document.getElementById(`track-${track.sid}`)
   if (el) el.remove()
 }
@@ -166,13 +177,30 @@ function attachLocalVideo() {
   })
 }
 
+function attachScreenShare(track) {
+  const container = document.getElementById('screen-share-container')
+  if (!container) return
+  container.innerHTML = ''
+  const el = track.attach()
+  el.style.width = '100%'
+  el.style.height = '100%'
+  el.style.objectFit = 'contain'
+  el.style.borderRadius = '0.5rem'
+  container.appendChild(el)
+}
+
 function attachRemoteTrack(track, participant) {
+  // skip screen share tracks — handled separately
+  if (track.source === Track.Source.ScreenShare || track.source === Track.Source.ScreenShareAudio) return
+
   if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) {
     const container = document.getElementById(`video-${participant.sid}`)
     if (!container) return
 
     if (track.kind === Track.Kind.Video) {
-      container.querySelectorAll('video').forEach((v) => v.remove())
+      // only remove existing camera videos, not all videos
+      const existing = document.getElementById(`track-${track.sid}`)
+      if (existing) existing.remove()
       const el = track.attach()
       el.id = `track-${track.sid}`
       el.style.width = '100%'
@@ -206,8 +234,25 @@ async function toggleCam() {
 async function toggleScreen() {
   if (!room.value) return
   try {
-    await toRaw(room.value).localParticipant.setScreenShareEnabled(!screenEnabled.value)
+    const r = toRaw(room.value)
+    await r.localParticipant.setScreenShareEnabled(!screenEnabled.value)
     screenEnabled.value = !screenEnabled.value
+
+    if (screenEnabled.value) {
+      // find local screen share track and display it
+      screenShareTrack.value = { track: null, identity: username }
+      await nextTick()
+      r.localParticipant.videoTrackPublications.forEach((pub) => {
+        if (pub.track && pub.track.source === Track.Source.ScreenShare) {
+          screenShareTrack.value = { track: pub.track, identity: username }
+          nextTick(() => attachScreenShare(pub.track))
+        }
+      })
+    } else {
+      screenShareTrack.value = null
+      const container = document.getElementById('screen-share-container')
+      if (container) container.innerHTML = ''
+    }
   } catch (_) {
     // user cancelled
   }
@@ -275,15 +320,29 @@ onUnmounted(() => {
 
     <!-- Main content: video grid + chat -->
     <div v-else class="flex-1 flex overflow-hidden">
-      <!-- Video grid -->
-      <div class="flex-1 p-4 overflow-auto">
+      <!-- Video area -->
+      <div class="flex-1 p-4 overflow-auto flex flex-col gap-3">
+        <!-- Screen share (large, top) -->
+        <div v-if="screenShareTrack" class="relative bg-gray-900 dark:bg-black rounded-lg overflow-hidden min-h-[300px] flex-1">
+          <div id="screen-share-container" class="absolute inset-0 flex items-center justify-center"></div>
+          <div class="absolute bottom-2 left-2 bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5 z-20">
+            <MonitorUp class="w-3 h-3" :stroke-width="2" />
+            {{ screenShareTrack.identity }} — {{ t('chat.shareScreen') }}
+          </div>
+        </div>
+
+        <!-- Participant camera grid -->
         <div
-          class="grid gap-3 h-full"
+          class="grid gap-3"
           :class="{
+            'flex-1': !screenShareTrack,
+            'h-[180px]': screenShareTrack,
             'grid-cols-1': participants.length === 1,
             'grid-cols-2': participants.length === 2,
-            'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4,
-            'grid-cols-3 grid-rows-2': participants.length >= 5,
+            'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4 && !screenShareTrack,
+            'grid-cols-3 grid-rows-2': participants.length >= 5 && !screenShareTrack,
+            'grid-cols-3': participants.length >= 3 && screenShareTrack,
+            'grid-cols-4': participants.length >= 5 && screenShareTrack,
           }"
         >
           <div

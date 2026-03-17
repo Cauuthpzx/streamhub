@@ -43,3 +43,18 @@ export function logout() {
 export function isAuthenticated() {
   return !!getToken()
 }
+
+// Request a LiveKit access token for the logged-in user
+export async function getLivekitToken(room = '') {
+  const res = await fetch(`${API_BASE}/token`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${getToken()}`,
+    },
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to get token')
+  return data
+}

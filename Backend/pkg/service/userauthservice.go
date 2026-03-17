@@ -17,34 +17,52 @@ package service
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 
+	"github.com/livekit/protocol/auth"
 	"github.com/livekit/protocol/logger"
 
 	"github.com/livekit/livekit-server/pkg/config"
 )
 
 type UserAuthService struct {
-	config    config.UserAuthConfig
-	userStore UserStore
+	config      config.UserAuthConfig
+	userStore   UserStore
+	keyProvider auth.KeyProvider
+	apiKey      string
+	apiSecret   string
 }
 
 func NewUserAuthService(
 	conf *config.Config,
 	userStore UserStore,
+	keyProvider auth.KeyProvider,
 ) *UserAuthService {
+	// use the first API key pair for issuing LiveKit tokens
+	var apiKey, apiSecret string
+	for k, v := range conf.Keys {
+		apiKey = k
+		apiSecret = v
+		break
+	}
+
 	return &UserAuthService{
-		config:    conf.UserAuth,
-		userStore: userStore,
+		config:      conf.UserAuth,
+		userStore:   userStore,
+		keyProvider: keyProvider,
+		apiKey:      apiKey,
+		apiSecret:   apiSecret,
 	}
 }
 
 func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/register", s.handleRegister)
 	mux.HandleFunc("/auth/login", s.handleLogin)
+	mux.HandleFunc("/auth/token", s.handleToken)
 }
 
 // request/response types
@@ -227,6 +245,92 @@ func (s *UserAuthService) generateToken(username string) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(s.config.JWTSecret))
+}
+
+// tokenRequest for requesting a LiveKit access token
+type tokenRequest struct {
+	// room to join (optional, if empty grants room create permission only)
+	Room string `json:"room,omitempty"`
+}
+
+type tokenResponse struct {
+	AccessToken string `json:"access_token"`
+	Username    string `json:"username"`
+}
+
+func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "method not allowed"})
+		return
+	}
+
+	if s.apiKey == "" || s.apiSecret == "" {
+		writeJSON(w, http.StatusServiceUnavailable, errorResponse{Error: "API keys not configured"})
+		return
+	}
+
+	// verify user JWT from Authorization header
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req tokenRequest
+	if r.Body != nil {
+		json.NewDecoder(r.Body).Decode(&req)
+	}
+
+	// build LiveKit access token with grants based on request
+	grant := &auth.VideoGrant{
+		RoomCreate: true,
+		RoomList:   true,
+		RoomJoin:   true,
+		Room:       req.Room,
+	}
+	grant.SetCanPublish(true)
+	grant.SetCanPublishData(true)
+	grant.SetCanSubscribe(true)
+
+	at := auth.NewAccessToken(s.apiKey, s.apiSecret).
+		SetVideoGrant(grant).
+		SetIdentity(username).
+		SetValidFor(s.config.TokenExpiry)
+
+	accessToken, err := at.ToJWT()
+	if err != nil {
+		logger.Errorw("failed to generate LiveKit token", err, "username", username)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "internal server error"})
+		return
+	}
+
+	logger.Debugw("issued LiveKit token", "username", username, "room", req.Room)
+	writeJSON(w, http.StatusOK, tokenResponse{
+		AccessToken: accessToken,
+		Username:    username,
+	})
+}
+
+// verifyUserToken extracts and validates the user JWT from Authorization header
+func (s *UserAuthService) verifyUserToken(r *http.Request) (string, error) {
+	authHeader := r.Header.Get("Authorization")
+	if !strings.HasPrefix(authHeader, "Bearer ") {
+		return "", ErrMissingAuthorization
+	}
+
+	tokenStr := authHeader[len("Bearer "):]
+	claims := &UserClaims{}
+	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (any, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, ErrInvalidAuthorizationToken
+		}
+		return []byte(s.config.JWTSecret), nil
+	})
+	if err != nil || !token.Valid {
+		return "", ErrInvalidAuthorizationToken
+	}
+
+	return claims.Username, nil
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

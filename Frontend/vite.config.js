@@ -11,6 +11,10 @@ export default defineConfig({
         target: 'http://localhost:7880',
         changeOrigin: true,
       },
+      '/twirp': {
+        target: 'http://localhost:7880',
+        changeOrigin: true,
+      },
     },
   },
 })

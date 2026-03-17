@@ -38,10 +38,48 @@ export function getUsername() {
 export function logout() {
   localStorage.removeItem('token')
   localStorage.removeItem('username')
+  localStorage.removeItem('profile')
 }
 
 export function isAuthenticated() {
   return !!getToken()
+}
+
+export function getProfile() {
+  return localStorage.getItem('profile') ? JSON.parse(localStorage.getItem('profile')) : null
+}
+
+export function saveProfile(profile) {
+  localStorage.setItem('profile', JSON.stringify(profile))
+}
+
+export async function fetchProfile() {
+  const token = getToken()
+  if (!token) return null
+  const res = await fetch(`${API_BASE}/profile`, {
+    headers: { 'Authorization': `Bearer ${token}` },
+  })
+  if (!res.ok) return null
+  const data = await res.json()
+  saveProfile(data)
+  return data
+}
+
+export async function updateProfile(profile) {
+  const token = getToken()
+  if (!token) throw new Error('error.missingAuthorization')
+  const res = await fetch(`${API_BASE}/profile`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(profile),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  saveProfile(data)
+  return data
 }
 
 // Request a LiveKit access token for the logged-in user

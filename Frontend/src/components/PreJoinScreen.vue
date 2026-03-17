@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Mic, MicOff, VideoIcon, VideoOff, LogIn } from 'lucide-vue-next'
+import { getProfile } from '../services/auth'
 
 const { t } = useI18n()
 
@@ -20,6 +21,9 @@ const videoInputs = ref([])
 const selectedAudioInput = ref('')
 const selectedVideoInput = ref('')
 let localStream = null
+
+const profile = computed(() => getProfile())
+const hasAvatar = computed(() => !!profile.value?.avatar)
 
 async function loadDevices() {
   try {
@@ -96,7 +100,15 @@ onUnmounted(stopPreview)
       <div class="relative bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden aspect-video mb-5">
         <video ref="videoEl" autoplay muted playsinline class="w-full h-full object-cover" :class="camOn ? '' : 'hidden'" :style="{ transform: 'scaleX(-1)' }"></video>
         <div v-if="!camOn" class="absolute inset-0 flex flex-col items-center justify-center gap-2">
-          <div class="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-3xl font-semibold text-gray-500 dark:text-gray-300">
+          <div v-if="hasAvatar" class="w-20 h-20 rounded-full overflow-hidden">
+            <img
+              :src="`/avatars/${profile.avatar}.webp`"
+              :style="{ objectPosition: `${(profile.avatar_x ?? 0.5) * 100}% ${(profile.avatar_y ?? 0.5) * 100}%`, transform: `scale(${profile.avatar_scale ?? 1})` }"
+              class="w-full h-full object-cover"
+              :alt="profile.display_name || username"
+            />
+          </div>
+          <div v-else class="w-20 h-20 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center text-3xl font-semibold text-gray-500 dark:text-gray-300">
             {{ (username || '?')[0].toUpperCase() }}
           </div>
           <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('prejoin.camOff') }}</p>

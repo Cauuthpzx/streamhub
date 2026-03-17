@@ -160,6 +160,7 @@ export function useRoom(roomName, username, deps) {
       r.on(RoomEvent.Disconnected, handleDisconnect)
       r.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers)
       r.on(RoomEvent.ConnectionQualityChanged, handleConnectionQuality)
+      r.on(RoomEvent.ParticipantMetadataChanged, handleParticipantUpdate)
 
       r.on(RoomEvent.ParticipantConnected, () => deps.sounds.playJoinSound())
       r.on(RoomEvent.ParticipantDisconnected, () => deps.sounds.playLeaveSound())
@@ -171,6 +172,22 @@ export function useRoom(roomName, username, deps) {
       })
 
       await r.connect(getLivekitUrl(), access_token)
+
+      // set profile metadata for other participants
+      try {
+        const { getProfile, fetchProfile } = await import('../services/auth')
+        let profile = getProfile()
+        if (!profile) profile = await fetchProfile()
+        if (profile && (profile.avatar || profile.display_name)) {
+          await r.localParticipant.setMetadata(JSON.stringify({
+            avatar: profile.avatar || '',
+            avatar_x: profile.avatar_x || 0.5,
+            avatar_y: profile.avatar_y || 0.5,
+            avatar_scale: profile.avatar_scale || 1,
+            display_name: profile.display_name || '',
+          }))
+        }
+      } catch (_) { /* non-critical */ }
 
       const pj = preJoinSettings.value || { micOn: true, camOn: true }
       try {
@@ -307,15 +324,35 @@ export function useRoom(roomName, username, deps) {
     }
   }
 
+  // profile update handler — when user edits profile, re-broadcast metadata
+  async function handleProfileUpdate() {
+    if (!room.value) return
+    try {
+      const { getProfile } = await import('../services/auth')
+      const profile = getProfile()
+      if (profile) {
+        await toRaw(room.value).localParticipant.setMetadata(JSON.stringify({
+          avatar: profile.avatar || '',
+          avatar_x: profile.avatar_x || 0.5,
+          avatar_y: profile.avatar_y || 0.5,
+          avatar_scale: profile.avatar_scale || 1,
+          display_name: profile.display_name || '',
+        }))
+      }
+    } catch (_) { /* non-critical */ }
+  }
+
   // lifecycle
   onMounted(() => {
     document.addEventListener('fullscreenchange', onFullscreenChange)
     document.addEventListener('keydown', handleKeyboard)
+    window.addEventListener('profile-updated', handleProfileUpdate)
   })
 
   onUnmounted(() => {
     document.removeEventListener('fullscreenchange', onFullscreenChange)
     document.removeEventListener('keydown', handleKeyboard)
+    window.removeEventListener('profile-updated', handleProfileUpdate)
     deps.reactions.cleanupListeners()
     deps.recording.cleanup()
     if (room.value) toRaw(room.value).disconnect()

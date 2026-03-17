@@ -241,7 +241,16 @@
     "fileUploaded": "文件已上传",
     "fileUploadFailed": "文件上传失败",
     "shareLinkCreated": "分享链接已创建",
-    "shareLinkResolved": "分享链接已处理"
+    "shareLinkResolved": "分享链接已处理",
+    "profileUpdated": "个人资料已更新",
+    "updateProfileFailed": "更新个人资料失败"
+  },
+  "profile": {
+    "edit": "编辑个人资料",
+    "displayName": "显示名称",
+    "save": "保存",
+    "saving": "保存中...",
+    "dragHint": "拖动以调整位置"
   },
   "ingress": {
     "title": "RTMP/WHIP 推流",

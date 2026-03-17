@@ -86,6 +86,27 @@ func (s *RedisUserStore) UserExists(ctx context.Context, username string) (bool,
 	return s.rc.HExists(ctx, UsersKey, username).Result()
 }
 
+func (s *RedisUserStore) UpdateProfile(ctx context.Context, username string, displayName string, avatar string, ax, ay, as float64) error {
+	user, err := s.LoadUser(ctx, username)
+	if err != nil {
+		return err
+	}
+	user.DisplayName = displayName
+	user.Avatar = avatar
+	user.AvatarX = ax
+	user.AvatarY = ay
+	user.AvatarScale = as
+	return s.StoreUser(ctx, user)
+}
+
+func (s *RedisUserStore) GetProfile(ctx context.Context, username string) (string, string, float64, float64, float64, error) {
+	user, err := s.LoadUser(ctx, username)
+	if err != nil {
+		return "", "", 0, 0, 0, err
+	}
+	return user.DisplayName, user.Avatar, user.AvatarX, user.AvatarY, user.AvatarScale, nil
+}
+
 func (s *RedisUserStore) StoreRoomPassword(ctx context.Context, roomName string, passwordHash string) error {
 	return s.rc.HSet(ctx, RoomPasswordsKey, roomName, passwordHash).Err()
 }
@@ -335,6 +356,31 @@ func (s *LocalUserStore) UserExists(_ context.Context, username string) (bool, e
 	defer s.lock.RUnlock()
 	_, ok := s.users[username]
 	return ok, nil
+}
+
+func (s *LocalUserStore) UpdateProfile(_ context.Context, username string, displayName string, avatar string, ax, ay, as float64) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	user, ok := s.users[username]
+	if !ok {
+		return ErrUserNotFound
+	}
+	user.DisplayName = displayName
+	user.Avatar = avatar
+	user.AvatarX = ax
+	user.AvatarY = ay
+	user.AvatarScale = as
+	return nil
+}
+
+func (s *LocalUserStore) GetProfile(_ context.Context, username string) (string, string, float64, float64, float64, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	user, ok := s.users[username]
+	if !ok {
+		return "", "", 0, 0, 0, ErrUserNotFound
+	}
+	return user.DisplayName, user.Avatar, user.AvatarX, user.AvatarY, user.AvatarScale, nil
 }
 
 func (s *LocalUserStore) StoreRoomPassword(_ context.Context, roomName string, passwordHash string) error {

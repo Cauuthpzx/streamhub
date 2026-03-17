@@ -84,7 +84,8 @@ function buildEntry(p, isLocal) {
     }
   })
 
-  return { identity: p.identity, sid: p.sid, isLocal, audioMuted, videoMuted, audioTrackSid }
+  const avatarMeta = parseMeta(p.metadata)
+  return { identity: p.identity, sid: p.sid, isLocal, audioMuted, videoMuted, audioTrackSid, avatarMeta }
 }
 
 async function handleKick(identity) {
@@ -135,10 +136,19 @@ async function handleMove() {
 watch(() => props.room, buildList, { immediate: true })
 
 watch(() => props.room, (r, oldR) => {
-  const events = ['participantConnected', 'participantDisconnected', 'trackMuted', 'trackUnmuted', 'trackSubscribed', 'trackUnsubscribed', 'localTrackPublished', 'localTrackUnpublished']
+  const events = ['participantConnected', 'participantDisconnected', 'trackMuted', 'trackUnmuted', 'trackSubscribed', 'trackUnsubscribed', 'localTrackPublished', 'localTrackUnpublished', 'participantMetadataChanged']
   if (oldR) events.forEach((e) => toRaw(oldR).off(e, debouncedBuildList))
   if (r) events.forEach((e) => toRaw(r).on(e, debouncedBuildList))
 }, { immediate: true })
+
+function parseMeta(raw) {
+  try {
+    const m = JSON.parse(raw || '{}')
+    if (m.avatar) return { avatar: m.avatar, x: m.avatar_x ?? 0.5, y: m.avatar_y ?? 0.5, s: m.avatar_scale ?? 1, displayName: m.display_name || '' }
+    if (m.display_name) return { avatar: '', displayName: m.display_name }
+  } catch { /* ignore */ }
+  return null
+}
 
 onMounted(startLobbyPoll)
 onUnmounted(stopLobbyPoll)
@@ -214,10 +224,19 @@ onUnmounted(stopLobbyPoll)
         class="flex items-center justify-between px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
       >
         <div class="flex items-center gap-2 min-w-0">
-          <div class="w-7 h-7 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0">
+          <div v-if="p.avatarMeta?.avatar" class="w-7 h-7 rounded-full overflow-hidden shrink-0">
+            <img
+              :src="`/avatars/${p.avatarMeta.avatar}.webp`"
+              :style="{ objectPosition: `${p.avatarMeta.x * 100}% ${p.avatarMeta.y * 100}%`, transform: `scale(${p.avatarMeta.s})` }"
+              class="w-full h-full object-cover"
+              loading="lazy"
+              :alt="p.identity"
+            />
+          </div>
+          <div v-else class="w-7 h-7 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center text-xs font-semibold text-gray-600 dark:text-gray-300 shrink-0">
             {{ (p.identity || '?')[0].toUpperCase() }}
           </div>
-          <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ p.identity }}</span>
+          <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ p.avatarMeta?.displayName || p.identity }}</span>
           <span v-if="p.isLocal" class="text-xs text-indigo-500 font-medium shrink-0">({{ t('participants.you') }})</span>
         </div>
 

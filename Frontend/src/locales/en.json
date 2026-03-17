@@ -241,7 +241,16 @@
     "fileUploaded": "File uploaded",
     "fileUploadFailed": "Failed to upload file",
     "shareLinkCreated": "Share link created",
-    "shareLinkResolved": "Share link resolved"
+    "shareLinkResolved": "Share link resolved",
+    "profileUpdated": "Profile updated",
+    "updateProfileFailed": "Failed to update profile"
+  },
+  "profile": {
+    "edit": "Edit profile",
+    "displayName": "Display name",
+    "save": "Save",
+    "saving": "Saving...",
+    "dragHint": "Drag to adjust position"
   },
   "ingress": {
     "title": "RTMP/WHIP Ingress",

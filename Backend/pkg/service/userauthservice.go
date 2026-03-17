@@ -118,6 +118,8 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/room/share/create", s.handleShareCreate)
 	mux.HandleFunc("/auth/room/share/get", s.handleShareGet)
 	mux.HandleFunc("/auth/room/share/resolve", s.handleShareResolve)
+	// User profile
+	mux.HandleFunc("/auth/profile", s.handleProfile)
 }
 
 // request/response types
@@ -1559,4 +1561,78 @@ func (s *UserAuthService) handleShareResolve(w http.ResponseWriter, r *http.Requ
 	}
 
 	writeJSON(w, http.StatusOK, link)
+}
+
+// ── User profile ──
+
+func (s *UserAuthService) handleProfile(w http.ResponseWriter, r *http.Request) {
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: "error.missingAuthorization"})
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		displayName, avatar, ax, ay, as, err := s.userStore.GetProfile(r.Context(), username)
+		if err != nil {
+			// user exists (JWT valid) but no profile yet — return empty profile
+			writeJSON(w, http.StatusOK, map[string]any{
+				"username":     username,
+				"display_name": "",
+				"avatar":       "",
+				"avatar_x":     0.5,
+				"avatar_y":     0.5,
+				"avatar_scale": 1,
+			})
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]any{
+			"username":     username,
+			"display_name": displayName,
+			"avatar":       avatar,
+			"avatar_x":     ax,
+			"avatar_y":     ay,
+			"avatar_scale": as,
+		})
+
+	case http.MethodPost:
+		var req struct {
+			DisplayName string  `json:"display_name"`
+			Avatar      string  `json:"avatar"`
+			AvatarX     float64 `json:"avatar_x"`
+			AvatarY     float64 `json:"avatar_y"`
+			AvatarScale float64 `json:"avatar_scale"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+			return
+		}
+
+		if err := s.userStore.UpdateProfile(r.Context(), username, req.DisplayName, req.Avatar, req.AvatarX, req.AvatarY, req.AvatarScale); err != nil {
+			// user may not exist in store (dev restart) — create stub record then retry
+			stub := &UserRecord{Username: username, CreatedAt: time.Now().Unix()}
+			if storeErr := s.userStore.StoreUser(r.Context(), stub); storeErr == nil {
+				err = s.userStore.UpdateProfile(r.Context(), username, req.DisplayName, req.Avatar, req.AvatarX, req.AvatarY, req.AvatarScale)
+			}
+			if err != nil {
+				logger.Errorw("log.updateProfileFailed", err)
+				writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+				return
+			}
+		}
+
+		logger.Infow("log.profileUpdated", "username", username)
+		writeJSON(w, http.StatusOK, map[string]any{
+			"username":     username,
+			"display_name": req.DisplayName,
+			"avatar":       req.Avatar,
+			"avatar_x":     req.AvatarX,
+			"avatar_y":     req.AvatarY,
+			"avatar_scale": req.AvatarScale,
+		})
+
+	default:
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+	}
 }

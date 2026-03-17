@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { Send, Smile, Reply, X, Paperclip, FileIcon, Download } from 'lucide-vue-next'
 import { RoomEvent } from 'livekit-client'
 import { sendChatMessage, getChatHistory, uploadFile, getFileDownloadURL } from '../services/room'
+import { getProfile } from '../services/auth'
 
 const { t } = useI18n()
 
@@ -56,6 +57,7 @@ async function handleFileSelect(e) {
       fileId: meta.id,
       fileName: meta.file_name,
       fileSize: meta.file_size,
+      avatar: getLocalAvatar(),
     })
     scrollToBottom()
   } catch (_) { /* upload error */ }
@@ -143,6 +145,17 @@ function formatTime(ts) {
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
+function findAvatarBySender(sender) {
+  if (sender === props.username) return getLocalAvatar()
+  if (!props.room) return null
+  const r = toRaw(props.room)
+  let found = null
+  r.remoteParticipants.forEach((p) => {
+    if (p.identity === sender) found = parseAvatar(p)
+  })
+  return found
+}
+
 async function loadHistory() {
   loadingHistory.value = true
   try {
@@ -158,6 +171,7 @@ async function loadHistory() {
       fileId: msg.file_id || '',
       fileName: msg.file_name || '',
       fileSize: msg.file_size || 0,
+      avatar: findAvatarBySender(msg.sender),
     }))
     scrollToBottom()
   } catch (_) {
@@ -167,10 +181,25 @@ async function loadHistory() {
   }
 }
 
+function parseAvatar(participant) {
+  try {
+    const meta = JSON.parse(participant?.metadata || '{}')
+    if (meta.avatar) return { avatar: meta.avatar, x: meta.avatar_x ?? 0.5, y: meta.avatar_y ?? 0.5, s: meta.avatar_scale ?? 1, displayName: meta.display_name || '' }
+  } catch { /* no avatar */ }
+  return null
+}
+
+function getLocalAvatar() {
+  const p = getProfile()
+  if (p?.avatar) return { avatar: p.avatar, x: p.avatar_x ?? 0.5, y: p.avatar_y ?? 0.5, s: p.avatar_scale ?? 1, displayName: p.display_name || '' }
+  return null
+}
+
 function onDataReceived(payload, participant) {
   try {
     const msg = JSON.parse(decoder.decode(payload))
     if (msg.type !== 'chat') return
+    const avt = parseAvatar(participant)
     messages.value.push({
       id: Date.now() + Math.random(),
       sender: participant?.identity || msg.sender || t('chat.unknown'),
@@ -182,6 +211,7 @@ function onDataReceived(payload, participant) {
       fileId: msg.fileId || '',
       fileName: msg.fileName || '',
       fileSize: msg.fileSize || 0,
+      avatar: avt,
     })
     scrollToBottom()
   } catch (_) {
@@ -213,6 +243,7 @@ async function sendMessage() {
     isLocal: true,
     replyTo: reply?.id || '',
     replyText: reply?.text || '',
+    avatar: getLocalAvatar(),
   })
 
   input.value = ''
@@ -252,11 +283,40 @@ onMounted(loadHistory)
       <div
         v-for="msg in messages"
         :key="msg.id"
-        class="group/msg flex"
+        class="group/msg flex gap-1.5"
         :class="msg.isLocal ? 'justify-end' : 'justify-start'"
       >
+        <!-- Avatar -->
+        <div v-if="!msg.isLocal" class="shrink-0 mt-1 order-first">
+          <div v-if="msg.avatar?.avatar" class="w-6 h-6 rounded-full overflow-hidden">
+            <img
+              :src="`/avatars/${msg.avatar.avatar}.webp`"
+              :style="{ objectPosition: `${msg.avatar.x * 100}% ${msg.avatar.y * 100}%`, transform: `scale(${msg.avatar.s})` }"
+              class="w-full h-full object-cover"
+              loading="lazy"
+              :alt="msg.sender"
+            />
+          </div>
+          <div v-else class="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <span class="text-2xs font-semibold text-gray-500 dark:text-gray-400">{{ (msg.sender || '?')[0].toUpperCase() }}</span>
+          </div>
+        </div>
+        <div v-if="msg.isLocal" class="shrink-0 mt-1 order-last">
+          <div v-if="msg.avatar?.avatar" class="w-6 h-6 rounded-full overflow-hidden">
+            <img
+              :src="`/avatars/${msg.avatar.avatar}.webp`"
+              :style="{ objectPosition: `${msg.avatar.x * 100}% ${msg.avatar.y * 100}%`, transform: `scale(${msg.avatar.s})` }"
+              class="w-full h-full object-cover"
+              loading="lazy"
+              :alt="msg.sender"
+            />
+          </div>
+          <div v-else class="w-6 h-6 rounded-full bg-indigo-400 flex items-center justify-center">
+            <span class="text-2xs font-semibold text-white">{{ (msg.sender || '?')[0].toUpperCase() }}</span>
+          </div>
+        </div>
         <div
-          class="relative max-w-[85%] rounded-xl px-3 py-1.5 transition-colors"
+          class="relative max-w-[80%] rounded-xl px-3 py-1.5 transition-colors"
           :class="msg.isLocal
             ? 'bg-indigo-600 text-white rounded-br-sm'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm'"
@@ -272,7 +332,7 @@ onMounted(loadHistory)
             <span
               class="text-sm font-semibold shrink-0"
               :class="msg.isLocal ? 'text-indigo-200' : 'text-emerald-500 dark:text-emerald-400'"
-            >{{ msg.isLocal ? '' : msg.sender }}</span>
+            >{{ msg.isLocal ? '' : (msg.avatar?.displayName || msg.sender) }}</span>
             <span class="text-xs shrink-0 ml-auto"
               :class="msg.isLocal ? 'text-indigo-300' : 'text-gray-400 dark:text-gray-500'"
             >{{ formatTime(msg.time) }}</span>

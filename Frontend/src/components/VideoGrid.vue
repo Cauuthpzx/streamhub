@@ -3,6 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { Mic, MicOff, VideoOff, MonitorUp, Pin, Maximize, Minimize } from 'lucide-vue-next'
 import ConnectionBars from './ConnectionBars.vue'
 import AppTooltip from './AppTooltip.vue'
+import ParticipantAvatar from './ParticipantAvatar.vue'
 
 const { t } = useI18n()
 
@@ -20,6 +21,13 @@ defineProps({
 })
 
 const emit = defineEmits(['pin', 'fullscreen'])
+
+function getDisplayName(participant) {
+  try {
+    const meta = JSON.parse(participant.metadata || '{}')
+    return meta.display_name || participant.identity
+  } catch { return participant.identity }
+}
 </script>
 
 <template>
@@ -38,13 +46,11 @@ const emit = defineEmits(['pin', 'fullscreen'])
         >
           <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
           <div class="absolute inset-0 flex items-center justify-center z-0">
-            <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-sm font-semibold text-gray-300">
-              {{ (participant.identity || '?')[0].toUpperCase() }}
-            </div>
+            <ParticipantAvatar :participant="participant" size="sm" />
           </div>
           <div class="absolute bottom-1 left-1 bg-black/70 rounded px-1.5 py-0.5 text-2xs text-white z-20 flex items-center gap-1">
             <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
-            {{ participant.identity }}
+            {{ getDisplayName(participant) }}
             <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
             <ConnectionBars :quality="connectionQualities[participant.identity]" />
           </div>
@@ -77,14 +83,12 @@ const emit = defineEmits(['pin', 'fullscreen'])
         >
           <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
           <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
-            <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl font-semibold text-gray-500 dark:text-gray-300">
-              {{ (participant.identity || '?')[0].toUpperCase() }}
-            </div>
+            <ParticipantAvatar :participant="participant" size="xl" />
           </div>
           <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
             <div class="bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
               <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
-              {{ participant.identity }}
+              {{ getDisplayName(participant) }}
               <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
             </div>
           </div>
@@ -114,13 +118,11 @@ const emit = defineEmits(['pin', 'fullscreen'])
           >
             <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
             <div class="absolute inset-0 flex items-center justify-center z-0">
-              <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-semibold text-gray-500 dark:text-gray-300">
-                {{ (participant.identity || '?')[0].toUpperCase() }}
-              </div>
+              <ParticipantAvatar :participant="participant" size="sm" />
             </div>
             <div class="absolute bottom-1 left-1 bg-black/60 rounded px-1.5 py-0.5 text-2xs text-white z-20 flex items-center gap-1">
               <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
-              {{ participant.identity }}
+              {{ getDisplayName(participant) }}
             </div>
             <div class="absolute top-1 right-1 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
               <AppTooltip :content="t('chat.pin')" position="bottom">
@@ -153,9 +155,7 @@ const emit = defineEmits(['pin', 'fullscreen'])
 
           <!-- Avatar fallback -->
           <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
-            <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
-              {{ (participant.identity || '?')[0].toUpperCase() }}
-            </div>
+            <ParticipantAvatar :participant="participant" size="lg" />
             <div v-if="isLocal && !camEnabled && !micEnabled" class="text-xs text-gray-400 dark:text-gray-500">
               {{ t('chat.noDevices') }}
             </div>
@@ -180,7 +180,7 @@ const emit = defineEmits(['pin', 'fullscreen'])
           <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
             <div class="bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
               <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
-              {{ participant.identity }}
+              {{ getDisplayName(participant) }}
               <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
               <ConnectionBars :quality="connectionQualities[participant.identity]" />
             </div>

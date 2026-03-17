@@ -7,9 +7,11 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"github.com/livekit/livekit-server/pkg/agent"
 	"github.com/livekit/livekit-server/pkg/config"
+	"github.com/livekit/livekit-server/pkg/postgres"
 	"github.com/livekit/livekit-server/pkg/routing"
 	"github.com/livekit/livekit-server/pkg/sfu"
 	"github.com/livekit/livekit-server/pkg/telemetry"
@@ -155,7 +157,10 @@ func InitializeServer(conf *config.Config, currentNode routing.LocalNode) (*Live
 	if err != nil {
 		return nil, err
 	}
-	userStore := createUserStore(universalClient)
+	userStore, err := createUserStore(conf, universalClient)
+	if err != nil {
+		return nil, err
+	}
 	userAuthService := NewUserAuthService(conf, userStore, keyProvider, roomService, ingressService, agentDispatchService, egressService)
 	livekitServer, err := NewLivekitServer(conf, roomService, agentDispatchService, egressService, ingressService, sipService, ioInfoService, rtcService, serviceWHIPService, agentService, userAuthService, keyProvider, router, roomManager, signalServer, server, currentNode)
 	if err != nil {
@@ -354,9 +359,22 @@ func getAgentConfig(config2 *config.Config) agent.Config {
 	return config2.Agents
 }
 
-func createUserStore(rc redis.UniversalClient) UserStore {
-	if rc != nil {
-		return NewRedisUserStore(rc)
+func createUserStore(conf *config.Config, rc redis.UniversalClient) (UserStore, error) {
+	if conf.Postgres.IsConfigured() {
+		pool, err := postgres.NewPool(&conf.Postgres)
+		if err != nil {
+			return nil, err
+		}
+		if err := postgres.RunMigrations(context.Background(), pool); err != nil {
+			return nil, err
+		}
+		if rc != nil {
+			return NewHybridUserStore(pool, rc), nil
+		}
+		return NewPgUserStore(pool), nil
 	}
-	return NewLocalUserStore()
+	if rc != nil {
+		return NewRedisUserStore(rc), nil
+	}
+	return NewLocalUserStore(), nil
 }

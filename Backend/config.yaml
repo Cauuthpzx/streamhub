@@ -11,6 +11,18 @@ user_auth:
   min_username_length: 3
   min_password_length: 6
 
+redis:
+  address: localhost:6379
+
+postgres:
+  host: localhost
+  port: 5432
+  user: streamhub
+  password: streamhub
+  database: streamhub
+  ssl_mode: disable
+  max_conns: 10
+
 development: true
 
 logging:

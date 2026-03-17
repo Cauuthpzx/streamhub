@@ -109,6 +109,8 @@ type UserStore interface {
 	StoreUser(ctx context.Context, user *UserRecord) error
 	LoadUser(ctx context.Context, username string) (*UserRecord, error)
 	UserExists(ctx context.Context, username string) (bool, error)
+	UpdateProfile(ctx context.Context, username string, displayName string, avatar string, ax, ay, as float64) error
+	GetProfile(ctx context.Context, username string) (displayName, avatar string, ax, ay, as float64, err error)
 
 	// Room password management
 	StoreRoomPassword(ctx context.Context, roomName string, passwordHash string) error
@@ -160,6 +162,11 @@ type UserRecord struct {
 	Username     string `json:"username"`
 	PasswordHash string `json:"password_hash"`
 	CreatedAt    int64  `json:"created_at"`
+	DisplayName  string `json:"display_name,omitempty"`
+	Avatar       string `json:"avatar,omitempty"`       // e.g. "avt-03"
+	AvatarX      float64 `json:"avatar_x,omitempty"`     // crop offset X (0-1)
+	AvatarY      float64 `json:"avatar_y,omitempty"`     // crop offset Y (0-1)
+	AvatarScale  float64 `json:"avatar_scale,omitempty"` // crop zoom (1-3)
 }
 
 // FileMetadata represents an uploaded file in a room

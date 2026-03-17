@@ -241,7 +241,16 @@
     "fileUploaded": "Đã tải tệp lên",
     "fileUploadFailed": "Không thể tải tệp lên",
     "shareLinkCreated": "Đã tạo liên kết chia sẻ",
-    "shareLinkResolved": "Đã xử lý liên kết chia sẻ"
+    "shareLinkResolved": "Đã xử lý liên kết chia sẻ",
+    "profileUpdated": "Đã cập nhật hồ sơ",
+    "updateProfileFailed": "Cập nhật hồ sơ thất bại"
+  },
+  "profile": {
+    "edit": "Chỉnh sửa hồ sơ",
+    "displayName": "Tên hiển thị",
+    "save": "Lưu",
+    "saving": "Đang lưu...",
+    "dragHint": "Kéo để điều chỉnh vị trí"
   },
   "ingress": {
     "title": "Luồng vào RTMP/WHIP",

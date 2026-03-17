@@ -80,6 +80,7 @@ type Config struct {
 	Limit    LimitConfig   `yaml:"limit,omitempty"`
 	Agents   agent.Config  `yaml:"agents,omitempty"`
 
+	Postgres PostgresConfig `yaml:"postgres,omitempty"`
 	UserAuth UserAuthConfig `yaml:"user_auth,omitempty"`
 
 	Development bool `yaml:"development,omitempty"`
@@ -300,6 +301,33 @@ type IngressConfig struct {
 }
 
 type SIPConfig struct{}
+
+type PostgresConfig struct {
+	Host     string `yaml:"host,omitempty"`
+	Port     int    `yaml:"port,omitempty"`
+	User     string `yaml:"user,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Database string `yaml:"database,omitempty"`
+	SSLMode  string `yaml:"ssl_mode,omitempty"`
+	MaxConns int32  `yaml:"max_conns,omitempty"`
+}
+
+func (p *PostgresConfig) IsConfigured() bool {
+	return p.Host != "" && p.Database != ""
+}
+
+func (p *PostgresConfig) ConnectionString() string {
+	port := p.Port
+	if port == 0 {
+		port = 5432
+	}
+	sslMode := p.SSLMode
+	if sslMode == "" {
+		sslMode = "disable"
+	}
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		p.User, p.Password, p.Host, port, p.Database, sslMode)
+}
 
 type UserAuthConfig struct {
 	// secret used to sign user JWT tokens (separate from LiveKit API keys)

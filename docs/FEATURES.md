@@ -222,8 +222,8 @@
 |---|---|---|---|---|---|
 | 1 | Đăng ký / Đăng nhập | ✅ 3 endpoints | ✅ Login + Register | ✅ 24 tests | ✅ XONG |
 | 2 | Quản lý phòng (CRUD + password + max) | ✅ 2 endpoints | ✅ Create/List/Delete/Join | ✅ 8 tests | ✅ XONG |
-| 3 | Video / Audio call | ✅ LiveKit RTC | ✅ Camera + Mic + Grid | — | ✅ XONG |
-| 4 | Screen share | ✅ LiveKit RTC | ✅ Toggle screen share | — | ✅ XONG |
+| 3 | Video / Audio call | ✅ LiveKit RTC | ✅ Camera + Mic + Grid + toRaw fix | — | ✅ XONG |
+| 4 | Screen share + PiP (Zoom/OBS style) | ✅ LiveKit RTC | ✅ PiP layout + camera overlay | — | ✅ XONG |
 | 5 | Chat real-time + lịch sử | ✅ 2 endpoints + DataChannel | ✅ RoomChat + history | ✅ 12 tests | ✅ XONG |
 | 6 | Quản lý participant | ✅ 6 Twirp RPC | ✅ List/Kick/Mute panel | — | ✅ XONG |
 | 7 | Đa ngôn ngữ (EN/VI/ZH) | ✅ i18n keys | ✅ vue-i18n + switcher | — | ✅ XONG |

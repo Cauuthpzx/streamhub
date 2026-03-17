@@ -80,7 +80,8 @@
     "camOn": "Bật camera",
     "shareScreen": "Chia sẻ màn hình",
     "leave": "Rời phòng",
-    "loadingHistory": "Đang tải tin nhắn..."
+    "loadingHistory": "Đang tải tin nhắn...",
+    "panel": "Trò chuyện & Người tham gia"
   },
   "participants": {
     "title": "Người tham gia",

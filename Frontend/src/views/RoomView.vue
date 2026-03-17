@@ -40,8 +40,8 @@ const participants = ref([])
 const micEnabled = ref(true)
 const camEnabled = ref(true)
 const screenEnabled = ref(false)
-const chatOpen = ref(false)
-const participantsOpen = ref(false)
+const panelOpen = ref(false)
+const panelTab = ref('chat') // 'chat' | 'participants'
 const unreadCount = ref(0)
 
 function getLivekitUrl() {
@@ -77,7 +77,7 @@ async function connectRoom() {
 
     // track unread chat messages
     r.on(RoomEvent.DataReceived, () => {
-      if (!chatOpen.value) unreadCount.value++
+      if (!panelOpen.value || panelTab.value !== 'chat') unreadCount.value++
     })
 
     await r.connect(getLivekitUrl(), access_token)
@@ -212,17 +212,14 @@ async function toggleScreen() {
   }
 }
 
-function toggleChat() {
-  chatOpen.value = !chatOpen.value
-  if (chatOpen.value) {
-    unreadCount.value = 0
-    participantsOpen.value = false
-  }
+function togglePanel() {
+  panelOpen.value = !panelOpen.value
+  if (panelOpen.value && panelTab.value === 'chat') unreadCount.value = 0
 }
 
-function toggleParticipants() {
-  participantsOpen.value = !participantsOpen.value
-  if (participantsOpen.value) chatOpen.value = false
+function switchTab(tab) {
+  panelTab.value = tab
+  if (tab === 'chat') unreadCount.value = 0
 }
 
 async function leaveRoom() {
@@ -307,37 +304,55 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Side panel: Participants or Chat -->
+      <!-- Side panel with tabs -->
       <div
-        v-if="participantsOpen || chatOpen"
+        v-if="panelOpen"
         class="w-80 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800 shrink-0"
       >
-        <!-- Panel header -->
-        <div class="h-[45px] flex items-center justify-between px-3 border-b border-gray-200 dark:border-gray-700">
-          <span class="text-sm font-medium text-gray-900 dark:text-white">
-            {{ participantsOpen ? t('participants.title') : t('chat.title') }}
-          </span>
+        <!-- Tab bar -->
+        <div class="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
           <button
-            @click="participantsOpen = false; chatOpen = false"
-            class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer"
-          >{{ t('chat.close') }}</button>
+            @click="switchTab('chat')"
+            class="flex-1 h-[40px] text-xs font-medium transition-colors cursor-pointer relative flex items-center justify-center gap-1.5"
+            :class="panelTab === 'chat'
+              ? 'text-indigo-600 dark:text-indigo-400'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            <MessageSquare class="w-3.5 h-3.5" :stroke-width="1.8" />
+            {{ t('chat.title') }}
+            <span
+              v-if="unreadCount > 0 && panelTab !== 'chat'"
+              class="w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center"
+            >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+            <div v-if="panelTab === 'chat'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full"></div>
+          </button>
+          <button
+            @click="switchTab('participants')"
+            class="flex-1 h-[40px] text-xs font-medium transition-colors cursor-pointer relative flex items-center justify-center gap-1.5"
+            :class="panelTab === 'participants'
+              ? 'text-indigo-600 dark:text-indigo-400'
+              : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
+          >
+            <Users class="w-3.5 h-3.5" :stroke-width="1.8" />
+            {{ t('participants.title') }}
+            <span class="text-[10px] text-gray-400 dark:text-gray-500">({{ participants.length }})</span>
+            <div v-if="panelTab === 'participants'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full"></div>
+          </button>
         </div>
 
-        <!-- Participants panel -->
-        <RoomParticipants
-          v-if="participantsOpen && room"
-          :room="room"
-          :room-name="roomName"
-          :local-identity="username"
-          class="flex-1 min-h-0"
-        />
-
-        <!-- Chat panel -->
+        <!-- Tab content -->
         <RoomChat
-          v-if="chatOpen && room"
+          v-if="panelTab === 'chat' && room"
           :room="room"
           :room-name="roomName"
           :username="username"
+          class="flex-1 min-h-0"
+        />
+        <RoomParticipants
+          v-if="panelTab === 'participants' && room"
+          :room="room"
+          :room-name="roomName"
+          :local-identity="username"
           class="flex-1 min-h-0"
         />
       </div>
@@ -379,27 +394,16 @@ onUnmounted(() => {
           </button>
         </AppTooltip>
 
-        <!-- Participants toggle -->
-        <AppTooltip :content="t('participants.title')" position="top">
+        <!-- Panel toggle (Chat + Participants) -->
+        <AppTooltip :content="t('chat.panel')" position="top">
           <button
-            @click="toggleParticipants"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-            :class="participantsOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
-          >
-            <Users class="w-4.5 h-4.5" :stroke-width="1.8" />
-          </button>
-        </AppTooltip>
-
-        <!-- Chat toggle -->
-        <AppTooltip :content="t('chat.title')" position="top">
-          <button
-            @click="toggleChat"
+            @click="togglePanel"
             class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer relative"
-            :class="chatOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
+            :class="panelOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
           >
             <MessageSquare class="w-4.5 h-4.5" :stroke-width="1.8" />
             <span
-              v-if="unreadCount > 0 && !chatOpen"
+              v-if="unreadCount > 0 && !panelOpen"
               class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
             >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
           </button>

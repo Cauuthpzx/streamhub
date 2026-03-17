@@ -80,7 +80,8 @@
     "camOn": "Turn on camera",
     "shareScreen": "Share screen",
     "leave": "Leave room",
-    "loadingHistory": "Loading messages..."
+    "loadingHistory": "Loading messages...",
+    "panel": "Chat & Participants"
   },
   "participants": {
     "title": "Participants",

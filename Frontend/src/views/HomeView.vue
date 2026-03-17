@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil, Radio, Bot } from 'lucide-vue-next'
+import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom, updateRoomMetadata } from '../services/room'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
@@ -124,7 +124,7 @@ onMounted(fetchRooms)
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-gray-900/40">
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_1px_8px_-2px_rgba(0,0,0,0.4)]">
       <div class="px-6 h-[45px] flex items-center justify-between">
         <AppLogo :height="40" />
         <div class="flex items-center gap-3">
@@ -165,7 +165,7 @@ onMounted(fetchRooms)
       </div>
 
       <!-- Create room form -->
-      <div v-if="showCreate" class="mb-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+      <div v-if="showCreate" class="mb-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.4)] p-4">
         <form @submit.prevent="handleCreate" class="space-y-3">
           <div class="flex gap-3">
             <div class="flex-1">
@@ -235,7 +235,7 @@ onMounted(fetchRooms)
         <div
           v-for="room in rooms"
           :key="room.sid"
-          class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.4)] px-4 py-3 flex items-center justify-between hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.12),0_2px_6px_-1px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.6)] transition-all"
         >
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-9 h-9 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center shrink-0">
@@ -289,33 +289,6 @@ onMounted(fetchRooms)
         </div>
       </div>
 
-      <!-- Quick links -->
-      <div class="mt-8 grid grid-cols-2 gap-3">
-        <router-link
-          to="/ingress"
-          class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors"
-        >
-          <div class="w-9 h-9 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center shrink-0">
-            <Radio class="w-4 h-4 text-orange-600 dark:text-orange-400" :stroke-width="1.8" />
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('ingress.title') }}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500">OBS / Streamlabs</p>
-          </div>
-        </router-link>
-        <router-link
-          to="/agents"
-          class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors"
-        >
-          <div class="w-9 h-9 bg-purple-50 dark:bg-purple-900/30 rounded-lg flex items-center justify-center shrink-0">
-            <Bot class="w-4 h-4 text-purple-600 dark:text-purple-400" :stroke-width="1.8" />
-          </div>
-          <div>
-            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('agent.title') }}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500">STT / TTS / AI</p>
-          </div>
-        </router-link>
-      </div>
     </main>
 
     <!-- Join password dialog -->

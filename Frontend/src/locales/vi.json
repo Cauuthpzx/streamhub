@@ -92,7 +92,8 @@
     "pin": "Ghim",
     "unpin": "Bỏ ghim",
     "fullscreen": "Toàn màn hình",
-    "exitFullscreen": "Thoát toàn màn hình"
+    "exitFullscreen": "Thoát toàn màn hình",
+    "screenshot": "Chụp ảnh"
   },
   "participants": {
     "title": "Người tham gia",
@@ -184,7 +185,9 @@
     "noConnectResponse": "Không có phản hồi kết nối",
     "destinationIdentityRequired": "Danh tính đích là bắt buộc",
     "sendMessageFailed": "Không thể gửi tin nhắn",
-    "loadHistoryFailed": "Không thể tải lịch sử trò chuyện"
+    "loadHistoryFailed": "Không thể tải lịch sử trò chuyện",
+    "egressStartFailed": "Không thể bắt đầu ghi hình",
+    "egressStopFailed": "Không thể dừng ghi hình"
   },
   "log": {
     "userRegistered": "Đã đăng ký người dùng",
@@ -200,7 +203,11 @@
     "hashRoomPasswordFailed": "Không thể mã hóa mật khẩu phòng",
     "storeRoomPasswordFailed": "Không thể lưu mật khẩu phòng",
     "listRoomsFailed": "Không thể tải danh sách phòng",
-    "createRoomFailed": "Không thể tạo phòng"
+    "createRoomFailed": "Không thể tạo phòng",
+    "startEgressFailed": "Không thể bắt đầu egress",
+    "listEgressFailed": "Không thể tải danh sách egress",
+    "stopEgressFailed": "Không thể dừng egress",
+    "noActiveVideo": "Không có video nào đang hoạt động để chụp"
   },
   "ingress": {
     "title": "Luồng vào RTMP/WHIP",
@@ -213,6 +220,7 @@
     "inputType": "Loại đầu vào",
     "streamKey": "Khóa stream",
     "empty": "Chưa có luồng vào. Tạo mới để bắt đầu stream từ OBS hoặc công cụ khác.",
+    "subtitle": "Phát từ OBS / Streamlabs",
     "ingressCreateFailed": "Không thể tạo luồng vào",
     "ingressListFailed": "Không thể tải danh sách luồng vào",
     "ingressDeleteFailed": "Không thể xóa luồng vào"
@@ -229,8 +237,28 @@
     "selectRoomFilter": "Chọn phòng để xem agent",
     "selectRoomFirst": "Chọn phòng để xem các agent đã gửi.",
     "empty": "Chưa có agent nào trong phòng này.",
+    "subtitle": "Chuyển giọng nói / TTS / Bot AI",
     "agentDispatchFailed": "Không thể gửi agent",
     "agentListFailed": "Không thể tải danh sách agent",
     "agentDeleteFailed": "Không thể xóa agent dispatch"
+  },
+  "egress": {
+    "title": "Ghi hình",
+    "selectRoom": "Chọn phòng",
+    "startRecording": "Ghi hình",
+    "stop": "Dừng ghi hình",
+    "egressId": "Egress ID",
+    "startedAt": "Bắt đầu lúc",
+    "empty": "Chưa có bản ghi. Chọn phòng và bắt đầu ghi hình.",
+    "subtitle": "Ghi phòng ra MP4 / HLS",
+    "egressStartFailed": "Không thể bắt đầu ghi hình",
+    "egressListFailed": "Không thể tải danh sách bản ghi",
+    "egressStopFailed": "Không thể dừng ghi hình",
+    "serverRecording": "Ghi trên server",
+    "localRecording": "Ghi trên trình duyệt",
+    "fallbackToLocal": "Server không khả dụng, dùng ghi hình trên trình duyệt",
+    "downloadReady": "Bản ghi đã sẵn sàng tải xuống",
+    "download": "Tải xuống",
+    "recordingInProgress": "Đang ghi"
   }
 }

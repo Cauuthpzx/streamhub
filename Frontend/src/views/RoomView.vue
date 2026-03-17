@@ -26,6 +26,9 @@ import {
   Maximize,
   Minimize,
   Settings,
+  Circle,
+  Square,
+  Camera,
 } from 'lucide-vue-next'
 import { getLivekitToken, getUsername } from '../services/auth'
 import RoomChat from '../components/RoomChat.vue'
@@ -38,6 +41,7 @@ import DeviceSettings from '../components/DeviceSettings.vue'
 import ConnectionBars from '../components/ConnectionBars.vue'
 import PreJoinScreen from '../components/PreJoinScreen.vue'
 import { useReactions } from '../composables/useReactions'
+import { useRecording } from '../composables/useRecording'
 
 const route = useRoute()
 const router = useRouter()
@@ -76,6 +80,18 @@ const {
   setupListeners: setupReactionListeners,
   cleanupListeners: cleanupReactionListeners,
 } = useReactions(room, username)
+
+const {
+  recording,
+  recordingLoading,
+  recordingError,
+  formattedTime,
+  downloadUrl,
+  toggleRecording,
+  triggerDownload,
+  clearDownload,
+  cleanup: cleanupRecording,
+} = useRecording(room, roomName, t)
 
 function pickReaction(emoji) {
   sendReaction(emoji)
@@ -377,6 +393,88 @@ async function toggleScreen() {
   }
 }
 
+function takeScreenshot() {
+  const videos = Array.from(document.querySelectorAll('video')).filter(
+    (v) => v.srcObject && v.videoWidth > 0 && !v.paused,
+  )
+  if (videos.length === 0) {
+    console.warn('[screenshot]', t('log.noActiveVideo'))
+    return
+  }
+
+  const count = videos.length
+  const cols = Math.ceil(Math.sqrt(count))
+  const rows = Math.ceil(count / cols)
+  const baseW = Math.min(videos[0].videoWidth, 1920)
+  const baseH = Math.min(videos[0].videoHeight, 1080)
+  const canvas = document.createElement('canvas')
+  canvas.width = baseW * cols
+  canvas.height = baseH * rows
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = '#111827'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  videos.forEach((video, i) => {
+    const col = i % cols
+    const row = Math.floor(i / cols)
+    const x = col * baseW
+    const y = row * baseH
+    const vRatio = video.videoWidth / video.videoHeight
+    const cRatio = baseW / baseH
+    let dw, dh, dx, dy
+    if (vRatio > cRatio) {
+      dw = baseW; dh = baseW / vRatio; dx = x; dy = y + (baseH - dh) / 2
+    } else {
+      dh = baseH; dw = baseH * vRatio; dx = x + (baseW - dw) / 2; dy = y
+    }
+    ctx.drawImage(video, dx, dy, dw, dh)
+  })
+
+  const dataUrl = canvas.toDataURL('image/png')
+  const date = new Date().toISOString().slice(0, 19).replace(/[T:]/g, '-')
+  const filename = `${roomName}-${date}.png`
+
+  const a = document.createElement('a')
+  a.href = dataUrl
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+
+  // Polaroid preview — center screen, scale up, show 2.5s, then fade out
+  const frame = document.createElement('div')
+  frame.style.cssText = `
+    position:fixed;top:50%;left:50%;z-index:99999;pointer-events:none;
+    background:white;padding:12px 12px 48px 12px;border-radius:6px;
+    box-shadow:0 12px 48px rgba(0,0,0,0.45);
+    transform:translate(-50%,-50%) scale(0.7) rotate(1deg);opacity:0;
+    transition:transform 0.5s cubic-bezier(0.34,1.56,0.64,1),opacity 0.4s ease;
+    max-width:min(560px,80vw);
+  `
+  const img = document.createElement('img')
+  img.src = dataUrl
+  img.style.cssText = 'width:100%;border-radius:3px;display:block;'
+  const label = document.createElement('div')
+  label.style.cssText = 'position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:13px;color:#888;font-family:sans-serif;'
+  label.textContent = filename
+  frame.appendChild(img)
+  frame.appendChild(label)
+  document.body.appendChild(frame)
+
+  // Animate in — scale up to full size
+  requestAnimationFrame(() => {
+    frame.style.transform = 'translate(-50%,-50%) scale(1) rotate(1deg)'
+    frame.style.opacity = '1'
+  })
+  // Fade out after 2.5s — shrink and disappear
+  setTimeout(() => {
+    frame.style.transform = 'translate(-50%,-50%) scale(0.9) rotate(1deg)'
+    frame.style.opacity = '0'
+    setTimeout(() => document.body.removeChild(frame), 500)
+  }, 2500)
+}
+
 function togglePanel() {
   panelOpen.value = !panelOpen.value
   if (panelOpen.value && panelTab.value === 'chat') unreadCount.value = 0
@@ -401,6 +499,8 @@ function handleKeyboard(e) {
     case 'v': toggleCam(); break
     case 's': toggleScreen(); break
     case 'h': toggleHand(); break
+    case 'r': toggleRecording(); break
+    case 'p': takeScreenshot(); break
     case 'l': leaveRoom(); break
   }
 }
@@ -449,6 +549,7 @@ onUnmounted(() => {
   document.removeEventListener('fullscreenchange', onFullscreenChange)
   document.removeEventListener('keydown', handleKeyboard)
   cleanupReactionListeners()
+  cleanupRecording()
   if (room.value) toRaw(room.value).disconnect()
 })
 </script>
@@ -466,7 +567,7 @@ onUnmounted(() => {
 
     <template v-else>
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-gray-900/40">
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_1px_8px_-2px_rgba(0,0,0,0.4)]">
       <div class="px-4 h-[45px] flex items-center justify-between">
         <div class="flex items-center gap-3">
           <AppLogo :height="40" />
@@ -519,8 +620,37 @@ onUnmounted(() => {
         </TransitionGroup>
       </div>
 
+      <!-- Recording error/info toast -->
+      <Transition name="fade">
+        <div v-if="recordingError" class="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-600 text-white text-sm rounded-lg shadow-lg">
+          {{ recordingError }}
+        </div>
+      </Transition>
+
+      <!-- REC indicator + timer (top-left corner) -->
+      <Transition name="fade">
+        <div v-if="recording" class="absolute top-3 left-3 z-50 flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg">
+          <span class="relative flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+            <span class="text-red-400 text-xs font-bold uppercase tracking-wider">REC</span>
+          </span>
+          <span class="text-white text-xs font-mono">{{ formattedTime }}</span>
+        </div>
+      </Transition>
+
+      <!-- Download banner (after local recording stops) -->
+      <Transition name="fade">
+        <div v-if="downloadUrl" class="absolute top-3 right-3 z-50 flex items-center gap-3 bg-green-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+          <span class="text-white text-sm">{{ t('egress.downloadReady') }}</span>
+          <button @click="triggerDownload" class="px-3 py-1 bg-white text-green-700 text-sm font-semibold rounded-md hover:bg-green-50 cursor-pointer transition-colors">
+            {{ t('egress.download') }}
+          </button>
+          <button @click="clearDownload" class="text-white/70 hover:text-white cursor-pointer text-lg leading-none">&times;</button>
+        </div>
+      </Transition>
+
       <!-- Video area -->
-      <div class="flex-1 p-4 overflow-auto flex flex-col gap-3">
+      <div class="flex-1 p-4 overflow-auto flex flex-col gap-3 bg-gray-100 dark:bg-gray-900">
         <!-- Screen share mode: PiP layout like Zoom/OBS -->
         <div v-if="screenShareTrack" class="relative bg-gray-900 dark:bg-black rounded-lg overflow-hidden flex-1">
           <!-- Screen share full area -->
@@ -570,12 +700,12 @@ onUnmounted(() => {
               v-for="{ participant, isLocal } in participants.filter(p => p.participant.sid === pinnedSid)"
               :key="'pinned-' + participant.sid"
               :id="`tile-${participant.sid}`"
-              class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden flex-1 transition-shadow duration-300"
+              class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden flex-1 transition-all duration-300 border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.1),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.5)]"
               :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
             >
               <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
               <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
-                <div class="w-20 h-20 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl font-semibold text-gray-500 dark:text-gray-300">
+                <div class="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-2xl font-semibold text-gray-500 dark:text-gray-300">
                   {{ (participant.identity || '?')[0].toUpperCase() }}
                 </div>
               </div>
@@ -607,12 +737,12 @@ onUnmounted(() => {
                 v-for="{ participant } in participants.filter(p => p.participant.sid !== pinnedSid)"
                 :key="'side-' + participant.sid"
                 :id="`tile-${participant.sid}`"
-                class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden h-[130px] transition-shadow duration-300 group"
+                class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden h-[130px] transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.1),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.5)]"
                 :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
               >
                 <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
                 <div class="absolute inset-0 flex items-center justify-center z-0">
-                  <div class="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-semibold text-gray-500 dark:text-gray-300">
+                  <div class="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-sm font-semibold text-gray-500 dark:text-gray-300">
                     {{ (participant.identity || '?')[0].toUpperCase() }}
                   </div>
                 </div>
@@ -644,7 +774,7 @@ onUnmounted(() => {
               v-for="{ participant, isLocal } in participants"
               :key="participant.sid"
               :id="`tile-${participant.sid}`"
-              class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden min-h-[200px] transition-shadow duration-300 group"
+              class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden min-h-[200px] transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.1),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.5)]"
               :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
             >
               <!-- Video container -->
@@ -652,7 +782,7 @@ onUnmounted(() => {
 
               <!-- Avatar fallback -->
               <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
-                <div class="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
+                <div class="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
                   {{ (participant.identity || '?')[0].toUpperCase() }}
                 </div>
                 <div v-if="isLocal && !camEnabled && !micEnabled" class="text-xs text-gray-400 dark:text-gray-500">
@@ -700,7 +830,7 @@ onUnmounted(() => {
       <!-- Side panel with tabs -->
       <div
         v-if="panelOpen"
-        class="w-80 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800 shrink-0"
+        class="w-80 border-l border-gray-200/70 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0 shadow-[-4px_0_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[-4px_0_16px_-4px_rgba(0,0,0,0.3)]"
       >
         <!-- Tab bar -->
         <div class="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
@@ -752,38 +882,61 @@ onUnmounted(() => {
     </div>
 
     <!-- Controls bar -->
-    <div v-if="connected" class="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 py-3">
-      <div class="flex items-center justify-center gap-3">
+    <div v-if="connected" class="bg-white dark:bg-gray-800 border-t border-gray-200/70 dark:border-gray-700 shadow-[0_-1px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_-1px_8px_-2px_rgba(0,0,0,0.4)] h-[45px] flex items-center justify-center">
+      <div class="flex items-center justify-center gap-2">
         <AppTooltip :content="micEnabled ? t('chat.muteMic') : t('chat.unmuteMic')" position="top">
           <button
             @click="toggleMic"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="micEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
           >
-            <Mic v-if="micEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
-            <MicOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <Mic v-if="micEnabled" class="w-4 h-4" :stroke-width="1.8" />
+            <MicOff v-else class="w-4 h-4" :stroke-width="1.8" />
           </button>
         </AppTooltip>
 
         <AppTooltip :content="camEnabled ? t('chat.camOff') : t('chat.camOn')" position="top">
           <button
             @click="toggleCam"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="camEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
           >
-            <VideoIcon v-if="camEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
-            <VideoOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <VideoIcon v-if="camEnabled" class="w-4 h-4" :stroke-width="1.8" />
+            <VideoOff v-else class="w-4 h-4" :stroke-width="1.8" />
           </button>
         </AppTooltip>
 
         <AppTooltip :content="t('chat.shareScreen')" position="top">
           <button
             @click="toggleScreen"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="screenEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
           >
-            <MonitorUp v-if="!screenEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
-            <MonitorOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <MonitorUp v-if="!screenEnabled" class="w-4 h-4" :stroke-width="1.8" />
+            <MonitorOff v-else class="w-4 h-4" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
+
+        <!-- Record -->
+        <AppTooltip :content="recording ? t('egress.stop') : t('egress.startRecording')" position="top">
+          <button
+            @click="toggleRecording"
+            :disabled="recordingLoading"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
+            :class="recording ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
+          >
+            <Square v-if="recording" class="w-3.5 h-3.5" :stroke-width="2" />
+            <Circle v-else class="w-3.5 h-3.5 fill-red-500 text-red-500" :stroke-width="0" />
+          </button>
+        </AppTooltip>
+
+        <!-- Screenshot -->
+        <AppTooltip :content="t('chat.screenshot')" position="top">
+          <button
+            @click="takeScreenshot"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
+          >
+            <Camera class="w-4 h-4" :stroke-width="1.8" />
           </button>
         </AppTooltip>
 
@@ -791,10 +944,10 @@ onUnmounted(() => {
         <AppTooltip :content="t('chat.raiseHand')" position="top">
           <button
             @click="toggleHand"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="raisedHands.has(username) ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
           >
-            <Hand class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <Hand class="w-4 h-4" :stroke-width="1.8" />
           </button>
         </AppTooltip>
 
@@ -803,23 +956,23 @@ onUnmounted(() => {
           <AppTooltip :content="t('chat.reactions')" position="top">
             <button
               @click="showReactionPicker = !showReactionPicker"
-              class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+              class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
               :class="showReactionPicker ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
             >
-              <Smile class="w-4.5 h-4.5" :stroke-width="1.8" />
+              <Smile class="w-4 h-4" :stroke-width="1.8" />
             </button>
           </AppTooltip>
           <!-- Picker popup -->
           <Transition name="fade">
             <div
               v-if="showReactionPicker"
-              class="absolute bottom-14 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 px-2 py-1.5 flex gap-1 z-50"
+              class="absolute bottom-11 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-xl border border-gray-200/80 dark:border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.15),0_2px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.6)] px-2 py-1.5 flex gap-1 z-50"
             >
               <button
                 v-for="emoji in REACTIONS"
                 :key="emoji"
                 @click="pickReaction(emoji)"
-                class="w-9 h-9 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-center text-xl cursor-pointer transition-colors"
+                class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-center text-lg cursor-pointer transition-colors"
               >{{ emoji }}</button>
             </div>
           </Transition>
@@ -829,13 +982,13 @@ onUnmounted(() => {
         <AppTooltip :content="t('chat.panel')" position="top">
           <button
             @click="togglePanel"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer relative"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer relative"
             :class="panelOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
           >
-            <MessageSquare class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <MessageSquare class="w-4 h-4" :stroke-width="1.8" />
             <span
               v-if="unreadCount > 0 && !panelOpen"
-              class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full text-[10px] font-bold text-white flex items-center justify-center"
+              class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center"
             >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
           </button>
         </AppTooltip>
@@ -844,18 +997,18 @@ onUnmounted(() => {
         <AppTooltip :content="t('devices.title')" position="top">
           <button
             @click="showDeviceSettings = true"
-            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
+            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
           >
-            <Settings class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <Settings class="w-4 h-4" :stroke-width="1.8" />
           </button>
         </AppTooltip>
 
         <AppTooltip :content="t('chat.leave')" position="top">
           <button
             @click="leaveRoom"
-            class="w-10 h-10 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
+            class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
           >
-            <PhoneOff class="w-4.5 h-4.5" :stroke-width="1.8" />
+            <PhoneOff class="w-4 h-4" :stroke-width="1.8" />
           </button>
         </AppTooltip>
       </div>

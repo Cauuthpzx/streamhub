@@ -38,6 +38,7 @@ type UserAuthService struct {
 	roomService          livekit.RoomService
 	ingressService       *IngressService
 	agentDispatchService *AgentDispatchService
+	egressService        *EgressService
 	apiKey               string
 	apiSecret            string
 }
@@ -49,6 +50,7 @@ func NewUserAuthService(
 	roomService livekit.RoomService,
 	ingressService *IngressService,
 	agentDispatchService *AgentDispatchService,
+	egressService *EgressService,
 ) *UserAuthService {
 	// use the first API key pair for issuing LiveKit tokens
 	var apiKey, apiSecret string
@@ -65,6 +67,7 @@ func NewUserAuthService(
 		roomService:          roomService,
 		ingressService:       ingressService,
 		agentDispatchService: agentDispatchService,
+		egressService:        egressService,
 		apiKey:               apiKey,
 		apiSecret:            apiSecret,
 	}
@@ -86,6 +89,10 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/agent/dispatch", s.handleAgentDispatch)
 	mux.HandleFunc("/auth/agent/dispatch/list", s.handleAgentDispatchList)
 	mux.HandleFunc("/auth/agent/dispatch/delete", s.handleAgentDispatchDelete)
+	// Egress (Recording)
+	mux.HandleFunc("/auth/egress/start", s.handleEgressStart)
+	mux.HandleFunc("/auth/egress/list", s.handleEgressList)
+	mux.HandleFunc("/auth/egress/stop", s.handleEgressStop)
 }
 
 // request/response types
@@ -903,6 +910,168 @@ func (s *UserAuthService) handleAgentDispatchDelete(w http.ResponseWriter, r *ht
 	}
 
 	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+// --- Egress (Recording) handlers ---
+
+type startEgressRequest struct {
+	Room string `json:"room"`
+}
+
+type egressInfoResponse struct {
+	EgressID  string `json:"egress_id"`
+	RoomName  string `json:"room"`
+	Status    string `json:"status"`
+	StartedAt int64  `json:"started_at"`
+	EndedAt   int64  `json:"ended_at,omitempty"`
+}
+
+func toEgressStatus(status livekit.EgressStatus) string {
+	switch status {
+	case livekit.EgressStatus_EGRESS_STARTING:
+		return "starting"
+	case livekit.EgressStatus_EGRESS_ACTIVE:
+		return "active"
+	case livekit.EgressStatus_EGRESS_ENDING:
+		return "ending"
+	case livekit.EgressStatus_EGRESS_COMPLETE:
+		return "complete"
+	case livekit.EgressStatus_EGRESS_FAILED:
+		return "failed"
+	case livekit.EgressStatus_EGRESS_ABORTED:
+		return "aborted"
+	case livekit.EgressStatus_EGRESS_LIMIT_REACHED:
+		return "limit_reached"
+	default:
+		return "unknown"
+	}
+}
+
+func toEgressInfoResponse(info *livekit.EgressInfo) egressInfoResponse {
+	return egressInfoResponse{
+		EgressID:  info.EgressId,
+		RoomName:  info.RoomName,
+		Status:    toEgressStatus(info.Status),
+		StartedAt: info.StartedAt,
+		EndedAt:   info.EndedAt,
+	}
+}
+
+func (s *UserAuthService) handleEgressStart(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req startEgressRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	if req.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.missingFields"})
+		return
+	}
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{
+			RoomRecord: true,
+			RoomAdmin:  true,
+			Room:       req.Room,
+		},
+	}, s.apiKey)
+
+	info, err := s.egressService.StartRoomCompositeEgress(ctx, &livekit.RoomCompositeEgressRequest{
+		RoomName: req.Room,
+		FileOutputs: []*livekit.EncodedFileOutput{
+			{
+				FileType: livekit.EncodedFileType_MP4,
+			},
+		},
+	})
+	if err != nil {
+		logger.Errorw("log.startEgressFailed", err, "user", username, "room", req.Room)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.egressStartFailed"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toEgressInfoResponse(info))
+}
+
+func (s *UserAuthService) handleEgressList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	_, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var body struct {
+		Room string `json:"room"`
+	}
+	json.NewDecoder(r.Body).Decode(&body)
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{RoomRecord: true},
+	}, s.apiKey)
+
+	resp, err := s.egressService.ListEgress(ctx, &livekit.ListEgressRequest{
+		RoomName: body.Room,
+	})
+	if err != nil {
+		logger.Errorw("log.listEgressFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+
+	items := make([]egressInfoResponse, 0, len(resp.Items))
+	for _, info := range resp.Items {
+		items = append(items, toEgressInfoResponse(info))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+func (s *UserAuthService) handleEgressStop(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var body struct {
+		EgressID string `json:"egress_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.EgressID == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.missingFields"})
+		return
+	}
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{RoomRecord: true},
+	}, s.apiKey)
+
+	info, err := s.egressService.StopEgress(ctx, &livekit.StopEgressRequest{
+		EgressId: body.EgressID,
+	})
+	if err != nil {
+		logger.Errorw("log.stopEgressFailed", err, "user", username)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.egressStopFailed"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toEgressInfoResponse(info))
 }
 
 // verifyUserToken extracts and validates the user JWT from Authorization header

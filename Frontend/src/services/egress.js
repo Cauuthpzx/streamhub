@@ -1,0 +1,43 @@
+import { getToken } from './auth'
+
+const BASE = '/auth/egress'
+
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${getToken()}`,
+  }
+}
+
+export async function startEgress(room) {
+  const res = await fetch(`${BASE}/start`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.egressStartFailed')
+  return data
+}
+
+export async function listEgress(room) {
+  const res = await fetch(`${BASE}/list`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room: room || '' }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.egressListFailed')
+  return data.items || []
+}
+
+export async function stopEgress(egressId) {
+  const res = await fetch(`${BASE}/stop`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ egress_id: egressId }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.egressStopFailed')
+  return data
+}

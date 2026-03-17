@@ -36,6 +36,8 @@ type LocalStore struct {
 	agentDispatches map[livekit.RoomName]map[string]*livekit.AgentDispatch
 	agentJobs       map[livekit.RoomName]map[string]*livekit.Job
 
+	egresses map[string]*livekit.EgressInfo // egressID => EgressInfo
+
 	lock       sync.RWMutex
 	globalLock sync.Mutex
 }
@@ -47,6 +49,7 @@ func NewLocalStore() *LocalStore {
 		participants:    make(map[livekit.RoomName]map[livekit.ParticipantIdentity]*livekit.ParticipantInfo),
 		agentDispatches: make(map[livekit.RoomName]map[string]*livekit.AgentDispatch),
 		agentJobs:       make(map[livekit.RoomName]map[string]*livekit.Job),
+		egresses:        make(map[string]*livekit.EgressInfo),
 		lock:            sync.RWMutex{},
 	}
 }
@@ -292,5 +295,48 @@ func (s *LocalStore) DeleteAgentJob(ctx context.Context, job *livekit.Job) error
 		delete(roomJobs, job.Id)
 	}
 
+	return nil
+}
+
+func (s *LocalStore) StoreEgress(_ context.Context, info *livekit.EgressInfo) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.egresses[info.EgressId] = utils.CloneProto(info)
+	return nil
+}
+
+func (s *LocalStore) LoadEgress(_ context.Context, egressID string) (*livekit.EgressInfo, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	info, ok := s.egresses[egressID]
+	if !ok {
+		return nil, ErrEgressNotFound
+	}
+	return utils.CloneProto(info), nil
+}
+
+func (s *LocalStore) ListEgress(_ context.Context, roomName livekit.RoomName, active bool) ([]*livekit.EgressInfo, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	var items []*livekit.EgressInfo
+	for _, info := range s.egresses {
+		if roomName != "" && livekit.RoomName(info.RoomName) != roomName {
+			continue
+		}
+		if active && info.Status != livekit.EgressStatus_EGRESS_ACTIVE && info.Status != livekit.EgressStatus_EGRESS_STARTING {
+			continue
+		}
+		items = append(items, utils.CloneProto(info))
+	}
+	return items, nil
+}
+
+func (s *LocalStore) UpdateEgress(_ context.Context, info *livekit.EgressInfo) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if _, ok := s.egresses[info.EgressId]; !ok {
+		return ErrEgressNotFound
+	}
+	s.egresses[info.EgressId] = utils.CloneProto(info)
 	return nil
 }

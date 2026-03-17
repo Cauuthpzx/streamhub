@@ -156,7 +156,7 @@ func InitializeServer(conf *config.Config, currentNode routing.LocalNode) (*Live
 		return nil, err
 	}
 	userStore := createUserStore(universalClient)
-	userAuthService := NewUserAuthService(conf, userStore, keyProvider, roomService, ingressService, agentDispatchService)
+	userAuthService := NewUserAuthService(conf, userStore, keyProvider, roomService, ingressService, agentDispatchService, egressService)
 	livekitServer, err := NewLivekitServer(conf, roomService, agentDispatchService, egressService, ingressService, sipService, ioInfoService, rtcService, serviceWHIPService, agentService, userAuthService, keyProvider, router, roomManager, signalServer, server, currentNode)
 	if err != nil {
 		return nil, err
@@ -262,6 +262,8 @@ func getMessageBus(rc redis.UniversalClient) psrpc.MessageBus {
 func getEgressStore(s ObjectStore) EgressStore {
 	switch store := s.(type) {
 	case *RedisStore:
+		return store
+	case *LocalStore:
 		return store
 	default:
 		return nil

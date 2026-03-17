@@ -92,7 +92,8 @@
     "pin": "Pin",
     "unpin": "Unpin",
     "fullscreen": "Fullscreen",
-    "exitFullscreen": "Exit fullscreen"
+    "exitFullscreen": "Exit fullscreen",
+    "screenshot": "Screenshot"
   },
   "participants": {
     "title": "Participants",
@@ -184,7 +185,9 @@
     "noConnectResponse": "No connect response",
     "destinationIdentityRequired": "Destination identity is required",
     "sendMessageFailed": "Failed to send message",
-    "loadHistoryFailed": "Failed to load chat history"
+    "loadHistoryFailed": "Failed to load chat history",
+    "egressStartFailed": "Failed to start recording",
+    "egressStopFailed": "Failed to stop recording"
   },
   "log": {
     "userRegistered": "User registered",
@@ -200,7 +203,11 @@
     "hashRoomPasswordFailed": "Failed to hash room password",
     "storeRoomPasswordFailed": "Failed to store room password",
     "listRoomsFailed": "Failed to list rooms",
-    "createRoomFailed": "Failed to create room"
+    "createRoomFailed": "Failed to create room",
+    "startEgressFailed": "Failed to start egress",
+    "listEgressFailed": "Failed to list egress",
+    "stopEgressFailed": "Failed to stop egress",
+    "noActiveVideo": "No active video to capture"
   },
   "ingress": {
     "title": "RTMP/WHIP Ingress",
@@ -213,6 +220,7 @@
     "inputType": "Input Type",
     "streamKey": "Stream Key",
     "empty": "No ingress endpoints. Create one to start streaming from OBS or other tools.",
+    "subtitle": "Stream from OBS / Streamlabs",
     "ingressCreateFailed": "Failed to create ingress",
     "ingressListFailed": "Failed to list ingress",
     "ingressDeleteFailed": "Failed to delete ingress"
@@ -229,8 +237,28 @@
     "selectRoomFilter": "Select room to view agents",
     "selectRoomFirst": "Select a room to view dispatched agents.",
     "empty": "No agents dispatched in this room.",
+    "subtitle": "Speech-to-text / TTS / AI bots",
     "agentDispatchFailed": "Failed to dispatch agent",
     "agentListFailed": "Failed to list agent dispatches",
     "agentDeleteFailed": "Failed to delete agent dispatch"
+  },
+  "egress": {
+    "title": "Recordings",
+    "selectRoom": "Select a room",
+    "startRecording": "Record",
+    "stop": "Stop recording",
+    "egressId": "Egress ID",
+    "startedAt": "Started at",
+    "empty": "No recordings. Select a room and start recording.",
+    "subtitle": "Record room to MP4 / HLS",
+    "egressStartFailed": "Failed to start recording",
+    "egressListFailed": "Failed to list recordings",
+    "egressStopFailed": "Failed to stop recording",
+    "serverRecording": "Server recording",
+    "localRecording": "Local recording",
+    "fallbackToLocal": "Server unavailable, using local recording",
+    "downloadReady": "Recording ready for download",
+    "download": "Download",
+    "recordingInProgress": "Recording"
   }
 }

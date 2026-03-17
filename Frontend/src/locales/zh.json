@@ -92,7 +92,8 @@
     "pin": "固定",
     "unpin": "取消固定",
     "fullscreen": "全屏",
-    "exitFullscreen": "退出全屏"
+    "exitFullscreen": "退出全屏",
+    "screenshot": "截图"
   },
   "participants": {
     "title": "参与者",
@@ -184,7 +185,9 @@
     "noConnectResponse": "缺少连接响应",
     "destinationIdentityRequired": "目标身份标识为必填项",
     "sendMessageFailed": "发送消息失败",
-    "loadHistoryFailed": "加载聊天记录失败"
+    "loadHistoryFailed": "加载聊天记录失败",
+    "egressStartFailed": "开始录制失败",
+    "egressStopFailed": "停止录制失败"
   },
   "log": {
     "userRegistered": "用户已注册",
@@ -200,7 +203,11 @@
     "hashRoomPasswordFailed": "房间密码哈希失败",
     "storeRoomPasswordFailed": "存储房间密码失败",
     "listRoomsFailed": "获取房间列表失败",
-    "createRoomFailed": "创建房间失败"
+    "createRoomFailed": "创建房间失败",
+    "startEgressFailed": "开始egress失败",
+    "listEgressFailed": "获取egress列表失败",
+    "stopEgressFailed": "停止egress失败",
+    "noActiveVideo": "没有可捕获的活动视频"
   },
   "ingress": {
     "title": "RTMP/WHIP 推流",
@@ -213,6 +220,7 @@
     "inputType": "输入类型",
     "streamKey": "推流密钥",
     "empty": "暂无推流端点。创建一个以便从OBS或其他工具开始推流。",
+    "subtitle": "从 OBS / Streamlabs 推流",
     "ingressCreateFailed": "创建推流失败",
     "ingressListFailed": "获取推流列表失败",
     "ingressDeleteFailed": "删除推流失败"
@@ -229,8 +237,28 @@
     "selectRoomFilter": "选择房间查看代理",
     "selectRoomFirst": "选择房间以查看已派遣的代理。",
     "empty": "此房间暂无代理。",
+    "subtitle": "语音转文字 / TTS / AI机器人",
     "agentDispatchFailed": "派遣代理失败",
     "agentListFailed": "获取代理列表失败",
     "agentDeleteFailed": "删除代理派遣失败"
+  },
+  "egress": {
+    "title": "录制",
+    "selectRoom": "选择房间",
+    "startRecording": "录制",
+    "stop": "停止录制",
+    "egressId": "Egress ID",
+    "startedAt": "开始时间",
+    "empty": "暂无录制。选择房间并开始录制。",
+    "subtitle": "录制房间为 MP4 / HLS",
+    "egressStartFailed": "开始录制失败",
+    "egressListFailed": "获取录制列表失败",
+    "egressStopFailed": "停止录制失败",
+    "serverRecording": "服务器录制",
+    "localRecording": "本地录制",
+    "fallbackToLocal": "服务器不可用，使用本地录制",
+    "downloadReady": "录制已准备好下载",
+    "download": "下载",
+    "recordingInProgress": "录制中"
   }
 }

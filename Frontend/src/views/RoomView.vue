@@ -322,27 +322,52 @@ onUnmounted(() => {
     <div v-else class="flex-1 flex overflow-hidden">
       <!-- Video area -->
       <div class="flex-1 p-4 overflow-auto flex flex-col gap-3">
-        <!-- Screen share (large, top) -->
-        <div v-if="screenShareTrack" class="relative bg-gray-900 dark:bg-black rounded-lg overflow-hidden min-h-[300px] flex-1">
-          <div id="screen-share-container" class="absolute inset-0 flex items-center justify-center"></div>
-          <div class="absolute bottom-2 left-2 bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5 z-20">
-            <MonitorUp class="w-3 h-3" :stroke-width="2" />
+        <!-- Screen share mode: PiP layout like Zoom/OBS -->
+        <div v-if="screenShareTrack" class="relative bg-gray-900 dark:bg-black rounded-lg overflow-hidden flex-1">
+          <!-- Screen share full area -->
+          <div id="screen-share-container" class="absolute inset-0 flex items-center justify-center z-0"></div>
+
+          <!-- PiP camera tiles — bottom right corner -->
+          <div class="absolute bottom-3 right-3 z-30 flex gap-2">
+            <div
+              v-for="{ participant, isLocal } in participants"
+              :key="'pip-' + participant.sid"
+              class="relative w-[180px] h-[120px] bg-gray-800 rounded-lg overflow-hidden shadow-xl border border-gray-700/50 transition-all hover:scale-105"
+            >
+              <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
+              <div class="absolute inset-0 flex items-center justify-center z-0">
+                <div class="w-10 h-10 bg-gray-700 rounded-full flex items-center justify-center text-sm font-semibold text-gray-300">
+                  {{ (participant.identity || '?')[0].toUpperCase() }}
+                </div>
+              </div>
+              <div class="absolute bottom-1 left-1 bg-black/70 rounded px-1.5 py-0.5 text-[10px] text-white z-20 flex items-center gap-1">
+                {{ participant.identity }}
+                <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
+              </div>
+              <div class="absolute top-1 right-1 flex items-center gap-0.5 z-20">
+                <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
+                  <MicOff class="w-2.5 h-2.5 text-white" :stroke-width="2" />
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Screen share label -->
+          <div class="absolute top-3 left-3 bg-black/60 rounded-lg px-2.5 py-1 text-xs text-white flex items-center gap-1.5 z-20">
+            <MonitorUp class="w-3.5 h-3.5 text-green-400" :stroke-width="2" />
             {{ screenShareTrack.identity }} — {{ t('chat.shareScreen') }}
           </div>
         </div>
 
-        <!-- Participant camera grid -->
+        <!-- Normal mode: camera grid (no screen share) -->
         <div
-          class="grid gap-3"
+          v-else
+          class="grid gap-3 flex-1"
           :class="{
-            'flex-1': !screenShareTrack,
-            'h-[180px]': screenShareTrack,
             'grid-cols-1': participants.length === 1,
             'grid-cols-2': participants.length === 2,
-            'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4 && !screenShareTrack,
-            'grid-cols-3 grid-rows-2': participants.length >= 5 && !screenShareTrack,
-            'grid-cols-3': participants.length >= 3 && screenShareTrack,
-            'grid-cols-4': participants.length >= 5 && screenShareTrack,
+            'grid-cols-2 grid-rows-2': participants.length >= 3 && participants.length <= 4,
+            'grid-cols-3 grid-rows-2': participants.length >= 5,
           }"
         >
           <div
@@ -353,12 +378,11 @@ onUnmounted(() => {
             <!-- Video container -->
             <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
 
-            <!-- Avatar fallback (visible when no video) -->
+            <!-- Avatar fallback -->
             <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
               <div class="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
                 {{ (participant.identity || '?')[0].toUpperCase() }}
               </div>
-              <!-- Device status for local participant -->
               <div v-if="isLocal && !camEnabled && !micEnabled" class="text-xs text-gray-400 dark:text-gray-500">
                 {{ t('chat.noDevices') }}
               </div>
@@ -370,7 +394,6 @@ onUnmounted(() => {
                 {{ participant.identity }}
                 <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
               </div>
-              <!-- Mic/Cam indicators -->
               <div class="flex items-center gap-1">
                 <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
                   <MicOff class="w-3 h-3 text-white" :stroke-width="2" />

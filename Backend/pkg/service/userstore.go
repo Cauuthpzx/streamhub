@@ -25,6 +25,8 @@ import (
 const (
 	// UsersKey is a hash of username => UserRecord JSON
 	UsersKey = "users"
+	// RoomPasswordsKey is a hash of roomName => password hash
+	RoomPasswordsKey = "room_passwords"
 )
 
 // RedisUserStore implements UserStore backed by Redis
@@ -64,15 +66,40 @@ func (s *RedisUserStore) UserExists(ctx context.Context, username string) (bool,
 	return s.rc.HExists(ctx, UsersKey, username).Result()
 }
 
+func (s *RedisUserStore) StoreRoomPassword(ctx context.Context, roomName string, passwordHash string) error {
+	return s.rc.HSet(ctx, RoomPasswordsKey, roomName, passwordHash).Err()
+}
+
+func (s *RedisUserStore) LoadRoomPassword(ctx context.Context, roomName string) (string, error) {
+	data, err := s.rc.HGet(ctx, RoomPasswordsKey, roomName).Result()
+	if err == redis.Nil {
+		return "", ErrRoomNotFound
+	}
+	if err != nil {
+		return "", err
+	}
+	return data, nil
+}
+
+func (s *RedisUserStore) DeleteRoomPassword(ctx context.Context, roomName string) error {
+	return s.rc.HDel(ctx, RoomPasswordsKey, roomName).Err()
+}
+
+func (s *RedisUserStore) RoomHasPassword(ctx context.Context, roomName string) (bool, error) {
+	return s.rc.HExists(ctx, RoomPasswordsKey, roomName).Result()
+}
+
 // LocalUserStore implements UserStore backed by in-memory map (single-node only)
 type LocalUserStore struct {
-	users map[string]*UserRecord
-	lock  sync.RWMutex
+	users         map[string]*UserRecord
+	roomPasswords map[string]string
+	lock          sync.RWMutex
 }
 
 func NewLocalUserStore() *LocalUserStore {
 	return &LocalUserStore{
-		users: make(map[string]*UserRecord),
+		users:         make(map[string]*UserRecord),
+		roomPasswords: make(map[string]string),
 	}
 }
 
@@ -97,5 +124,36 @@ func (s *LocalUserStore) UserExists(_ context.Context, username string) (bool, e
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	_, ok := s.users[username]
+	return ok, nil
+}
+
+func (s *LocalUserStore) StoreRoomPassword(_ context.Context, roomName string, passwordHash string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.roomPasswords[roomName] = passwordHash
+	return nil
+}
+
+func (s *LocalUserStore) LoadRoomPassword(_ context.Context, roomName string) (string, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	hash, ok := s.roomPasswords[roomName]
+	if !ok {
+		return "", ErrRoomNotFound
+	}
+	return hash, nil
+}
+
+func (s *LocalUserStore) DeleteRoomPassword(_ context.Context, roomName string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	delete(s.roomPasswords, roomName)
+	return nil
+}
+
+func (s *LocalUserStore) RoomHasPassword(_ context.Context, roomName string) (bool, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	_, ok := s.roomPasswords[roomName]
 	return ok, nil
 }

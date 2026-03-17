@@ -104,11 +104,17 @@ type SIPStore interface {
 	DeleteSIPDispatchRule(ctx context.Context, sipDispatchRuleID string) error
 }
 
-// UserStore encapsulates CRUD operations for user accounts
+// UserStore encapsulates CRUD operations for user accounts and room passwords
 type UserStore interface {
 	StoreUser(ctx context.Context, user *UserRecord) error
 	LoadUser(ctx context.Context, username string) (*UserRecord, error)
 	UserExists(ctx context.Context, username string) (bool, error)
+
+	// Room password management
+	StoreRoomPassword(ctx context.Context, roomName string, passwordHash string) error
+	LoadRoomPassword(ctx context.Context, roomName string) (string, error)
+	DeleteRoomPassword(ctx context.Context, roomName string) error
+	RoomHasPassword(ctx context.Context, roomName string) (bool, error)
 }
 
 // UserRecord represents a registered user account

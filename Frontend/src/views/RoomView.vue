@@ -48,7 +48,11 @@ async function connectRoom() {
   error.value = ''
 
   try {
-    const { access_token } = await getLivekitToken(roomName)
+    // get room password from sessionStorage if set (for password-protected rooms)
+    const roomPassword = sessionStorage.getItem(`room_password:${roomName}`)
+    if (roomPassword) sessionStorage.removeItem(`room_password:${roomName}`)
+
+    const { access_token } = await getLivekitToken(roomName, roomPassword)
 
     const r = new Room({
       adaptiveStream: true,

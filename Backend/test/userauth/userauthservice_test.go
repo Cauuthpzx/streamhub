@@ -42,14 +42,14 @@ func newTestConfig() *config.Config {
 func newTestService() *service.UserAuthService {
 	conf := newTestConfig()
 	store := service.NewLocalUserStore()
-	return service.NewUserAuthService(conf, store, nil)
+	return service.NewUserAuthService(conf, store, nil, nil)
 }
 
 func newTestServiceWithKeys() *service.UserAuthService {
 	conf := newTestConfig()
 	store := service.NewLocalUserStore()
 	keyProvider := newTestKeyProvider(conf)
-	return service.NewUserAuthService(conf, store, keyProvider)
+	return service.NewUserAuthService(conf, store, keyProvider, nil)
 }
 
 type simpleKeyProvider struct {
@@ -390,7 +390,7 @@ func TestRegister_AuthNotEnabled(t *testing.T) {
 		Keys:     map[string]string{"k": "s"},
 		UserAuth: config.UserAuthConfig{JWTSecret: ""}, // not enabled
 	}
-	svc := service.NewUserAuthService(conf, service.NewLocalUserStore(), nil)
+	svc := service.NewUserAuthService(conf, service.NewLocalUserStore(), nil, nil)
 	mux := setupMux(svc)
 
 	w := doPost(mux, "/auth/register", map[string]string{
@@ -406,7 +406,7 @@ func TestLogin_AuthNotEnabled(t *testing.T) {
 		Keys:     map[string]string{"k": "s"},
 		UserAuth: config.UserAuthConfig{JWTSecret: ""},
 	}
-	svc := service.NewUserAuthService(conf, service.NewLocalUserStore(), nil)
+	svc := service.NewUserAuthService(conf, service.NewLocalUserStore(), nil, nil)
 	mux := setupMux(svc)
 
 	w := doPost(mux, "/auth/login", map[string]string{

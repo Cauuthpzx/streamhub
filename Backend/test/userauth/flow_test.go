@@ -34,7 +34,7 @@ func TestFullAuthFlow(t *testing.T) {
 	conf := newTestConfig()
 	store := service.NewLocalUserStore()
 	keyProvider := newTestKeyProvider(conf)
-	svc := service.NewUserAuthService(conf, store, keyProvider)
+	svc := service.NewUserAuthService(conf, store, keyProvider, nil)
 	mux := setupMux(svc)
 
 	// Step 1: Register

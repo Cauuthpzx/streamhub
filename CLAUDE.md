@@ -1,4 +1,11 @@
 # Stream-HUB Development Guide
+BẮT BUỘC LUÔN LUÔN ĐỌC MEMORY VÀ FILE CLAUDE.MD NÀY TRƯỚC KHI CODE BẤT KỂ THỨ GÌ . PHONG CÁCH CODE SERVER DỰA HOÀN TOÀN TRÊN NHỮNG MÃ ĐÃ CÓ. CLEARN PRODUCATION READY . FIX CODE SỬA ĐÚNG CHỖ CẦN, KHÔNG VIẾT THÊM ĐỂ FIX TRÁNH DUPLICE CODE . VÀ DEADCODE .
+STRICT HOÀN TOÀN DỰ ÁN 
+- CHẤT LƯỢNG LÀ HÀNG ĐẦU 
+- TỐC  ĐỘ LÀ ĐẶC BIỆT 
+- ỔN ĐỊNH LÀ ĐIỀU KHÔNG THỂ THIẾU .
+
+CÔNG NGHỆ HIỆN ĐẠI NHẤT  ĐƯỢC ÁP DỤNG VỚI CODE TOÀN VẸN NHẤT 2026 CỦA PRO CODER 40 NĂM KINH NGHIỆM .
 
 ## Project Structure
 - `Backend/` — Go LiveKit WebRTC server (port 7880)
@@ -20,6 +27,14 @@
 - Icons: `lucide-vue-next`
 - Router: Vue Router 4, lazy-loaded views
 - API proxy: Vite proxies `/auth` -> backend
+
+## i18n (BẮT BUỘC)
+- **KHÔNG hardcode text ở bất kỳ đâu** — UI, logs, errors, placeholders, toasts, API responses
+- 3 ngôn ngữ: English (en), 中文 (zh), Tiếng Việt (vi)
+- Frontend: dùng `vue-i18n`, mọi text phải dùng `t('key')` trong `<script setup>` hoặc `$t('key')` trong `<template>`
+- Backend: dùng i18n key cho log messages và API response messages
+- Locale files: `Frontend/src/locales/{en,zh,vi}.json`
+- Áp dụng ngay từ dòng code đầu tiên, không refactor sau
 
 ## Code Style Rules
 - Follow existing LiveKit server conventions exactly

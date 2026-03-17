@@ -1,56 +1,52 @@
-import { getLivekitToken } from './auth'
+import { getToken } from './auth'
 
-const TWIRP_BASE = '/twirp/livekit.RoomService'
+const AUTH_BASE = '/auth/room'
 
-let cachedToken = null
-
-async function getAccessToken() {
-  if (!cachedToken) {
-    const data = await getLivekitToken()
-    cachedToken = data.access_token
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${getToken()}`,
   }
-  return cachedToken
 }
 
-// Clear cached token (call on logout or token expiry)
-export function clearRoomToken() {
-  cachedToken = null
-}
-
-async function twirpCall(method, body = {}) {
-  const token = await getAccessToken()
-  const res = await fetch(`${TWIRP_BASE}/${method}`, {
+export async function createRoom(name, { maxParticipants = 0, password = '' } = {}) {
+  const res = await fetch(`${AUTH_BASE}/create`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-    },
-    body: JSON.stringify(body),
+    headers: authHeaders(),
+    body: JSON.stringify({
+      name,
+      max_participants: maxParticipants,
+      password: password || undefined,
+    }),
   })
   const data = await res.json()
-  if (!res.ok) {
-    // clear token on auth error so it refreshes
-    if (res.status === 401) cachedToken = null
-    throw new Error(data.msg || data.message || 'Request failed')
-  }
+  if (!res.ok) throw new Error(data.error || 'Failed to create room')
   return data
 }
 
-export async function createRoom(name, options = {}) {
-  return twirpCall('CreateRoom', {
-    name,
-    empty_timeout: options.emptyTimeout || 300,
-    departure_timeout: options.departureTimeout || 20,
-    max_participants: options.maxParticipants || 0,
-    metadata: options.metadata || '',
-  })
-}
-
 export async function listRooms() {
-  const data = await twirpCall('ListRooms', {})
+  const res = await fetch(`${AUTH_BASE}/list`, {
+    method: 'POST',
+    headers: authHeaders(),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Failed to list rooms')
   return data.rooms || []
 }
 
 export async function deleteRoom(name) {
-  return twirpCall('DeleteRoom', { room: name })
+  // deleteRoom still uses Twirp RPC via a LiveKit token
+  const { getLivekitToken } = await import('./auth')
+  const { access_token } = await getLivekitToken()
+  const res = await fetch('/twirp/livekit.RoomService/DeleteRoom', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${access_token}`,
+    },
+    body: JSON.stringify({ room: name }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.msg || data.message || 'Failed to delete room')
+  return data
 }

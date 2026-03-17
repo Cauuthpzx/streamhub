@@ -81,7 +81,8 @@
     "shareScreen": "Share screen",
     "leave": "Leave room",
     "loadingHistory": "Loading messages...",
-    "panel": "Chat & Participants"
+    "panel": "Chat & Participants",
+    "noDevices": "No camera or microphone detected"
   },
   "participants": {
     "title": "Participants",

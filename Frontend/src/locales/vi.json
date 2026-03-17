@@ -81,7 +81,8 @@
     "shareScreen": "Chia sẻ màn hình",
     "leave": "Rời phòng",
     "loadingHistory": "Đang tải tin nhắn...",
-    "panel": "Trò chuyện & Người tham gia"
+    "panel": "Trò chuyện & Người tham gia",
+    "noDevices": "Không phát hiện camera hoặc micro"
   },
   "participants": {
     "title": "Người tham gia",

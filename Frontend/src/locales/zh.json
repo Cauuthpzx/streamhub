@@ -81,7 +81,8 @@
     "shareScreen": "共享屏幕",
     "leave": "离开房间",
     "loadingHistory": "正在加载消息...",
-    "panel": "聊天与参与者"
+    "panel": "聊天与参与者",
+    "noDevices": "未检测到摄像头或麦克风"
   },
   "participants": {
     "title": "参与者",

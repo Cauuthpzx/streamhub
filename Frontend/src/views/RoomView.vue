@@ -290,15 +290,35 @@ onUnmounted(() => {
             :key="participant.sid"
             class="relative bg-gray-200 dark:bg-gray-800 rounded-lg overflow-hidden min-h-[200px]"
           >
-            <div :id="`video-${participant.sid}`" class="absolute inset-0"></div>
-            <div class="absolute inset-0 flex items-center justify-center">
+            <!-- Video container -->
+            <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
+
+            <!-- Avatar fallback (visible when no video) -->
+            <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
               <div class="w-16 h-16 bg-gray-300 dark:bg-gray-700 rounded-full flex items-center justify-center text-xl font-semibold text-gray-500 dark:text-gray-300">
                 {{ (participant.identity || '?')[0].toUpperCase() }}
               </div>
+              <!-- Device status for local participant -->
+              <div v-if="isLocal && !camEnabled && !micEnabled" class="text-xs text-gray-400 dark:text-gray-500">
+                {{ t('chat.noDevices') }}
+              </div>
             </div>
-            <div class="absolute bottom-2 left-2 bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
-              {{ participant.identity }}
-              <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
+
+            <!-- Name + status bar -->
+            <div class="absolute bottom-2 left-2 right-2 flex items-center justify-between z-20">
+              <div class="bg-black/60 rounded px-2 py-0.5 text-xs text-white flex items-center gap-1.5">
+                {{ participant.identity }}
+                <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
+              </div>
+              <!-- Mic/Cam indicators -->
+              <div class="flex items-center gap-1">
+                <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
+                  <MicOff class="w-3 h-3 text-white" :stroke-width="2" />
+                </span>
+                <span v-if="isLocal && !camEnabled" class="bg-red-500/80 rounded p-0.5">
+                  <VideoOff class="w-3 h-3 text-white" :stroke-width="2" />
+                </span>
+              </div>
             </div>
           </div>
         </div>

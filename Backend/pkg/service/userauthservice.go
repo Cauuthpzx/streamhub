@@ -397,10 +397,10 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 	}, s.apiKey)
 
 	room, err := s.roomService.CreateRoom(ctx, &livekit.CreateRoomRequest{
-		Name:            req.Name,
-		MaxParticipants: req.MaxParticipants,
-		EmptyTimeout:    300,
-		DepartureTimeout: 20,
+		Name:             req.Name,
+		MaxParticipants:  req.MaxParticipants,
+		EmptyTimeout:     86400 * 30, // 30 ngày, room tồn tại lâu dài
+		DepartureTimeout: 86400 * 30, // 30 ngày sau khi tất cả rời
 	})
 	if err != nil {
 		logger.Errorw("log.createRoomFailed", err, "username", username, "room", req.Name)

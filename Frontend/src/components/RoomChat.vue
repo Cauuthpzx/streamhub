@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch, onMounted } from 'vue'
+import { ref, toRaw, nextTick, watch, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Send } from 'lucide-vue-next'
 import { RoomEvent } from 'livekit-client'
@@ -76,7 +76,7 @@ async function sendMessage() {
 
   // send via DataChannel for real-time delivery
   const payload = JSON.stringify({ type: 'chat', text, sender: props.username })
-  props.room.localParticipant.publishData(encoder.encode(payload), {
+  toRaw(props.room).localParticipant.publishData(encoder.encode(payload), {
     reliable: true,
   })
 
@@ -99,8 +99,8 @@ async function sendMessage() {
 watch(
   () => props.room,
   (r, oldR) => {
-    if (oldR) oldR.off(RoomEvent.DataReceived, onDataReceived)
-    if (r) r.on(RoomEvent.DataReceived, onDataReceived)
+    if (oldR) toRaw(oldR).off(RoomEvent.DataReceived, onDataReceived)
+    if (r) toRaw(r).on(RoomEvent.DataReceived, onDataReceived)
   },
   { immediate: true },
 )

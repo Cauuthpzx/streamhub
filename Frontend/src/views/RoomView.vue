@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, toRaw, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import {
@@ -32,7 +32,8 @@ const { t } = useI18n()
 const roomName = route.params.name
 const username = getUsername()
 
-const room = ref(null)
+const room = ref(null) // stores LiveKit Room — use toRaw(room.value) for SDK calls
+
 const connected = ref(false)
 const connecting = ref(true)
 const error = ref('')
@@ -117,7 +118,7 @@ async function connectRoom() {
 
 function updateParticipants() {
   if (!room.value) return
-  const r = room.value
+  const r = toRaw(room.value)
   const list = [{ participant: r.localParticipant, isLocal: true }]
   r.remoteParticipants.forEach((p) => {
     list.push({ participant: p, isLocal: false })
@@ -146,7 +147,7 @@ function handleDisconnect() {
 }
 
 function attachLocalVideo() {
-  const r = room.value
+  const r = toRaw(room.value)
   if (!r) return
   const container = document.getElementById(`video-${r.localParticipant.sid}`)
   if (!container) return
@@ -190,13 +191,13 @@ function attachRemoteTrack(track, participant) {
 
 async function toggleMic() {
   if (!room.value) return
-  await room.value.localParticipant.setMicrophoneEnabled(!micEnabled.value)
+  await toRaw(room.value).localParticipant.setMicrophoneEnabled(!micEnabled.value)
   micEnabled.value = !micEnabled.value
 }
 
 async function toggleCam() {
   if (!room.value) return
-  await room.value.localParticipant.setCameraEnabled(!camEnabled.value)
+  await toRaw(room.value).localParticipant.setCameraEnabled(!camEnabled.value)
   camEnabled.value = !camEnabled.value
   await nextTick()
   if (camEnabled.value) attachLocalVideo()
@@ -205,7 +206,7 @@ async function toggleCam() {
 async function toggleScreen() {
   if (!room.value) return
   try {
-    await room.value.localParticipant.setScreenShareEnabled(!screenEnabled.value)
+    await toRaw(room.value).localParticipant.setScreenShareEnabled(!screenEnabled.value)
     screenEnabled.value = !screenEnabled.value
   } catch (_) {
     // user cancelled
@@ -223,14 +224,14 @@ function switchTab(tab) {
 }
 
 async function leaveRoom() {
-  if (room.value) await room.value.disconnect()
+  if (room.value) await toRaw(room.value).disconnect()
   router.push('/home')
 }
 
 onMounted(connectRoom)
 
 onUnmounted(() => {
-  if (room.value) room.value.disconnect()
+  if (room.value) toRaw(room.value).disconnect()
 })
 </script>
 

@@ -1,7 +1,7 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, toRaw, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoIcon, VideoOff, UserX, Crown } from 'lucide-vue-next'
+import { Mic, MicOff, VideoIcon, VideoOff, UserX } from 'lucide-vue-next'
 import { Track } from 'livekit-client'
 import { removeParticipant, muteTrack } from '../services/room'
 
@@ -20,7 +20,7 @@ const actionError = ref('')
 
 function buildList() {
   if (!props.room) return
-  const r = props.room
+  const r = toRaw(props.room)
   const list = []
 
   // local participant first
@@ -92,8 +92,8 @@ watch(() => props.room, buildList, { immediate: true })
 // refresh list on any participant/track events
 watch(() => props.room, (r, oldR) => {
   const events = ['participantConnected', 'participantDisconnected', 'trackMuted', 'trackUnmuted', 'trackSubscribed', 'trackUnsubscribed', 'localTrackPublished', 'localTrackUnpublished']
-  if (oldR) events.forEach((e) => oldR.off(e, buildList))
-  if (r) events.forEach((e) => r.on(e, buildList))
+  if (oldR) events.forEach((e) => toRaw(oldR).off(e, buildList))
+  if (r) events.forEach((e) => toRaw(r).on(e, buildList))
 }, { immediate: true })
 </script>
 

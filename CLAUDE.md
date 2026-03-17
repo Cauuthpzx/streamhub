@@ -45,6 +45,16 @@ CÔNG NGHỆ HIỆN ĐẠI NHẤT  ĐƯỢC ÁP DỤNG VỚI CODE TOÀN VẸN NH
 - Muốn thay đổi bất kỳ thành phần nào developer đưa vào → PHẢI HỎI TRƯỚC
 - Chỉ được wrap trong component và thêm CSS theme (dark/light), KHÔNG đổi nội dung gốc
 
+## File Size & Splitting Rules (BẮT BUỘC)
+- **Vue component tối đa 300 dòng** — nếu vượt → tách composable hoặc sub-component
+- **Composable tối đa 200 dòng** — nếu vượt → tách thành composable nhỏ hơn
+- **View = orchestrator** — View chỉ import composables + components, truyền props/events, lifecycle. KHÔNG chứa business logic trực tiếp
+- **1 file = 1 trách nhiệm** — tracks, sounds, screenshot, reactions, recording, video grid, controls bar = mỗi cái 1 file riêng
+- **Composable pattern**: `use<Name>.js` nhận `room` ref hoặc deps object, return reactive state + methods
+- **Sub-component pattern**: nhận props + emit events, KHÔNG truy cập composable trực tiếp
+- **Backend upstream (LiveKit)**: KHÔNG TÁCH — giữ nguyên để merge upstream dễ dàng
+- **Backend custom code**: tách khi vượt 500 dòng VÀ có 2+ concerns rõ ràng
+
 ## Code Style Rules
 - Follow existing LiveKit server conventions exactly
 - Production-ready: clean, performant, no demo/prototype code

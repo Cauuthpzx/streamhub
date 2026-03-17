@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil } from 'lucide-vue-next'
+import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil, Radio, Bot } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom, updateRoomMetadata } from '../services/room'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
@@ -287,6 +287,34 @@ onMounted(fetchRooms)
             </AppTooltip>
           </div>
         </div>
+      </div>
+
+      <!-- Quick links -->
+      <div class="mt-8 grid grid-cols-2 gap-3">
+        <router-link
+          to="/ingress"
+          class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors"
+        >
+          <div class="w-9 h-9 bg-orange-50 dark:bg-orange-900/30 rounded-lg flex items-center justify-center shrink-0">
+            <Radio class="w-4 h-4 text-orange-600 dark:text-orange-400" :stroke-width="1.8" />
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('ingress.title') }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">OBS / Streamlabs</p>
+          </div>
+        </router-link>
+        <router-link
+          to="/agents"
+          class="flex items-center gap-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3 hover:border-indigo-300 dark:hover:border-indigo-600 transition-colors"
+        >
+          <div class="w-9 h-9 bg-purple-50 dark:bg-purple-900/30 rounded-lg flex items-center justify-center shrink-0">
+            <Bot class="w-4 h-4 text-purple-600 dark:text-purple-400" :stroke-width="1.8" />
+          </div>
+          <div>
+            <p class="text-sm font-medium text-gray-900 dark:text-white">{{ t('agent.title') }}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500">STT / TTS / AI</p>
+          </div>
+        </router-link>
       </div>
     </main>
 

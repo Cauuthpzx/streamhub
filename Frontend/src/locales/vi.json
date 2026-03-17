@@ -201,5 +201,36 @@
     "storeRoomPasswordFailed": "Không thể lưu mật khẩu phòng",
     "listRoomsFailed": "Không thể tải danh sách phòng",
     "createRoomFailed": "Không thể tạo phòng"
+  },
+  "ingress": {
+    "title": "Luồng vào RTMP/WHIP",
+    "create": "Tạo luồng vào",
+    "createBtn": "Tạo luồng vào",
+    "name": "Tên",
+    "namePlaceholder": "Stream từ OBS",
+    "room": "Phòng",
+    "selectRoom": "Chọn phòng",
+    "inputType": "Loại đầu vào",
+    "streamKey": "Khóa stream",
+    "empty": "Chưa có luồng vào. Tạo mới để bắt đầu stream từ OBS hoặc công cụ khác.",
+    "ingressCreateFailed": "Không thể tạo luồng vào",
+    "ingressListFailed": "Không thể tải danh sách luồng vào",
+    "ingressDeleteFailed": "Không thể xóa luồng vào"
+  },
+  "agent": {
+    "title": "AI Agent Workers",
+    "dispatch": "Gửi Agent",
+    "dispatchBtn": "Tạo Dispatch",
+    "agentName": "Tên Agent",
+    "agentNamePlaceholder": "bot-phien-dich",
+    "room": "Phòng",
+    "metadata": "Metadata",
+    "metadataPlaceholder": "Metadata JSON tùy chọn",
+    "selectRoomFilter": "Chọn phòng để xem agent",
+    "selectRoomFirst": "Chọn phòng để xem các agent đã gửi.",
+    "empty": "Chưa có agent nào trong phòng này.",
+    "agentDispatchFailed": "Không thể gửi agent",
+    "agentListFailed": "Không thể tải danh sách agent",
+    "agentDeleteFailed": "Không thể xóa agent dispatch"
   }
 }

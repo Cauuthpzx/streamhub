@@ -59,7 +59,7 @@ async function handleKick(identity) {
     emit('participantRemoved', identity)
     buildList()
   } catch (e) {
-    actionError.value = e.message
+    actionError.value = t(e.message)
   }
 }
 
@@ -69,7 +69,7 @@ async function handleToggleMute(identity, trackSid, currentMuted) {
     await muteTrack(props.roomName, identity, trackSid, !currentMuted)
     setTimeout(buildList, 300)
   } catch (e) {
-    actionError.value = e.message
+    actionError.value = t(e.message)
   }
 }
 
@@ -93,7 +93,7 @@ async function handleMove() {
     moveTarget.value = null
     buildList()
   } catch (e) {
-    actionError.value = e.message
+    actionError.value = t(e.message)
   }
 }
 

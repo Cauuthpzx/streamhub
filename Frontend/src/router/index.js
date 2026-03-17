@@ -27,6 +27,18 @@ const routes = [
     component: () => import('../views/RoomView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/ingress',
+    name: 'Ingress',
+    component: () => import('../views/IngressView.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/agents',
+    name: 'Agents',
+    component: () => import('../views/AgentView.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

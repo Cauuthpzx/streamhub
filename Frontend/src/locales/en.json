@@ -201,5 +201,36 @@
     "storeRoomPasswordFailed": "Failed to store room password",
     "listRoomsFailed": "Failed to list rooms",
     "createRoomFailed": "Failed to create room"
+  },
+  "ingress": {
+    "title": "RTMP/WHIP Ingress",
+    "create": "New Ingress",
+    "createBtn": "Create Ingress",
+    "name": "Name",
+    "namePlaceholder": "My OBS Stream",
+    "room": "Room",
+    "selectRoom": "Select a room",
+    "inputType": "Input Type",
+    "streamKey": "Stream Key",
+    "empty": "No ingress endpoints. Create one to start streaming from OBS or other tools.",
+    "ingressCreateFailed": "Failed to create ingress",
+    "ingressListFailed": "Failed to list ingress",
+    "ingressDeleteFailed": "Failed to delete ingress"
+  },
+  "agent": {
+    "title": "AI Agent Workers",
+    "dispatch": "Dispatch Agent",
+    "dispatchBtn": "Create Dispatch",
+    "agentName": "Agent Name",
+    "agentNamePlaceholder": "my-translator-bot",
+    "room": "Room",
+    "metadata": "Metadata",
+    "metadataPlaceholder": "Optional metadata JSON",
+    "selectRoomFilter": "Select room to view agents",
+    "selectRoomFirst": "Select a room to view dispatched agents.",
+    "empty": "No agents dispatched in this room.",
+    "agentDispatchFailed": "Failed to dispatch agent",
+    "agentListFailed": "Failed to list agent dispatches",
+    "agentDeleteFailed": "Failed to delete agent dispatch"
   }
 }

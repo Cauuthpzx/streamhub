@@ -32,12 +32,14 @@ import (
 )
 
 type UserAuthService struct {
-	config      config.UserAuthConfig
-	userStore   UserStore
-	keyProvider auth.KeyProvider
-	roomService livekit.RoomService
-	apiKey      string
-	apiSecret   string
+	config               config.UserAuthConfig
+	userStore            UserStore
+	keyProvider          auth.KeyProvider
+	roomService          livekit.RoomService
+	ingressService       *IngressService
+	agentDispatchService *AgentDispatchService
+	apiKey               string
+	apiSecret            string
 }
 
 func NewUserAuthService(
@@ -45,6 +47,8 @@ func NewUserAuthService(
 	userStore UserStore,
 	keyProvider auth.KeyProvider,
 	roomService livekit.RoomService,
+	ingressService *IngressService,
+	agentDispatchService *AgentDispatchService,
 ) *UserAuthService {
 	// use the first API key pair for issuing LiveKit tokens
 	var apiKey, apiSecret string
@@ -55,12 +59,14 @@ func NewUserAuthService(
 	}
 
 	return &UserAuthService{
-		config:      conf.UserAuth,
-		userStore:   userStore,
-		keyProvider: keyProvider,
-		roomService: roomService,
-		apiKey:      apiKey,
-		apiSecret:   apiSecret,
+		config:               conf.UserAuth,
+		userStore:            userStore,
+		keyProvider:          keyProvider,
+		roomService:          roomService,
+		ingressService:       ingressService,
+		agentDispatchService: agentDispatchService,
+		apiKey:               apiKey,
+		apiSecret:            apiSecret,
 	}
 }
 
@@ -72,6 +78,14 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/room/list", s.handleRoomList)
 	mux.HandleFunc("/auth/room/chat/send", s.handleChatSend)
 	mux.HandleFunc("/auth/room/chat/history", s.handleChatHistory)
+	// Ingress (RTMP/WHIP)
+	mux.HandleFunc("/auth/ingress/create", s.handleIngressCreate)
+	mux.HandleFunc("/auth/ingress/list", s.handleIngressList)
+	mux.HandleFunc("/auth/ingress/delete", s.handleIngressDelete)
+	// Agent dispatch
+	mux.HandleFunc("/auth/agent/dispatch", s.handleAgentDispatch)
+	mux.HandleFunc("/auth/agent/dispatch/list", s.handleAgentDispatchList)
+	mux.HandleFunc("/auth/agent/dispatch/delete", s.handleAgentDispatchDelete)
 }
 
 // request/response types
@@ -565,6 +579,330 @@ func (s *UserAuthService) handleChatHistory(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusOK, chatHistoryResponse{Messages: messages})
+}
+
+// --- Ingress handlers ---
+
+type createIngressRequest struct {
+	InputType string `json:"input_type"` // "rtmp" or "whip"
+	Name      string `json:"name"`
+	Room      string `json:"room"`
+	Identity  string `json:"identity"`
+}
+
+type ingressInfoResponse struct {
+	IngressID string `json:"ingress_id"`
+	Name      string `json:"name"`
+	StreamKey string `json:"stream_key"`
+	URL       string `json:"url"`
+	InputType string `json:"input_type"`
+	Room      string `json:"room"`
+	Identity  string `json:"identity"`
+	Status    string `json:"status"`
+}
+
+func toIngressResponse(info *livekit.IngressInfo) ingressInfoResponse {
+	status := "inactive"
+	if info.State != nil {
+		switch info.State.Status {
+		case livekit.IngressState_ENDPOINT_BUFFERING:
+			status = "buffering"
+		case livekit.IngressState_ENDPOINT_PUBLISHING:
+			status = "publishing"
+		case livekit.IngressState_ENDPOINT_ERROR:
+			status = "error"
+		case livekit.IngressState_ENDPOINT_COMPLETE:
+			status = "complete"
+		}
+	}
+	inputType := "rtmp"
+	if info.InputType == livekit.IngressInput_WHIP_INPUT {
+		inputType = "whip"
+	} else if info.InputType == livekit.IngressInput_URL_INPUT {
+		inputType = "url"
+	}
+	return ingressInfoResponse{
+		IngressID: info.IngressId,
+		Name:      info.Name,
+		StreamKey: info.StreamKey,
+		URL:       info.Url,
+		InputType: inputType,
+		Room:      info.RoomName,
+		Identity:  info.ParticipantIdentity,
+		Status:    status,
+	}
+}
+
+func (s *UserAuthService) handleIngressCreate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req createIngressRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	if req.Room == "" || req.Name == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.missingFields"})
+		return
+	}
+	if req.Identity == "" {
+		req.Identity = username
+	}
+
+	inputType := livekit.IngressInput_RTMP_INPUT
+	if req.InputType == "whip" {
+		inputType = livekit.IngressInput_WHIP_INPUT
+	}
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{
+			IngressAdmin: true,
+			RoomCreate:   true,
+			RoomAdmin:    true,
+		},
+	}, s.apiKey)
+
+	info, err := s.ingressService.CreateIngress(ctx, &livekit.CreateIngressRequest{
+		InputType:           inputType,
+		Name:                req.Name,
+		RoomName:            req.Room,
+		ParticipantIdentity: req.Identity,
+		ParticipantName:     req.Identity,
+	})
+	if err != nil {
+		logger.Errorw("log.createIngressFailed", err, "user", username)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.ingressCreateFailed"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toIngressResponse(info))
+}
+
+func (s *UserAuthService) handleIngressList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	_, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var body struct {
+		Room string `json:"room"`
+	}
+	json.NewDecoder(r.Body).Decode(&body)
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{IngressAdmin: true},
+	}, s.apiKey)
+
+	resp, err := s.ingressService.ListIngress(ctx, &livekit.ListIngressRequest{
+		RoomName: body.Room,
+	})
+	if err != nil {
+		logger.Errorw("log.listIngressFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+
+	items := make([]ingressInfoResponse, 0, len(resp.Items))
+	for _, info := range resp.Items {
+		items = append(items, toIngressResponse(info))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+func (s *UserAuthService) handleIngressDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var body struct {
+		IngressID string `json:"ingress_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.IngressID == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.missingFields"})
+		return
+	}
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{IngressAdmin: true},
+	}, s.apiKey)
+
+	_, err = s.ingressService.DeleteIngress(ctx, &livekit.DeleteIngressRequest{
+		IngressId: body.IngressID,
+	})
+	if err != nil {
+		logger.Errorw("log.deleteIngressFailed", err, "user", username)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.ingressDeleteFailed"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
+}
+
+// --- Agent dispatch handlers ---
+
+type createAgentDispatchRequest struct {
+	Room      string `json:"room"`
+	AgentName string `json:"agent_name"`
+	Metadata  string `json:"metadata,omitempty"`
+}
+
+type agentDispatchResponse struct {
+	ID        string `json:"id"`
+	AgentName string `json:"agent_name"`
+	Room      string `json:"room"`
+	Metadata  string `json:"metadata,omitempty"`
+}
+
+func toAgentDispatchResponse(d *livekit.AgentDispatch) agentDispatchResponse {
+	return agentDispatchResponse{
+		ID:        d.Id,
+		AgentName: d.AgentName,
+		Room:      d.Room,
+		Metadata:  d.Metadata,
+	}
+}
+
+func (s *UserAuthService) handleAgentDispatch(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req createAgentDispatchRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	if req.Room == "" || req.AgentName == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.missingFields"})
+		return
+	}
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{
+			RoomAdmin: true,
+			Room:      req.Room,
+		},
+	}, s.apiKey)
+
+	dispatch, err := s.agentDispatchService.CreateDispatch(ctx, &livekit.CreateAgentDispatchRequest{
+		Room:      req.Room,
+		AgentName: req.AgentName,
+		Metadata:  req.Metadata,
+	})
+	if err != nil {
+		logger.Errorw("log.createAgentDispatchFailed", err, "user", username)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.agentDispatchFailed"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, toAgentDispatchResponse(dispatch))
+}
+
+func (s *UserAuthService) handleAgentDispatchList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	_, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var body struct {
+		Room string `json:"room"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.missingFields"})
+		return
+	}
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{
+			RoomAdmin: true,
+			Room:      body.Room,
+		},
+	}, s.apiKey)
+
+	resp, err := s.agentDispatchService.ListDispatch(ctx, &livekit.ListAgentDispatchRequest{
+		Room: body.Room,
+	})
+	if err != nil {
+		logger.Errorw("log.listAgentDispatchFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+
+	items := make([]agentDispatchResponse, 0, len(resp.AgentDispatches))
+	for _, d := range resp.AgentDispatches {
+		items = append(items, toAgentDispatchResponse(d))
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+func (s *UserAuthService) handleAgentDispatchDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var body struct {
+		Room       string `json:"room"`
+		DispatchID string `json:"dispatch_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil || body.DispatchID == "" || body.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.missingFields"})
+		return
+	}
+
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{
+			RoomAdmin: true,
+			Room:      body.Room,
+		},
+	}, s.apiKey)
+
+	_, err = s.agentDispatchService.DeleteDispatch(ctx, &livekit.DeleteAgentDispatchRequest{
+		DispatchId: body.DispatchID,
+		Room:       body.Room,
+	})
+	if err != nil {
+		logger.Errorw("log.deleteAgentDispatchFailed", err, "user", username)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.agentDispatchDeleteFailed"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"success": true})
 }
 
 // verifyUserToken extracts and validates the user JWT from Authorization header

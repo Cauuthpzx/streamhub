@@ -1,0 +1,47 @@
+import { getToken } from './auth'
+
+const BASE = '/auth/agent'
+
+function authHeaders() {
+  return {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${getToken()}`,
+  }
+}
+
+export async function createAgentDispatch(room, agentName, metadata = '') {
+  const res = await fetch(`${BASE}/dispatch`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({
+      room,
+      agent_name: agentName,
+      metadata: metadata || undefined,
+    }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.agentDispatchFailed')
+  return data
+}
+
+export async function listAgentDispatches(room) {
+  const res = await fetch(`${BASE}/dispatch/list`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.agentListFailed')
+  return data.items || []
+}
+
+export async function deleteAgentDispatch(room, dispatchId) {
+  const res = await fetch(`${BASE}/dispatch/delete`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room, dispatch_id: dispatchId }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.agentDeleteFailed')
+  return data
+}

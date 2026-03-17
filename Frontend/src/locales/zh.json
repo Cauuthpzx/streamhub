@@ -201,5 +201,36 @@
     "storeRoomPasswordFailed": "存储房间密码失败",
     "listRoomsFailed": "获取房间列表失败",
     "createRoomFailed": "创建房间失败"
+  },
+  "ingress": {
+    "title": "RTMP/WHIP 推流",
+    "create": "新建推流",
+    "createBtn": "创建推流",
+    "name": "名称",
+    "namePlaceholder": "我的OBS推流",
+    "room": "房间",
+    "selectRoom": "选择房间",
+    "inputType": "输入类型",
+    "streamKey": "推流密钥",
+    "empty": "暂无推流端点。创建一个以便从OBS或其他工具开始推流。",
+    "ingressCreateFailed": "创建推流失败",
+    "ingressListFailed": "获取推流列表失败",
+    "ingressDeleteFailed": "删除推流失败"
+  },
+  "agent": {
+    "title": "AI代理工作者",
+    "dispatch": "派遣代理",
+    "dispatchBtn": "创建派遣",
+    "agentName": "代理名称",
+    "agentNamePlaceholder": "我的翻译机器人",
+    "room": "房间",
+    "metadata": "元数据",
+    "metadataPlaceholder": "可选的元数据JSON",
+    "selectRoomFilter": "选择房间查看代理",
+    "selectRoomFirst": "选择房间以查看已派遣的代理。",
+    "empty": "此房间暂无代理。",
+    "agentDispatchFailed": "派遣代理失败",
+    "agentListFailed": "获取代理列表失败",
+    "agentDeleteFailed": "删除代理派遣失败"
   }
 }

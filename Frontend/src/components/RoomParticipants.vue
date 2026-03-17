@@ -1,10 +1,11 @@
 <script setup>
 import { ref, toRaw, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft, UserCheck, UserMinus } from 'lucide-vue-next'
+import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft, UserCheck, UserMinus, LogOut, Trash2 } from 'lucide-vue-next'
 import { Track } from 'livekit-client'
-import { removeParticipant, muteTrack, moveParticipant, listRooms, getLobbyPending, approveLobbyUser, rejectLobbyUser } from '../services/room'
+import { removeParticipant, muteTrack, moveParticipant, listRooms, getLobbyPending, approveLobbyUser, rejectLobbyUser, leaveRoom } from '../services/room'
 import AppTooltip from './AppTooltip.vue'
+import DeleteRoomDialog from './DeleteRoomDialog.vue'
 
 const { t } = useI18n()
 
@@ -12,9 +13,12 @@ const props = defineProps({
   room: { type: Object, required: true },
   roomName: { type: String, required: true },
   localIdentity: { type: String, required: true },
+  isCreator: { type: Boolean, default: false },
 })
 
-const emit = defineEmits(['participantRemoved'])
+const emit = defineEmits(['participantRemoved', 'leaveRoom', 'roomDeleted'])
+
+const showDeleteDialog = ref(false)
 
 const participantList = ref([])
 const actionError = ref('')
@@ -140,6 +144,16 @@ watch(() => props.room, (r, oldR) => {
   if (oldR) events.forEach((e) => toRaw(oldR).off(e, debouncedBuildList))
   if (r) events.forEach((e) => toRaw(r).on(e, debouncedBuildList))
 }, { immediate: true })
+
+async function handleLeaveRoom() {
+  actionError.value = ''
+  try {
+    await leaveRoom(props.roomName)
+    emit('leaveRoom')
+  } catch (e) {
+    actionError.value = t(e.message)
+  }
+}
 
 function parseMeta(raw) {
   try {
@@ -290,5 +304,32 @@ onUnmounted(stopLobbyPoll)
         <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('participants.empty') }}</p>
       </div>
     </div>
+
+    <!-- Creator: delete room / Member: leave room -->
+    <div class="border-t border-gray-200 dark:border-gray-700 px-3 py-2 shrink-0">
+      <button
+        v-if="isCreator"
+        @click="showDeleteDialog = true"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
+      >
+        <Trash2 class="w-4 h-4" :stroke-width="1.8" />
+        {{ t('room.deleteRoom') }}
+      </button>
+      <button
+        v-else
+        @click="handleLeaveRoom"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
+      >
+        <LogOut class="w-4 h-4" :stroke-width="1.8" />
+        {{ t('room.leaveRoom') }}
+      </button>
+    </div>
   </div>
+
+  <DeleteRoomDialog
+    :room-name="roomName"
+    :show="showDeleteDialog"
+    @close="showDeleteDialog = false"
+    @deleted="emit('roomDeleted')"
+  />
 </template>

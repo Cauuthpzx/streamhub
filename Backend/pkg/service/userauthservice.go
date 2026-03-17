@@ -120,6 +120,10 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/room/share/resolve", s.handleShareResolve)
 	// User profile
 	mux.HandleFunc("/auth/profile", s.handleProfile)
+	// Room membership
+	mux.HandleFunc("/auth/room/leave", s.handleRoomLeave)
+	mux.HandleFunc("/auth/room/delete", s.handleRoomDelete)
+	mux.HandleFunc("/auth/room/members", s.handleRoomMembers)
 }
 
 // request/response types
@@ -399,6 +403,7 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 	grant.SetCanPublish(true)
 	grant.SetCanPublishData(true)
 	grant.SetCanSubscribe(true)
+	grant.SetCanUpdateOwnMetadata(true)
 
 	at := auth.NewAccessToken(s.apiKey, s.apiSecret).
 		SetVideoGrant(grant).
@@ -410,6 +415,11 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 		logger.Errorw("log.generateLivekitTokenFailed", err, "username", username)
 		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 		return
+	}
+
+	// auto-add user as room member when joining
+	if req.Room != "" {
+		_ = s.userStore.AddRoomMember(r.Context(), req.Room, username, "member")
 	}
 
 	logger.Debugw("log.issuedLivekitToken", "username", username, "room", req.Room)
@@ -437,6 +447,8 @@ type roomInfo struct {
 	HasPassword     bool   `json:"has_password"`
 	HasLobby        bool   `json:"has_lobby"`
 	CreatedAt       int64  `json:"created_at"`
+	Creator         string `json:"creator,omitempty"`
+	IsMember        bool   `json:"is_member,omitempty"`
 }
 
 type roomListResponse struct {
@@ -491,20 +503,35 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 		_ = s.userStore.SetLobbyDecision(r.Context(), req.Name, username, true)
 	}
 
-	// store room password if provided
+	// hash room password if provided
+	var passwordHash string
 	if req.Password != "" {
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+		hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
 			logger.Errorw("log.hashRoomPasswordFailed", err)
 			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
 			return
 		}
-		if err := s.userStore.StoreRoomPassword(r.Context(), req.Name, string(hashedPassword)); err != nil {
+		passwordHash = string(hashed)
+		if err := s.userStore.StoreRoomPassword(r.Context(), req.Name, passwordHash); err != nil {
 			logger.Errorw("log.storeRoomPasswordFailed", err, "room", req.Name)
-			writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
-			return
 		}
 	}
+
+	// persist room in PostgreSQL
+	nowTs := time.Now().Unix()
+	_ = s.userStore.StoreRoom(r.Context(), &RoomRecord{
+		Name:            req.Name,
+		Creator:         username,
+		PasswordHash:    passwordHash,
+		LobbyEnabled:    req.LobbyEnabled,
+		MaxParticipants: int(req.MaxParticipants),
+		Status:          "active",
+		CreatedAt:       nowTs,
+		UpdatedAt:       nowTs,
+	})
+	// creator is always a member
+	_ = s.userStore.AddRoomMember(r.Context(), req.Name, username, "creator")
 
 	logger.Infow("log.roomCreated", "username", username, "room", req.Name, "hasPassword", req.Password != "", "hasLobby", req.LobbyEnabled, "maxParticipants", req.MaxParticipants)
 	writeJSON(w, http.StatusCreated, roomInfo{
@@ -515,6 +542,7 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 		HasPassword:     req.Password != "",
 		HasLobby:        req.LobbyEnabled,
 		CreatedAt:       room.CreationTime,
+		Creator:         username,
 	})
 }
 
@@ -524,40 +552,135 @@ func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	_, err := s.verifyUserToken(r)
+	username, err := s.verifyUserToken(r)
 	if err != nil {
 		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
 		return
 	}
 
-	// list rooms via LiveKit RoomService with list grants
+	// get active RTC rooms from LiveKit for participant counts
 	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
 		Video: &auth.VideoGrant{RoomList: true},
 	}, s.apiKey)
+	lkResp, _ := s.roomService.ListRooms(ctx, &livekit.ListRoomsRequest{})
 
-	resp, err := s.roomService.ListRooms(ctx, &livekit.ListRoomsRequest{})
-	if err != nil {
-		logger.Errorw("log.listRoomsFailed", err)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
-		return
+	// build map: roomName → online participant count
+	onlineMap := make(map[string]uint32)
+	sidMap := make(map[string]string)
+	for _, lkRoom := range lkResp.GetRooms() {
+		onlineMap[lkRoom.Name] = lkRoom.NumParticipants
+		sidMap[lkRoom.Name] = lkRoom.Sid
 	}
 
-	rooms := make([]roomInfo, 0, len(resp.Rooms))
-	for _, room := range resp.Rooms {
-		hasPassword, _ := s.userStore.RoomHasPassword(r.Context(), room.Name)
-		hasLobby, _ := s.userStore.IsRoomLobbyEnabled(r.Context(), room.Name)
+	// list persistent rooms this user is a member of
+	dbRooms, _ := s.userStore.ListUserRooms(r.Context(), username)
+
+	rooms := make([]roomInfo, 0, len(dbRooms))
+	for _, dbRoom := range dbRooms {
 		rooms = append(rooms, roomInfo{
-			SID:             room.Sid,
-			Name:            room.Name,
-			NumParticipants: room.NumParticipants,
-			MaxParticipants: room.MaxParticipants,
-			HasPassword:     hasPassword,
-			HasLobby:        hasLobby,
-			CreatedAt:       room.CreationTime,
+			SID:             sidMap[dbRoom.Name],
+			Name:            dbRoom.Name,
+			NumParticipants: onlineMap[dbRoom.Name],
+			MaxParticipants: uint32(dbRoom.MaxParticipants),
+			HasPassword:     dbRoom.PasswordHash != "",
+			HasLobby:        dbRoom.LobbyEnabled,
+			CreatedAt:       dbRoom.CreatedAt,
+			Creator:         dbRoom.Creator,
+			IsMember:        true,
 		})
 	}
 
 	writeJSON(w, http.StatusOK, roomListResponse{Rooms: rooms})
+}
+
+func (s *UserAuthService) handleRoomLeave(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+	var req struct {
+		Room string `json:"room"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	// creator cannot leave — must delete room
+	dbRoom, err := s.userStore.LoadRoom(r.Context(), req.Room)
+	if err == nil && dbRoom.Creator == username {
+		writeJSON(w, http.StatusForbidden, errorResponse{Error: "error.creatorCannotLeave"})
+		return
+	}
+	_ = s.userStore.RemoveRoomMember(r.Context(), req.Room, username)
+	logger.Infow("log.roomMemberLeft", "username", username, "room", req.Room)
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *UserAuthService) handleRoomDelete(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+	var req struct {
+		Room string `json:"room"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	// only creator can delete
+	dbRoom, err := s.userStore.LoadRoom(r.Context(), req.Room)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, errorResponse{Error: ErrRoomNotFound.Error()})
+		return
+	}
+	if dbRoom.Creator != username {
+		writeJSON(w, http.StatusForbidden, errorResponse{Error: "error.onlyCreatorCanDelete"})
+		return
+	}
+	// delete from LiveKit (stops active RTC session)
+	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
+		Video: &auth.VideoGrant{RoomCreate: true, RoomAdmin: true, Room: req.Room},
+	}, s.apiKey)
+	_, _ = s.roomService.DeleteRoom(ctx, &livekit.DeleteRoomRequest{Room: req.Room})
+	// delete from PostgreSQL (cascade deletes room_members)
+	_ = s.userStore.DeleteRoom(r.Context(), req.Room)
+	_ = s.userStore.DeleteRoomPassword(r.Context(), req.Room)
+	logger.Infow("log.roomDeleted", "username", username, "room", req.Room)
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *UserAuthService) handleRoomMembers(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	_, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+	roomName := r.URL.Query().Get("room")
+	if roomName == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	members, err := s.userStore.ListRoomMembers(r.Context(), roomName)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"members": members})
 }
 
 // chat types

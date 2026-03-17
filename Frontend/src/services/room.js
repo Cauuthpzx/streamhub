@@ -36,7 +36,34 @@ export async function listRooms() {
 }
 
 export async function deleteRoom(name) {
-  return twirpCall('DeleteRoom', { room: name })
+  const res = await fetch(`${AUTH_BASE}/delete`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room: name }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data
+}
+
+export async function leaveRoom(name) {
+  const res = await fetch(`${AUTH_BASE}/leave`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room: name }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data
+}
+
+export async function getRoomMembers(name) {
+  const res = await fetch(`${AUTH_BASE}/members?room=${encodeURIComponent(name)}`, {
+    headers: authHeaders(),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data.members || []
 }
 
 // Participant management via Twirp RPC (uses LiveKit token)

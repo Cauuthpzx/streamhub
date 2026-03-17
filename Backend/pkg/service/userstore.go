@@ -304,6 +304,23 @@ func (s *RedisUserStore) DeleteShareLink(ctx context.Context, code string) error
 	return err
 }
 
+// ── RedisUserStore: Room stubs (persistent rooms require PostgreSQL) ─────────
+
+func (s *RedisUserStore) StoreRoom(_ context.Context, _ *RoomRecord) error      { return nil }
+func (s *RedisUserStore) LoadRoom(_ context.Context, _ string) (*RoomRecord, error) {
+	return nil, ErrRoomNotFound
+}
+func (s *RedisUserStore) DeleteRoom(_ context.Context, _ string) error            { return nil }
+func (s *RedisUserStore) ListUserRooms(_ context.Context, _ string) ([]*RoomRecord, error) {
+	return nil, nil
+}
+func (s *RedisUserStore) AddRoomMember(_ context.Context, _, _, _ string) error   { return nil }
+func (s *RedisUserStore) RemoveRoomMember(_ context.Context, _, _ string) error   { return nil }
+func (s *RedisUserStore) ListRoomMembers(_ context.Context, _ string) ([]*RoomMember, error) {
+	return nil, nil
+}
+func (s *RedisUserStore) IsRoomMember(_ context.Context, _, _ string) (bool, error) { return false, nil }
+
 // LocalUserStore implements UserStore backed by in-memory map (single-node only)
 type LocalUserStore struct {
 	users          map[string]*UserRecord
@@ -583,3 +600,20 @@ func (s *LocalUserStore) DeleteShareLink(_ context.Context, code string) error {
 	}
 	return nil
 }
+
+// ── LocalUserStore: Room stubs (persistent rooms require PostgreSQL) ─────────
+
+func (s *LocalUserStore) StoreRoom(_ context.Context, _ *RoomRecord) error      { return nil }
+func (s *LocalUserStore) LoadRoom(_ context.Context, _ string) (*RoomRecord, error) {
+	return nil, ErrRoomNotFound
+}
+func (s *LocalUserStore) DeleteRoom(_ context.Context, _ string) error            { return nil }
+func (s *LocalUserStore) ListUserRooms(_ context.Context, _ string) ([]*RoomRecord, error) {
+	return nil, nil
+}
+func (s *LocalUserStore) AddRoomMember(_ context.Context, _, _, _ string) error   { return nil }
+func (s *LocalUserStore) RemoveRoomMember(_ context.Context, _, _ string) error   { return nil }
+func (s *LocalUserStore) ListRoomMembers(_ context.Context, _ string) ([]*RoomMember, error) {
+	return nil, nil
+}
+func (s *LocalUserStore) IsRoomMember(_ context.Context, _, _ string) (bool, error) { return false, nil }

@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -312,4 +313,105 @@ func (s *PgUserStore) GetLobbyDecision(_ context.Context, roomName string, usern
 	s.mu.RUnlock()
 	return v, nil
 }
+
+// ── Persistent Rooms (PostgreSQL) ───────────────────────────────────────────
+
+func (s *PgUserStore) StoreRoom(ctx context.Context, room *RoomRecord) error {
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO rooms (name, creator, password_hash, lobby_enabled, max_participants, description, status, created_at, updated_at)
+		VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
+		ON CONFLICT (name) DO UPDATE SET
+			password_hash=EXCLUDED.password_hash, lobby_enabled=EXCLUDED.lobby_enabled,
+			max_participants=EXCLUDED.max_participants, description=EXCLUDED.description,
+			status=EXCLUDED.status, updated_at=EXCLUDED.updated_at`,
+		room.Name, room.Creator, room.PasswordHash, room.LobbyEnabled,
+		room.MaxParticipants, room.Description, room.Status, room.CreatedAt, room.UpdatedAt)
+	return err
+}
+
+func (s *PgUserStore) LoadRoom(ctx context.Context, roomName string) (*RoomRecord, error) {
+	r := &RoomRecord{}
+	err := s.pool.QueryRow(ctx, `
+		SELECT name, creator, password_hash, lobby_enabled, max_participants, description, status, created_at, updated_at
+		FROM rooms WHERE name=$1`, roomName).
+		Scan(&r.Name, &r.Creator, &r.PasswordHash, &r.LobbyEnabled,
+			&r.MaxParticipants, &r.Description, &r.Status, &r.CreatedAt, &r.UpdatedAt)
+	if err == pgx.ErrNoRows {
+		return nil, ErrRoomNotFound
+	}
+	return r, err
+}
+
+func (s *PgUserStore) DeleteRoom(ctx context.Context, roomName string) error {
+	_, err := s.pool.Exec(ctx, "DELETE FROM rooms WHERE name=$1", roomName)
+	return err
+}
+
+func (s *PgUserStore) ListUserRooms(ctx context.Context, username string) ([]*RoomRecord, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT r.name, r.creator, r.password_hash, r.lobby_enabled, r.max_participants, r.description, r.status, r.created_at, r.updated_at
+		FROM rooms r
+		INNER JOIN room_members rm ON r.name = rm.room_name
+		WHERE rm.username=$1 AND r.status='active'
+		ORDER BY r.created_at DESC`, username)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*RoomRecord
+	for rows.Next() {
+		r := &RoomRecord{}
+		if err := rows.Scan(&r.Name, &r.Creator, &r.PasswordHash, &r.LobbyEnabled,
+			&r.MaxParticipants, &r.Description, &r.Status, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, r)
+	}
+	return list, nil
+}
+
+// ── Room Members (PostgreSQL) ───────────────────────────────────────────────
+
+func (s *PgUserStore) AddRoomMember(ctx context.Context, roomName, username, role string) error {
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO room_members (room_name, username, role, joined_at)
+		VALUES ($1,$2,$3,$4)
+		ON CONFLICT (room_name, username) DO NOTHING`,
+		roomName, username, role, now())
+	return err
+}
+
+func (s *PgUserStore) RemoveRoomMember(ctx context.Context, roomName, username string) error {
+	_, err := s.pool.Exec(ctx, "DELETE FROM room_members WHERE room_name=$1 AND username=$2", roomName, username)
+	return err
+}
+
+func (s *PgUserStore) ListRoomMembers(ctx context.Context, roomName string) ([]*RoomMember, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT room_name, username, role, joined_at
+		FROM room_members WHERE room_name=$1 ORDER BY joined_at`, roomName)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var list []*RoomMember
+	for rows.Next() {
+		m := &RoomMember{}
+		if err := rows.Scan(&m.RoomName, &m.Username, &m.Role, &m.JoinedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, m)
+	}
+	return list, nil
+}
+
+func (s *PgUserStore) IsRoomMember(ctx context.Context, roomName, username string) (bool, error) {
+	var exists bool
+	err := s.pool.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM room_members WHERE room_name=$1 AND username=$2)", roomName, username).Scan(&exists)
+	return exists, err
+}
+
+func now() int64 { return time.Now().Unix() }
 

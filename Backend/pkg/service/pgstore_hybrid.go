@@ -132,3 +132,37 @@ func (h *HybridUserStore) SetLobbyDecision(ctx context.Context, roomName, userna
 func (h *HybridUserStore) GetLobbyDecision(ctx context.Context, roomName, username string) (string, error) {
 	return h.redis.GetLobbyDecision(ctx, roomName, username)
 }
+
+// ── Persistent Rooms (PostgreSQL) ───────────────────────────────────────────
+
+func (h *HybridUserStore) StoreRoom(ctx context.Context, room *RoomRecord) error {
+	return h.pg.StoreRoom(ctx, room)
+}
+
+func (h *HybridUserStore) LoadRoom(ctx context.Context, roomName string) (*RoomRecord, error) {
+	return h.pg.LoadRoom(ctx, roomName)
+}
+
+func (h *HybridUserStore) DeleteRoom(ctx context.Context, roomName string) error {
+	return h.pg.DeleteRoom(ctx, roomName)
+}
+
+func (h *HybridUserStore) ListUserRooms(ctx context.Context, username string) ([]*RoomRecord, error) {
+	return h.pg.ListUserRooms(ctx, username)
+}
+
+func (h *HybridUserStore) AddRoomMember(ctx context.Context, roomName, username, role string) error {
+	return h.pg.AddRoomMember(ctx, roomName, username, role)
+}
+
+func (h *HybridUserStore) RemoveRoomMember(ctx context.Context, roomName, username string) error {
+	return h.pg.RemoveRoomMember(ctx, roomName, username)
+}
+
+func (h *HybridUserStore) ListRoomMembers(ctx context.Context, roomName string) ([]*RoomMember, error) {
+	return h.pg.ListRoomMembers(ctx, roomName)
+}
+
+func (h *HybridUserStore) IsRoomMember(ctx context.Context, roomName, username string) (bool, error) {
+	return h.pg.IsRoomMember(ctx, roomName, username)
+}

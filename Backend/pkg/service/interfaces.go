@@ -141,6 +141,18 @@ type UserStore interface {
 	LoadShareLink(ctx context.Context, code string) (*ShareLink, error)
 	LoadShareLinkByRoom(ctx context.Context, roomName string) (*ShareLink, error)
 	DeleteShareLink(ctx context.Context, code string) error
+
+	// Persistent rooms
+	StoreRoom(ctx context.Context, room *RoomRecord) error
+	LoadRoom(ctx context.Context, roomName string) (*RoomRecord, error)
+	DeleteRoom(ctx context.Context, roomName string) error
+	ListUserRooms(ctx context.Context, username string) ([]*RoomRecord, error)
+
+	// Room members
+	AddRoomMember(ctx context.Context, roomName, username, role string) error
+	RemoveRoomMember(ctx context.Context, roomName, username string) error
+	ListRoomMembers(ctx context.Context, roomName string) ([]*RoomMember, error)
+	IsRoomMember(ctx context.Context, roomName, username string) (bool, error)
 }
 
 // ChatMessage represents a single chat message in a room
@@ -178,6 +190,27 @@ type FileMetadata struct {
 	FileSize  int64  `json:"file_size"`
 	MimeType  string `json:"mime_type"`
 	Timestamp int64  `json:"timestamp"`
+}
+
+// RoomRecord represents a persistent room in PostgreSQL
+type RoomRecord struct {
+	Name            string `json:"name"`
+	Creator         string `json:"creator"`
+	PasswordHash    string `json:"password_hash,omitempty"`
+	LobbyEnabled    bool   `json:"lobby_enabled"`
+	MaxParticipants int    `json:"max_participants"`
+	Description     string `json:"description,omitempty"`
+	Status          string `json:"status"` // "active", "archived"
+	CreatedAt       int64  `json:"created_at"`
+	UpdatedAt       int64  `json:"updated_at"`
+}
+
+// RoomMember represents a user's membership in a persistent room
+type RoomMember struct {
+	RoomName string `json:"room_name"`
+	Username string `json:"username"`
+	Role     string `json:"role"` // "creator", "member"
+	JoinedAt int64  `json:"joined_at"`
 }
 
 // ShareLink represents a shareable invite link for a room

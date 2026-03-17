@@ -124,8 +124,8 @@ onMounted(fetchRooms)
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_1px_8px_-2px_rgba(0,0,0,0.4)]">
-      <div class="px-6 h-[45px] flex items-center justify-between">
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-bar-top dark:shadow-bar-top">
+      <div class="px-6 h-bar flex items-center justify-between">
         <AppLogo :height="40" />
         <div class="flex items-center gap-3">
           <ThemeToggle />
@@ -165,7 +165,7 @@ onMounted(fetchRooms)
       </div>
 
       <!-- Create room form -->
-      <div v-if="showCreate" class="mb-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.4)] p-4">
+      <div v-if="showCreate" class="mb-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card p-4">
         <form @submit.prevent="handleCreate" class="space-y-3">
           <div class="flex gap-3">
             <div class="flex-1">
@@ -235,7 +235,7 @@ onMounted(fetchRooms)
         <div
           v-for="room in rooms"
           :key="room.sid"
-          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.08),0_1px_4px_-1px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.4)] px-4 py-3 flex items-center justify-between hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.12),0_2px_6px_-1px_rgba(0,0,0,0.06)] dark:hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.6)] transition-all"
+          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card px-4 py-3 flex items-center justify-between hover:shadow-popup dark:hover:shadow-popup transition-all"
         >
           <div class="flex items-center gap-3 min-w-0">
             <div class="w-9 h-9 bg-indigo-50 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center shrink-0">

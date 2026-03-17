@@ -79,7 +79,7 @@ onMounted(fetchRooms)
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-gray-900/40">
-      <div class="px-6 h-[45px] flex items-center justify-between">
+      <div class="px-6 h-bar flex items-center justify-between">
         <div class="flex items-center gap-3">
           <AppLogo :height="40" />
           <span class="font-semibold text-gray-900 dark:text-white text-sm">{{ t('agent.title') }}</span>
@@ -201,7 +201,7 @@ onMounted(fetchRooms)
             <div class="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
               <div><span class="font-medium">{{ t('agent.room') }}:</span> {{ item.room }}</div>
               <div v-if="item.metadata"><span class="font-medium">{{ t('agent.metadata') }}:</span> {{ item.metadata }}</div>
-              <div class="text-[10px] text-gray-400">ID: {{ item.id }}</div>
+              <div class="text-2xs text-gray-400">ID: {{ item.id }}</div>
             </div>
           </div>
           <button

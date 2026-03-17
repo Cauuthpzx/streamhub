@@ -35,6 +35,7 @@ describe('useRecording composable', () => {
       getTracks: vi.fn(() => [{ stop: vi.fn() }]),
       getVideoTracks: vi.fn(() => [{
         addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
       }]),
     }
     global.navigator = {
@@ -266,6 +267,7 @@ describe('useRecording composable', () => {
         addEventListener: vi.fn((event, handler) => {
           if (event === 'ended') trackEndHandler = handler
         }),
+        removeEventListener: vi.fn(),
       }])
 
       const result = useRecording(mockRoom, 'test-room', mockT)

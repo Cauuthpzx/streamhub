@@ -8,6 +8,20 @@ export default defineConfig({
     environment: 'happy-dom',
     globals: true,
   },
+  build: {
+    target: 'esnext',
+    minify: 'terser',
+    cssMinify: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vue-vendor': ['vue', 'vue-router', 'vue-i18n'],
+          'livekit': ['livekit-client'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 500,
+  },
   server: {
     host: '0.0.0.0',
     port: 3000,

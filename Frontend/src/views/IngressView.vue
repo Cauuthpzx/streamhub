@@ -93,7 +93,7 @@ onMounted(() => {
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
     <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-gray-900/40">
-      <div class="px-6 h-[45px] flex items-center justify-between">
+      <div class="px-6 h-bar flex items-center justify-between">
         <div class="flex items-center gap-3">
           <AppLogo :height="40" />
           <span class="font-semibold text-gray-900 dark:text-white text-sm">{{ t('ingress.title') }}</span>

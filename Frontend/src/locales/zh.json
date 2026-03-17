@@ -187,7 +187,9 @@
     "sendMessageFailed": "发送消息失败",
     "loadHistoryFailed": "加载聊天记录失败",
     "egressStartFailed": "开始录制失败",
-    "egressStopFailed": "停止录制失败"
+    "egressStopFailed": "停止录制失败",
+    "missingFields": "缺少必填字段",
+    "agentDispatchDeleteFailed": "删除代理调度失败"
   },
   "log": {
     "userRegistered": "用户已注册",

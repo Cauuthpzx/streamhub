@@ -22,7 +22,7 @@ const showEmojiPicker = ref(false)
 const emojiPickerRef = ref(null)
 const emojiBtnRef = ref(null)
 
-const emojis = [
+const emojis = Object.freeze([
   '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
   '😋','😎','😍','🥰','😘','😗','😙','😚','🙂','🤗',
   '🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥',
@@ -30,7 +30,7 @@ const emojis = [
   '😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','🥳',
   '😷','🤒','🤕','🤢','🤮','🤧','😇','🥺','🤡','💀',
   '👍','👎','👋','🤝','👏','🙌','💪','❤️','🔥','💯',
-]
+])
 
 function insertEmoji(emoji) {
   const el = chatInput.value
@@ -174,7 +174,7 @@ onMounted(loadHistory)
             class="text-xs font-medium shrink-0"
             :class="msg.isLocal ? 'text-indigo-400' : 'text-emerald-400'"
           >{{ msg.sender }}</span>
-          <span class="text-[10px] text-gray-500 shrink-0">{{ formatTime(msg.time) }}</span>
+          <span class="text-2xs text-gray-500 shrink-0">{{ formatTime(msg.time) }}</span>
         </div>
         <p class="text-sm text-gray-700 dark:text-gray-200 break-words leading-snug mt-0.5">{{ msg.text }}</p>
       </div>

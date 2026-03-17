@@ -21,6 +21,12 @@ const moveTarget = ref(null) // { identity }
 const moveDestination = ref('')
 const availableRooms = ref([])
 
+let buildListTimer = null
+function debouncedBuildList() {
+  if (buildListTimer) clearTimeout(buildListTimer)
+  buildListTimer = setTimeout(buildList, 50)
+}
+
 function buildList() {
   if (!props.room) return
   const r = toRaw(props.room)
@@ -101,8 +107,8 @@ watch(() => props.room, buildList, { immediate: true })
 
 watch(() => props.room, (r, oldR) => {
   const events = ['participantConnected', 'participantDisconnected', 'trackMuted', 'trackUnmuted', 'trackSubscribed', 'trackUnsubscribed', 'localTrackPublished', 'localTrackUnpublished']
-  if (oldR) events.forEach((e) => toRaw(oldR).off(e, buildList))
-  if (r) events.forEach((e) => toRaw(r).on(e, buildList))
+  if (oldR) events.forEach((e) => toRaw(oldR).off(e, debouncedBuildList))
+  if (r) events.forEach((e) => toRaw(r).on(e, debouncedBuildList))
 }, { immediate: true })
 </script>
 
@@ -136,7 +142,7 @@ watch(() => props.room, (r, oldR) => {
           class="text-xs px-2 py-1.5 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 cursor-pointer"
         >{{ t('room.cancel') }}</button>
       </div>
-      <p v-if="availableRooms.length === 0" class="text-[10px] text-gray-400 mt-1">{{ t('participants.noOtherRooms') }}</p>
+      <p v-if="availableRooms.length === 0" class="text-2xs text-gray-400 mt-1">{{ t('participants.noOtherRooms') }}</p>
     </div>
 
     <!-- List -->
@@ -151,7 +157,7 @@ watch(() => props.room, (r, oldR) => {
             {{ (p.identity || '?')[0].toUpperCase() }}
           </div>
           <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ p.identity }}</span>
-          <span v-if="p.isLocal" class="text-[10px] text-indigo-500 font-medium shrink-0">({{ t('participants.you') }})</span>
+          <span v-if="p.isLocal" class="text-2xs text-indigo-500 font-medium shrink-0">({{ t('participants.you') }})</span>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">

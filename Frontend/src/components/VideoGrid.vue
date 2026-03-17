@@ -33,8 +33,8 @@ const emit = defineEmits(['pin', 'fullscreen'])
         <div
           v-for="{ participant, isLocal } in participants"
           :key="'pip-' + participant.sid"
-          class="relative w-[180px] h-[120px] bg-gray-800 rounded-lg overflow-hidden shadow-xl transition-all hover:scale-105"
-          :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : 'border border-gray-700/50'"
+          class="relative w-pip-w h-pip-h bg-gray-800 rounded-lg overflow-hidden shadow-xl transition-all hover:scale-105"
+          :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : 'border border-gray-700/50'"
         >
           <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
           <div class="absolute inset-0 flex items-center justify-center z-0">
@@ -42,7 +42,7 @@ const emit = defineEmits(['pin', 'fullscreen'])
               {{ (participant.identity || '?')[0].toUpperCase() }}
             </div>
           </div>
-          <div class="absolute bottom-1 left-1 bg-black/70 rounded px-1.5 py-0.5 text-[10px] text-white z-20 flex items-center gap-1">
+          <div class="absolute bottom-1 left-1 bg-black/70 rounded px-1.5 py-0.5 text-2xs text-white z-20 flex items-center gap-1">
             <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
             {{ participant.identity }}
             <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
@@ -72,8 +72,8 @@ const emit = defineEmits(['pin', 'fullscreen'])
           v-for="{ participant, isLocal } in participants.filter(p => p.participant.sid === pinnedSid)"
           :key="'pinned-' + participant.sid"
           :id="`tile-${participant.sid}`"
-          class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden flex-1 transition-all duration-300 border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.1),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.5)]"
-          :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
+          class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden flex-1 transition-all duration-300 border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
+          :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
         >
           <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
           <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
@@ -104,13 +104,13 @@ const emit = defineEmits(['pin', 'fullscreen'])
           </div>
         </div>
         <!-- Side strip -->
-        <div class="flex flex-col gap-2 w-[200px] shrink-0">
+        <div class="flex flex-col gap-2 w-strip-w shrink-0">
           <div
             v-for="{ participant } in participants.filter(p => p.participant.sid !== pinnedSid)"
             :key="'side-' + participant.sid"
             :id="`tile-${participant.sid}`"
-            class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden h-[130px] transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.1),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.5)]"
-            :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
+            class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden h-strip-thumb transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
+            :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
           >
             <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
             <div class="absolute inset-0 flex items-center justify-center z-0">
@@ -118,7 +118,7 @@ const emit = defineEmits(['pin', 'fullscreen'])
                 {{ (participant.identity || '?')[0].toUpperCase() }}
               </div>
             </div>
-            <div class="absolute bottom-1 left-1 bg-black/60 rounded px-1.5 py-0.5 text-[10px] text-white z-20 flex items-center gap-1">
+            <div class="absolute bottom-1 left-1 bg-black/60 rounded px-1.5 py-0.5 text-2xs text-white z-20 flex items-center gap-1">
               <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
               {{ participant.identity }}
             </div>
@@ -146,8 +146,8 @@ const emit = defineEmits(['pin', 'fullscreen'])
           v-for="{ participant, isLocal } in participants"
           :key="participant.sid"
           :id="`tile-${participant.sid}`"
-          class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden min-h-[200px] transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-[0_2px_16px_-2px_rgba(0,0,0,0.1),0_1px_4px_-1px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_16px_-2px_rgba(0,0,0,0.5)]"
-          :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-[0_0_12px_rgba(74,222,128,0.4)]' : ''"
+          class="relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden min-h-grid-min transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
+          :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
         >
           <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
 

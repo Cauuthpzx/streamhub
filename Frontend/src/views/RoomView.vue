@@ -69,8 +69,8 @@ deps.recording = recordingCtx
 
     <template v-else>
       <!-- Header -->
-      <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-[0_1px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_1px_8px_-2px_rgba(0,0,0,0.4)]">
-        <div class="px-4 h-[45px] flex items-center justify-between">
+      <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-bar-top dark:shadow-bar-top">
+        <div class="px-4 h-bar flex items-center justify-between">
           <div class="flex items-center gap-3">
             <AppLogo :height="40" />
             <span class="font-semibold text-gray-900 dark:text-white text-sm">{{ roomName }}</span>
@@ -169,12 +169,12 @@ deps.recording = recordingCtx
         <Transition name="slide-panel">
           <div
             v-if="panelOpen"
-            class="w-80 border-l border-gray-200/70 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0 shadow-[-4px_0_16px_-4px_rgba(0,0,0,0.06)] dark:shadow-[-4px_0_16px_-4px_rgba(0,0,0,0.3)]"
+            class="w-80 border-l border-gray-200/70 dark:border-gray-700 flex flex-col bg-white dark:bg-gray-800 shrink-0 shadow-panel dark:shadow-panel"
           >
             <div class="flex border-b border-gray-200 dark:border-gray-700 shrink-0">
               <button
                 @click="switchTab('chat')"
-                class="flex-1 h-[40px] text-xs font-medium transition-colors cursor-pointer relative flex items-center justify-center gap-1.5"
+                class="flex-1 h-10 text-xs font-medium transition-colors cursor-pointer relative flex items-center justify-center gap-1.5"
                 :class="panelTab === 'chat'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
@@ -183,20 +183,20 @@ deps.recording = recordingCtx
                 {{ t('chat.title') }}
                 <span
                   v-if="unreadCount > 0 && panelTab !== 'chat'"
-                  class="w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center"
+                  class="w-4 h-4 bg-red-500 rounded-full text-3xs font-bold text-white flex items-center justify-center"
                 >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
                 <div v-if="panelTab === 'chat'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full"></div>
               </button>
               <button
                 @click="switchTab('participants')"
-                class="flex-1 h-[40px] text-xs font-medium transition-colors cursor-pointer relative flex items-center justify-center gap-1.5"
+                class="flex-1 h-10 text-xs font-medium transition-colors cursor-pointer relative flex items-center justify-center gap-1.5"
                 :class="panelTab === 'participants'
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
               >
                 <Users class="w-3.5 h-3.5" :stroke-width="1.8" />
                 {{ t('participants.title') }}
-                <span class="text-[10px] text-gray-400 dark:text-gray-500">({{ participants.length }})</span>
+                <span class="text-2xs text-gray-400 dark:text-gray-500">({{ participants.length }})</span>
                 <div v-if="panelTab === 'participants'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full"></div>
               </button>
             </div>

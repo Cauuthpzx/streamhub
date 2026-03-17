@@ -187,7 +187,9 @@
     "sendMessageFailed": "Failed to send message",
     "loadHistoryFailed": "Failed to load chat history",
     "egressStartFailed": "Failed to start recording",
-    "egressStopFailed": "Failed to stop recording"
+    "egressStopFailed": "Failed to stop recording",
+    "missingFields": "Required fields are missing",
+    "agentDispatchDeleteFailed": "Failed to delete agent dispatch"
   },
   "log": {
     "userRegistered": "User registered",

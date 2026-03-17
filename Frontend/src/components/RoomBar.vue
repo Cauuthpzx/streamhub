@@ -30,7 +30,7 @@ const emit = defineEmits([
 </script>
 
 <template>
-  <div class="bg-white dark:bg-gray-800 border-t border-gray-200/70 dark:border-gray-700 shadow-[0_-1px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_-1px_8px_-2px_rgba(0,0,0,0.4)] h-[45px] flex items-center justify-center">
+  <div class="bg-white dark:bg-gray-800 border-t border-gray-200/70 dark:border-gray-700 shadow-bar dark:shadow-bar h-bar flex items-center justify-center">
     <div class="flex items-center justify-center gap-2">
       <!-- Mic -->
       <AppTooltip :content="micEnabled ? t('chat.muteMic') : t('chat.unmuteMic')" position="top">
@@ -116,7 +116,7 @@ const emit = defineEmits([
         <Transition name="fade">
           <div
             v-if="showReactionPicker"
-            class="absolute bottom-11 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-xl border border-gray-200/80 dark:border-white/[0.08] shadow-[0_4px_24px_-4px_rgba(0,0,0,0.15),0_2px_8px_-2px_rgba(0,0,0,0.08)] dark:shadow-[0_4px_24px_-4px_rgba(0,0,0,0.6)] px-2 py-1.5 flex gap-1 z-50"
+            class="absolute bottom-11 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-xl border border-gray-200/80 dark:border-white/[0.08] shadow-popup dark:shadow-popup px-2 py-1.5 flex gap-1 z-50"
           >
             <button
               v-for="emoji in REACTIONS"
@@ -138,7 +138,7 @@ const emit = defineEmits([
           <MessageSquare class="w-4 h-4" :stroke-width="1.8" />
           <span
             v-if="unreadCount > 0 && !panelOpen"
-            class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center"
+            class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-3xs font-bold text-white flex items-center justify-center"
           >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
         </button>
       </AppTooltip>

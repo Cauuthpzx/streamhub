@@ -187,7 +187,9 @@
     "sendMessageFailed": "Không thể gửi tin nhắn",
     "loadHistoryFailed": "Không thể tải lịch sử trò chuyện",
     "egressStartFailed": "Không thể bắt đầu ghi hình",
-    "egressStopFailed": "Không thể dừng ghi hình"
+    "egressStopFailed": "Không thể dừng ghi hình",
+    "missingFields": "Thiếu các trường bắt buộc",
+    "agentDispatchDeleteFailed": "Không thể xoá agent dispatch"
   },
   "log": {
     "userRegistered": "Đã đăng ký người dùng",

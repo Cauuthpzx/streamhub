@@ -310,7 +310,10 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 
 	var req tokenRequest
 	if r.Body != nil {
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+			return
+		}
 	}
 
 	// if joining a specific room, verify password if room is protected
@@ -425,7 +428,7 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 	})
 	if err != nil {
 		logger.Errorw("log.createRoomFailed", err, "username", username, "room", req.Name)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: err.Error()})
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.roomCreateFailed"})
 		return
 	}
 
@@ -565,7 +568,10 @@ func (s *UserAuthService) handleChatHistory(w http.ResponseWriter, r *http.Reque
 
 	var req chatHistoryRequest
 	if r.Body != nil {
-		json.NewDecoder(r.Body).Decode(&req)
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+			return
+		}
 	}
 
 	if req.Room == "" {
@@ -707,7 +713,10 @@ func (s *UserAuthService) handleIngressList(w http.ResponseWriter, r *http.Reque
 	var body struct {
 		Room string `json:"room"`
 	}
-	json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
 
 	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
 		Video: &auth.VideoGrant{IngressAdmin: true},
@@ -1017,7 +1026,10 @@ func (s *UserAuthService) handleEgressList(w http.ResponseWriter, r *http.Reques
 	var body struct {
 		Room string `json:"room"`
 	}
-	json.NewDecoder(r.Body).Decode(&body)
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
 
 	ctx := WithGrants(r.Context(), &auth.ClaimGrants{
 		Video: &auth.VideoGrant{RoomRecord: true},

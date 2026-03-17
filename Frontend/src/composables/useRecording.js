@@ -18,6 +18,7 @@ export function useRecording(room, roomName, t) {
   let recordedChunks = []
   let timerInterval = null
   let captureStream = null
+  let trackEndHandler = null
 
   const formattedTime = computed(() => {
     const h = Math.floor(elapsedSeconds.value / 3600)
@@ -70,13 +71,14 @@ export function useRecording(room, roomName, t) {
     }
 
     // If user stops sharing via browser's "Stop sharing" button
-    captureStream.getVideoTracks()[0].addEventListener('ended', () => {
+    trackEndHandler = () => {
       if (recording.value) {
         stopRecording()
         recording.value = false
         stopTimer()
       }
-    })
+    }
+    captureStream.getVideoTracks()[0].addEventListener('ended', trackEndHandler)
 
     mediaRecorder.start(1000)
     recording.value = true
@@ -86,6 +88,10 @@ export function useRecording(room, roomName, t) {
   function stopRecording() {
     if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop()
     if (captureStream) {
+      if (trackEndHandler) {
+        captureStream.getVideoTracks().forEach((t) => t.removeEventListener('ended', trackEndHandler))
+        trackEndHandler = null
+      }
       captureStream.getTracks().forEach((t) => t.stop())
       captureStream = null
     }

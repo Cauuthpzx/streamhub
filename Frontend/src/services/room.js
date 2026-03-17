@@ -93,7 +93,7 @@ export async function sendChatMessage(room, text) {
     body: JSON.stringify({ room, text }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to send message')
+  if (!res.ok) throw new Error(data.error || 'error.sendMessageFailed')
   return data
 }
 
@@ -104,6 +104,6 @@ export async function getChatHistory(room, limit = 100) {
     body: JSON.stringify({ room, limit }),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'Failed to load history')
+  if (!res.ok) throw new Error(data.error || 'error.loadHistoryFailed')
   return data.messages || []
 }

@@ -29,7 +29,7 @@ async function handleLogin() {
     saveToken(data.token, data.username)
     router.push('/home')
   } catch (e) {
-    error.value = e.message
+    error.value = t(e.message)
   } finally {
     loading.value = false
   }

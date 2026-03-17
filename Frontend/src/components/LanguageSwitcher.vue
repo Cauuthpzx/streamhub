@@ -6,6 +6,7 @@ import { setLocale } from '../i18n'
 
 const { locale } = useI18n()
 const open = ref(false)
+let closeTimer = null
 
 const locales = [
   { code: 'en', name: 'English' },
@@ -20,18 +21,20 @@ function select(code) {
   open.value = false
 }
 
-function handleBlur(e) {
-  if (!e.currentTarget.contains(e.relatedTarget)) {
-    open.value = false
-  }
+function onEnter() {
+  clearTimeout(closeTimer)
+  open.value = true
+}
+
+function onLeave() {
+  closeTimer = setTimeout(() => { open.value = false }, 150)
 }
 </script>
 
 <template>
-  <div class="relative" @focusout="handleBlur" tabindex="-1">
+  <div class="relative" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Trigger -->
     <button
-      @click="open = !open"
       class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
     >
       <!-- Current flag -->
@@ -75,13 +78,13 @@ function handleBlur(e) {
     >
       <div
         v-if="open"
-        class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[160px] z-50"
+        class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-max z-50"
       >
         <button
           v-for="loc in locales"
           :key="loc.code"
           @click="select(loc.code)"
-          class="w-full flex items-center gap-2.5 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          class="w-full flex items-center gap-2.5 px-3 py-2 text-sm whitespace-nowrap hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           :class="locale === loc.code ? 'text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-900/20 font-medium' : 'text-gray-700 dark:text-gray-300'"
         >
           <!-- EN flag -->

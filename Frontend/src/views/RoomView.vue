@@ -31,6 +31,9 @@ import { getLivekitToken, getUsername } from '../services/auth'
 import RoomChat from '../components/RoomChat.vue'
 import RoomParticipants from '../components/RoomParticipants.vue'
 import AppLogo from '../components/AppLogo.vue'
+import ThemeToggle from '../components/ThemeToggle.vue'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import UserMenu from '../components/UserMenu.vue'
 import DeviceSettings from '../components/DeviceSettings.vue'
 import ConnectionBars from '../components/ConnectionBars.vue'
 import PreJoinScreen from '../components/PreJoinScreen.vue'
@@ -192,7 +195,7 @@ async function connectRoom() {
     await nextTick()
     attachLocalVideo()
   } catch (e) {
-    error.value = e.message || t('room.connectFailed')
+    error.value = t(e.message || 'room.connectFailed')
   } finally {
     connecting.value = false
   }
@@ -473,7 +476,11 @@ onUnmounted(() => {
             {{ participants.length }}
           </span>
         </div>
-        <span class="text-sm text-gray-500 dark:text-gray-400">{{ username }}</span>
+        <div class="flex items-center gap-3">
+          <ThemeToggle />
+          <LanguageSwitcher />
+          <UserMenu />
+        </div>
       </div>
     </header>
 

@@ -2,11 +2,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, LogOut, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil } from 'lucide-vue-next'
-import { getUsername, logout } from '../services/auth'
+import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil } from 'lucide-vue-next'
+import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom, updateRoomMetadata } from '../services/room'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
+import UserMenu from '../components/UserMenu.vue'
 import AppLogo from '../components/AppLogo.vue'
 
 const router = useRouter()
@@ -30,7 +31,7 @@ async function fetchRooms() {
   try {
     rooms.value = await listRooms()
   } catch (e) {
-    error.value = e.message
+    error.value = t(e.message)
   } finally {
     loading.value = false
   }
@@ -51,7 +52,7 @@ async function handleCreate() {
     showCreate.value = false
     await fetchRooms()
   } catch (e) {
-    error.value = e.message
+    error.value = t(e.message)
   } finally {
     creating.value = false
   }
@@ -63,7 +64,7 @@ async function handleDelete(name) {
     await deleteRoom(name)
     await fetchRooms()
   } catch (e) {
-    error.value = e.message
+    error.value = t(e.message)
   }
 }
 
@@ -113,13 +114,8 @@ async function handleEditMetadata() {
     showEditDialog.value = false
     await fetchRooms()
   } catch (e) {
-    error.value = e.message
+    error.value = t(e.message)
   }
-}
-
-function handleLogout() {
-  logout()
-  router.push('/login')
 }
 
 onMounted(fetchRooms)
@@ -134,14 +130,7 @@ onMounted(fetchRooms)
         <div class="flex items-center gap-3">
           <ThemeToggle />
           <LanguageSwitcher />
-          <span class="text-sm text-gray-600 dark:text-gray-400">{{ username }}</span>
-          <button
-            @click="handleLogout"
-            class="flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 font-medium transition-colors cursor-pointer"
-          >
-            <LogOut class="w-4 h-4" :stroke-width="1.8" />
-            {{ t('auth.signOut') }}
-          </button>
+          <UserMenu />
         </div>
       </div>
     </header>

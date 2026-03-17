@@ -1,7 +1,7 @@
 <script setup>
-import { ref, toRaw, nextTick, watch, onMounted } from 'vue'
+import { ref, toRaw, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Send } from 'lucide-vue-next'
+import { Send, Smile } from 'lucide-vue-next'
 import { RoomEvent } from 'livekit-client'
 import { sendChatMessage, getChatHistory } from '../services/room'
 
@@ -16,7 +16,54 @@ const props = defineProps({
 const messages = ref([])
 const input = ref('')
 const chatContainer = ref(null)
+const chatInput = ref(null)
 const loadingHistory = ref(false)
+const showEmojiPicker = ref(false)
+const emojiPickerRef = ref(null)
+const emojiBtnRef = ref(null)
+
+const emojis = [
+  '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
+  '😋','😎','😍','🥰','😘','😗','😙','😚','🙂','🤗',
+  '🤩','🤔','🤨','😐','😑','😶','🙄','😏','😣','😥',
+  '😮','🤐','😯','😪','😫','🥱','😴','😌','😛','😜',
+  '😝','🤤','😒','😓','😔','😕','🙃','🤑','😲','🥳',
+  '😷','🤒','🤕','🤢','🤮','🤧','😇','🥺','🤡','💀',
+  '👍','👎','👋','🤝','👏','🙌','💪','❤️','🔥','💯',
+]
+
+function insertEmoji(emoji) {
+  const el = chatInput.value
+  if (el) {
+    const start = el.selectionStart ?? input.value.length
+    const end = el.selectionEnd ?? start
+    input.value = input.value.slice(0, start) + emoji + input.value.slice(end)
+    nextTick(() => {
+      const pos = start + emoji.length
+      el.setSelectionRange(pos, pos)
+      el.focus()
+    })
+  } else {
+    input.value += emoji
+  }
+}
+
+function toggleEmojiPicker() {
+  showEmojiPicker.value = !showEmojiPicker.value
+}
+
+function onClickOutside(e) {
+  if (
+    showEmojiPicker.value &&
+    emojiPickerRef.value && !emojiPickerRef.value.contains(e.target) &&
+    emojiBtnRef.value && !emojiBtnRef.value.contains(e.target)
+  ) {
+    showEmojiPicker.value = false
+  }
+}
+
+onMounted(() => document.addEventListener('mousedown', onClickOutside))
+onBeforeUnmount(() => document.removeEventListener('mousedown', onClickOutside))
 
 const encoder = new TextEncoder()
 const decoder = new TextDecoder()
@@ -134,20 +181,66 @@ onMounted(loadHistory)
     </div>
 
     <!-- Input -->
-    <form @submit.prevent="sendMessage" class="border-t border-gray-200 dark:border-gray-700 p-2 flex gap-2">
-      <input
-        v-model="input"
-        :placeholder="t('chat.placeholder')"
-        class="flex-1 bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-text"
-        maxlength="500"
-      />
-      <button
-        type="submit"
-        :disabled="!input.trim()"
-        class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shrink-0"
-      >
-        <Send class="w-4 h-4 text-white" :stroke-width="2" />
-      </button>
-    </form>
+    <div class="relative border-t border-gray-200 dark:border-gray-700">
+      <!-- Emoji Picker Popup -->
+      <Transition name="emoji-fade">
+        <div
+          v-if="showEmojiPicker"
+          ref="emojiPickerRef"
+          class="absolute bottom-full left-0 right-0 mx-2 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg p-2 z-50"
+        >
+          <div class="grid grid-cols-10 gap-0.5">
+            <button
+              v-for="emoji in emojis"
+              :key="emoji"
+              type="button"
+              @click="insertEmoji(emoji)"
+              class="w-8 h-8 flex items-center justify-center rounded-md text-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer select-none"
+            >{{ emoji }}</button>
+          </div>
+        </div>
+      </Transition>
+
+      <form @submit.prevent="sendMessage" class="p-2 flex gap-2 items-center">
+        <button
+          ref="emojiBtnRef"
+          type="button"
+          :title="t('chat.emoji')"
+          @click="toggleEmojiPicker"
+          class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          :class="showEmojiPicker
+            ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-500'
+            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+        >
+          <Smile class="w-5 h-5" :stroke-width="1.8" />
+        </button>
+        <input
+          ref="chatInput"
+          v-model="input"
+          :placeholder="t('chat.placeholder')"
+          class="flex-1 bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-text"
+          maxlength="500"
+        />
+        <button
+          type="submit"
+          :disabled="!input.trim()"
+          class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shrink-0"
+        >
+          <Send class="w-4 h-4 text-white" :stroke-width="2" />
+        </button>
+      </form>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.emoji-fade-enter-active,
+.emoji-fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.emoji-fade-enter-from,
+.emoji-fade-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
+}
+</style>

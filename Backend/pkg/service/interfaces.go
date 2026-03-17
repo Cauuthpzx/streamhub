@@ -146,6 +146,7 @@ type UserStore interface {
 	StoreRoom(ctx context.Context, room *RoomRecord) error
 	LoadRoom(ctx context.Context, roomName string) (*RoomRecord, error)
 	DeleteRoom(ctx context.Context, roomName string) error
+	ListAllRooms(ctx context.Context) ([]*RoomRecord, error)
 	ListUserRooms(ctx context.Context, username string) ([]*RoomRecord, error)
 
 	// Room members

@@ -347,6 +347,26 @@ func (s *PgUserStore) DeleteRoom(ctx context.Context, roomName string) error {
 	return err
 }
 
+func (s *PgUserStore) ListAllRooms(ctx context.Context) ([]*RoomRecord, error) {
+	rows, err := s.pool.Query(ctx, `
+		SELECT name, creator, password_hash, lobby_enabled, max_participants, description, status, created_at, updated_at
+		FROM rooms WHERE status='active' ORDER BY created_at DESC`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var list []*RoomRecord
+	for rows.Next() {
+		r := &RoomRecord{}
+		if err := rows.Scan(&r.Name, &r.Creator, &r.PasswordHash, &r.LobbyEnabled,
+			&r.MaxParticipants, &r.Description, &r.Status, &r.CreatedAt, &r.UpdatedAt); err != nil {
+			return nil, err
+		}
+		list = append(list, r)
+	}
+	return list, nil
+}
+
 func (s *PgUserStore) ListUserRooms(ctx context.Context, username string) ([]*RoomRecord, error) {
 	rows, err := s.pool.Query(ctx, `
 		SELECT r.name, r.creator, r.password_hash, r.lobby_enabled, r.max_participants, r.description, r.status, r.created_at, r.updated_at

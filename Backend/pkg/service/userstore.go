@@ -311,6 +311,7 @@ func (s *RedisUserStore) LoadRoom(_ context.Context, _ string) (*RoomRecord, err
 	return nil, ErrRoomNotFound
 }
 func (s *RedisUserStore) DeleteRoom(_ context.Context, _ string) error            { return nil }
+func (s *RedisUserStore) ListAllRooms(_ context.Context) ([]*RoomRecord, error)   { return nil, nil }
 func (s *RedisUserStore) ListUserRooms(_ context.Context, _ string) ([]*RoomRecord, error) {
 	return nil, nil
 }
@@ -608,6 +609,7 @@ func (s *LocalUserStore) LoadRoom(_ context.Context, _ string) (*RoomRecord, err
 	return nil, ErrRoomNotFound
 }
 func (s *LocalUserStore) DeleteRoom(_ context.Context, _ string) error            { return nil }
+func (s *LocalUserStore) ListAllRooms(_ context.Context) ([]*RoomRecord, error)   { return nil, nil }
 func (s *LocalUserStore) ListUserRooms(_ context.Context, _ string) ([]*RoomRecord, error) {
 	return nil, nil
 }

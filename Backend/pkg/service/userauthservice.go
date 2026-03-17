@@ -572,11 +572,19 @@ func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request)
 		sidMap[lkRoom.Name] = lkRoom.Sid
 	}
 
-	// list persistent rooms this user is a member of
-	dbRooms, _ := s.userStore.ListUserRooms(r.Context(), username)
+	// list all persistent rooms
+	dbRooms, _ := s.userStore.ListAllRooms(r.Context())
+
+	// build membership set for current user
+	memberRooms, _ := s.userStore.ListUserRooms(r.Context(), username)
+	memberSet := make(map[string]struct{}, len(memberRooms))
+	for _, m := range memberRooms {
+		memberSet[m.Name] = struct{}{}
+	}
 
 	rooms := make([]roomInfo, 0, len(dbRooms))
 	for _, dbRoom := range dbRooms {
+		_, isMember := memberSet[dbRoom.Name]
 		rooms = append(rooms, roomInfo{
 			SID:             sidMap[dbRoom.Name],
 			Name:            dbRoom.Name,
@@ -586,7 +594,7 @@ func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request)
 			HasLobby:        dbRoom.LobbyEnabled,
 			CreatedAt:       dbRoom.CreatedAt,
 			Creator:         dbRoom.Creator,
-			IsMember:        true,
+			IsMember:        isMember,
 		})
 	}
 

@@ -147,6 +147,10 @@ func (h *HybridUserStore) DeleteRoom(ctx context.Context, roomName string) error
 	return h.pg.DeleteRoom(ctx, roomName)
 }
 
+func (h *HybridUserStore) ListAllRooms(ctx context.Context) ([]*RoomRecord, error) {
+	return h.pg.ListAllRooms(ctx)
+}
+
 func (h *HybridUserStore) ListUserRooms(ctx context.Context, username string) ([]*RoomRecord, error) {
 	return h.pg.ListUserRooms(ctx, username)
 }

@@ -1,9 +1,9 @@
 <script setup>
 import { ref, toRaw, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Send, Smile, Reply, X } from 'lucide-vue-next'
+import { Send, Smile, Reply, X, Paperclip, FileIcon, Download } from 'lucide-vue-next'
 import { RoomEvent } from 'livekit-client'
-import { sendChatMessage, getChatHistory } from '../services/room'
+import { sendChatMessage, getChatHistory, uploadFile, getFileDownloadURL } from '../services/room'
 
 const { t } = useI18n()
 
@@ -22,12 +22,56 @@ const showEmojiPicker = ref(false)
 const emojiPickerRef = ref(null)
 const emojiBtnRef = ref(null)
 const replyTo = ref(null) // { id, sender, text }
+const fileInputRef = ref(null)
+const uploading = ref(false)
+const lightbox = ref(null) // { src, name }
 
 function setReply(msg) {
   replyTo.value = { id: msg.id, sender: msg.sender, text: msg.text.slice(0, 80) }
   nextTick(() => chatInput.value?.focus())
 }
 function clearReply() { replyTo.value = null }
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024 // 10MB
+
+async function handleFileSelect(e) {
+  const file = e.target.files?.[0]
+  if (!file || !props.room) return
+  if (file.size > MAX_FILE_SIZE) {
+    alert(t('error.fileTooLarge'))
+    if (fileInputRef.value) fileInputRef.value.value = ''
+    return
+  }
+  uploading.value = true
+  try {
+    const meta = await uploadFile(props.roomName, file)
+    const msgData = { type: 'chat', text: '', sender: props.username, fileId: meta.id, fileName: meta.file_name, fileSize: meta.file_size }
+    toRaw(props.room).localParticipant.publishData(encoder.encode(JSON.stringify(msgData)), { reliable: true })
+    messages.value.push({
+      id: Date.now() + Math.random(),
+      sender: props.username,
+      text: '',
+      time: Date.now(),
+      isLocal: true,
+      fileId: meta.id,
+      fileName: meta.file_name,
+      fileSize: meta.file_size,
+    })
+    scrollToBottom()
+  } catch (_) { /* upload error */ }
+  uploading.value = false
+  if (fileInputRef.value) fileInputRef.value.value = ''
+}
+
+function formatFileSize(bytes) {
+  if (bytes < 1024) return bytes + ' B'
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
+}
+
+function isImageFile(name) {
+  return /\.(jpe?g|png|gif|webp|svg|bmp|ico|avif)$/i.test(name || '')
+}
 
 // Markdown-like rendering: **bold**, *italic*, `code`, [link](url)
 function renderMarkdown(text) {
@@ -106,11 +150,14 @@ async function loadHistory() {
     messages.value = history.map((msg) => ({
       id: msg.id,
       sender: msg.sender,
-      text: msg.text,
+      text: msg.text || '',
       time: msg.timestamp,
       isLocal: msg.sender === props.username,
       replyTo: msg.reply_to || '',
       replyText: msg.reply_text || '',
+      fileId: msg.file_id || '',
+      fileName: msg.file_name || '',
+      fileSize: msg.file_size || 0,
     }))
     scrollToBottom()
   } catch (_) {
@@ -132,6 +179,9 @@ function onDataReceived(payload, participant) {
       isLocal: false,
       replyTo: msg.replyTo || '',
       replyText: msg.replyText || '',
+      fileId: msg.fileId || '',
+      fileName: msg.fileName || '',
+      fileSize: msg.fileSize || 0,
     })
     scrollToBottom()
   } catch (_) {
@@ -227,8 +277,36 @@ onMounted(loadHistory)
               :class="msg.isLocal ? 'text-indigo-300' : 'text-gray-400 dark:text-gray-500'"
             >{{ formatTime(msg.time) }}</span>
           </div>
+          <!-- Image preview -->
+          <div v-if="msg.fileId && isImageFile(msg.fileName)" class="mt-1">
+            <img
+              :src="getFileDownloadURL(msg.fileId)"
+              :alt="msg.fileName"
+              class="max-w-full max-h-48 rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity"
+              loading="lazy"
+              @click="lightbox = { src: getFileDownloadURL(msg.fileId), name: msg.fileName }"
+            />
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-3xs opacity-50 truncate min-w-0 flex-1">{{ msg.fileName }} · {{ formatFileSize(msg.fileSize) }}</span>
+              <a :href="getFileDownloadURL(msg.fileId)" download :title="t('chat.download')" class="shrink-0 opacity-40 hover:opacity-80 transition-opacity" @click.stop>
+                <Download class="w-3 h-3" :stroke-width="2" />
+              </a>
+            </div>
+          </div>
+          <!-- File attachment (non-image) -->
+          <a v-else-if="msg.fileId"
+            :href="getFileDownloadURL(msg.fileId)"
+            target="_blank"
+            class="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-lg text-xs cursor-pointer no-underline"
+            :class="msg.isLocal ? 'bg-indigo-500/30 text-indigo-100 hover:bg-indigo-500/50' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'"
+          >
+            <FileIcon class="w-4 h-4 shrink-0" :stroke-width="1.8" />
+            <span class="truncate flex-1">{{ msg.fileName }}</span>
+            <span class="text-2xs opacity-60 shrink-0">{{ formatFileSize(msg.fileSize) }}</span>
+            <Download class="w-3.5 h-3.5 shrink-0 opacity-60" :stroke-width="2" />
+          </a>
           <!-- Message body -->
-          <p class="text-sm break-words leading-snug chat-markdown"
+          <p v-if="msg.text" class="text-sm break-words leading-snug chat-markdown"
             :class="msg.isLocal ? 'text-white' : 'text-gray-700 dark:text-gray-200'"
             v-html="renderMarkdown(msg.text)"
           ></p>
@@ -281,35 +359,67 @@ onMounted(loadHistory)
         </button>
       </div>
 
-      <form @submit.prevent="sendMessage" class="p-2 flex gap-2 items-center">
-        <button
-          ref="emojiBtnRef"
-          type="button"
-          :title="t('chat.emoji')"
-          @click="toggleEmojiPicker"
-          class="w-9 h-9 rounded-lg flex items-center justify-center transition-colors cursor-pointer shrink-0"
-          :class="showEmojiPicker
-            ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-500'
-            : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
-        >
-          <Smile class="w-5 h-5" :stroke-width="1.8" />
-        </button>
+      <form @submit.prevent="sendMessage" class="px-2.5 py-2 flex items-center gap-1.5">
+        <div class="flex items-center shrink-0">
+          <button
+            ref="emojiBtnRef"
+            type="button"
+            :title="t('chat.emoji')"
+            @click="toggleEmojiPicker"
+            class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+            :class="showEmojiPicker
+              ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-500'
+              : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
+          >
+            <Smile class="w-[18px] h-[18px]" :stroke-width="1.8" />
+          </button>
+          <button
+            type="button"
+            :title="t('chat.attachFile')"
+            @click="fileInputRef?.click()"
+            :disabled="uploading"
+            class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
+          >
+            <Paperclip class="w-[18px] h-[18px]" :stroke-width="1.8" />
+          </button>
+        </div>
+        <input ref="fileInputRef" type="file" class="hidden" @change="handleFileSelect" />
         <input
           ref="chatInput"
           v-model="input"
           :placeholder="t('chat.placeholder')"
-          class="flex-1 bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-text"
+          class="flex-1 min-w-0 bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-text"
           maxlength="500"
         />
         <button
           type="submit"
           :disabled="!input.trim()"
-          class="w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          class="w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shrink-0"
         >
           <Send class="w-4 h-4 text-white" :stroke-width="2" />
         </button>
       </form>
     </div>
+
+    <!-- Lightbox overlay -->
+    <Teleport to="body">
+      <Transition name="lightbox-fade">
+        <div v-if="lightbox" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" @click.self="lightbox = null">
+          <div class="relative max-w-[90vw] max-h-[90vh]">
+            <img :src="lightbox.src" :alt="lightbox.name" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+            <div class="absolute top-2 right-2 flex gap-1.5">
+              <a :href="lightbox.src" download class="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors cursor-pointer" :title="t('chat.download')">
+                <Download class="w-4 h-4 text-white" :stroke-width="2" />
+              </a>
+              <button type="button" @click="lightbox = null" class="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors cursor-pointer">
+                <X class="w-4 h-4 text-white" :stroke-width="2" />
+              </button>
+            </div>
+            <p class="text-center text-xs text-white/60 mt-2 truncate">{{ lightbox.name }}</p>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
   </div>
 </template>
 
@@ -322,5 +432,13 @@ onMounted(loadHistory)
 .emoji-fade-leave-to {
   opacity: 0;
   transform: translateY(4px);
+}
+.lightbox-fade-enter-active,
+.lightbox-fade-leave-active {
+  transition: opacity 0.2s ease;
+}
+.lightbox-fade-enter-from,
+.lightbox-fade-leave-to {
+  opacity: 0;
 }
 </style>

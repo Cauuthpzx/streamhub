@@ -100,7 +100,15 @@
     "fullscreen": "全屏",
     "exitFullscreen": "退出全屏",
     "screenshot": "截图",
-    "reply": "回复"
+    "reply": "回复",
+    "attachFile": "附加文件",
+    "share": "分享",
+    "download": "下载"
+  },
+  "share": {
+    "title": "分享房间链接",
+    "hint": "拥有此链接的任何人都可以加入房间",
+    "resolving": "正在处理分享链接..."
   },
   "participants": {
     "title": "参与者",
@@ -202,7 +210,11 @@
     "agentDispatchDeleteFailed": "删除代理调度失败",
     "lobbyPending": "您在等候室中",
     "lobbyRejected": "您的加入请求被拒绝",
-    "invalidRequestBody": "无效的请求体"
+    "invalidRequestBody": "无效的请求体",
+    "fileTooLarge": "文件过大（最大10 MB）",
+    "fileNotFound": "文件未找到",
+    "shareLinkNotFound": "分享链接不存在或已过期",
+    "fileUploadFailed": "文件上传失败"
   },
   "log": {
     "userRegistered": "用户已注册",
@@ -225,7 +237,11 @@
     "noActiveVideo": "没有可捕获的活动视频",
     "lobbyApproved": "已批准等候室用户",
     "lobbyRejected": "已拒绝等候室用户",
-    "setRoomLobbyFailed": "设置等候室失败"
+    "setRoomLobbyFailed": "设置等候室失败",
+    "fileUploaded": "文件已上传",
+    "fileUploadFailed": "文件上传失败",
+    "shareLinkCreated": "分享链接已创建",
+    "shareLinkResolved": "分享链接已处理"
   },
   "ingress": {
     "title": "RTMP/WHIP 推流",

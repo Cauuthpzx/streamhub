@@ -15,9 +15,14 @@
 package service
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -29,6 +34,13 @@ import (
 	"github.com/livekit/protocol/logger"
 
 	"github.com/livekit/livekit-server/pkg/config"
+)
+
+const (
+	// MaxFileSize is 10MB
+	MaxFileSize = 10 << 20
+	// UploadDir is the directory for uploaded files
+	UploadDir = "uploads"
 )
 
 type UserAuthService struct {
@@ -98,6 +110,14 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/egress/start", s.handleEgressStart)
 	mux.HandleFunc("/auth/egress/list", s.handleEgressList)
 	mux.HandleFunc("/auth/egress/stop", s.handleEgressStop)
+	// File sharing
+	mux.HandleFunc("/auth/room/file/upload", s.handleFileUpload)
+	mux.HandleFunc("/auth/room/file/download/", s.handleFileDownload)
+	mux.HandleFunc("/auth/room/file/list", s.handleFileList)
+	// Share links
+	mux.HandleFunc("/auth/room/share/create", s.handleShareCreate)
+	mux.HandleFunc("/auth/room/share/get", s.handleShareGet)
+	mux.HandleFunc("/auth/room/share/resolve", s.handleShareResolve)
 }
 
 // request/response types
@@ -461,11 +481,12 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// store lobby setting if enabled
+	// store lobby setting if enabled — auto-approve the room creator
 	if req.LobbyEnabled {
 		if err := s.userStore.SetRoomLobby(r.Context(), req.Name, true); err != nil {
 			logger.Errorw("log.setRoomLobbyFailed", err, "room", req.Name)
 		}
+		_ = s.userStore.SetLobbyDecision(r.Context(), req.Name, username, true)
 	}
 
 	// store room password if provided
@@ -1269,4 +1290,273 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(v)
+}
+
+// ── File sharing ──
+
+func (s *UserAuthService) handleFileUpload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	r.Body = http.MaxBytesReader(w, r.Body, MaxFileSize+1024)
+	if err := r.ParseMultipartForm(MaxFileSize); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.fileTooLarge"})
+		return
+	}
+
+	roomName := r.FormValue("room")
+	if roomName == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	defer file.Close()
+
+	if header.Size > MaxFileSize {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.fileTooLarge"})
+		return
+	}
+
+	// generate unique file ID
+	idBytes := make([]byte, 16)
+	rand.Read(idBytes)
+	fileID := hex.EncodeToString(idBytes)
+	ext := filepath.Ext(header.Filename)
+	storedName := fileID + ext
+
+	// ensure upload dir exists
+	if err := os.MkdirAll(UploadDir, 0o755); err != nil {
+		logger.Errorw("log.createUploadDirFailed", err, "dir", UploadDir)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: mkdir %s: %v", UploadDir, err)})
+		return
+	}
+
+	dstPath := filepath.Join(UploadDir, storedName)
+	dst, err := os.Create(dstPath)
+	if err != nil {
+		logger.Errorw("log.createFileFailed", err, "path", dstPath)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: create %s: %v", dstPath, err)})
+		return
+	}
+	defer dst.Close()
+
+	written, err := io.Copy(dst, file)
+	if err != nil {
+		logger.Errorw("log.writeFileFailed", err, "path", dstPath)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: write: %v", err)})
+		return
+	}
+
+	meta := &FileMetadata{
+		ID:        fileID,
+		RoomName:  roomName,
+		Sender:    username,
+		FileName:  header.Filename,
+		FileSize:  written,
+		MimeType:  header.Header.Get("Content-Type"),
+		Timestamp: time.Now().UnixMilli(),
+	}
+
+	if err := s.userStore.StoreFileMetadata(r.Context(), meta); err != nil {
+		logger.Errorw("log.storeFileMetaFailed", err, "fileID", fileID)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: store: %v", err)})
+		return
+	}
+
+	// persist file message to chat history so it survives reload
+	chatMsg := &ChatMessage{
+		ID:        fmt.Sprintf("file-%s", fileID),
+		RoomName:  roomName,
+		Sender:    username,
+		Timestamp: meta.Timestamp,
+		FileID:    meta.ID,
+		FileName:  meta.FileName,
+		FileSize:  meta.FileSize,
+	}
+	_ = s.userStore.StoreChatMessage(r.Context(), roomName, chatMsg)
+
+	writeJSON(w, http.StatusCreated, meta)
+}
+
+func (s *UserAuthService) handleFileDownload(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	// extract fileID from path: /auth/room/file/download/{id}
+	fileID := strings.TrimPrefix(r.URL.Path, "/auth/room/file/download/")
+	if fileID == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	meta, err := s.userStore.LoadFileMetadata(r.Context(), fileID)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, errorResponse{Error: "error.fileNotFound"})
+		return
+	}
+
+	ext := filepath.Ext(meta.FileName)
+	filePath := filepath.Join(UploadDir, fileID+ext)
+
+	f, err := os.Open(filePath)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, errorResponse{Error: "error.fileNotFound"})
+		return
+	}
+	defer f.Close()
+
+	w.Header().Set("Content-Type", meta.MimeType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", meta.FileName))
+	io.Copy(w, f)
+}
+
+func (s *UserAuthService) handleFileList(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	_, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req struct {
+		Room string `json:"room"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	files, err := s.userStore.ListRoomFiles(r.Context(), req.Room)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]any{"files": files})
+}
+
+// ── Share links ──
+
+func randomCode(n int) string {
+	b := make([]byte, n)
+	rand.Read(b)
+	return hex.EncodeToString(b)
+}
+
+func (s *UserAuthService) handleShareCreate(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req struct {
+		Room string `json:"room"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	if req.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.roomNameEmpty"})
+		return
+	}
+
+	// return existing link if one exists
+	existing, err := s.userStore.LoadShareLinkByRoom(r.Context(), req.Room)
+	if err == nil {
+		writeJSON(w, http.StatusOK, existing)
+		return
+	}
+
+	link := &ShareLink{
+		Code:      randomCode(6),
+		RoomName:  req.Room,
+		CreatedBy: username,
+		CreatedAt: time.Now().UnixMilli(),
+	}
+
+	if err := s.userStore.StoreShareLink(r.Context(), link); err != nil {
+		logger.Errorw("log.storeShareLinkFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+
+	writeJSON(w, http.StatusCreated, link)
+}
+
+func (s *UserAuthService) handleShareGet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	_, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+
+	var req struct {
+		Room string `json:"room"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	link, err := s.userStore.LoadShareLinkByRoom(r.Context(), req.Room)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, errorResponse{Error: "error.shareLinkNotFound"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, link)
+}
+
+func (s *UserAuthService) handleShareResolve(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+
+	var req struct {
+		Code string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+
+	link, err := s.userStore.LoadShareLink(r.Context(), req.Code)
+	if err != nil {
+		writeJSON(w, http.StatusNotFound, errorResponse{Error: "error.shareLinkNotFound"})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, link)
 }

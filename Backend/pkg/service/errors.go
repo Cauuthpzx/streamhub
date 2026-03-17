@@ -64,4 +64,7 @@ var (
 	ErrRoomNameEmpty         = psrpc.NewErrorf(psrpc.InvalidArgument, "error.roomNameEmpty")
 	ErrLobbyPending          = psrpc.NewErrorf(psrpc.FailedPrecondition, "error.lobbyPending")
 	ErrLobbyRejected         = psrpc.NewErrorf(psrpc.PermissionDenied, "error.lobbyRejected")
+	ErrFileTooLarge          = psrpc.NewErrorf(psrpc.InvalidArgument, "error.fileTooLarge")
+	ErrFileNotFound          = psrpc.NewErrorf(psrpc.NotFound, "error.fileNotFound")
+	ErrShareLinkNotFound     = psrpc.NewErrorf(psrpc.NotFound, "error.shareLinkNotFound")
 )

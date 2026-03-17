@@ -1,4 +1,5 @@
 <script setup>
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Users, MessageSquare } from 'lucide-vue-next'
@@ -14,6 +15,7 @@ import VideoGrid from '../components/VideoGrid.vue'
 import RoomBar from '../components/RoomBar.vue'
 import RoomChat from '../components/RoomChat.vue'
 import RoomParticipants from '../components/RoomParticipants.vue'
+import ShareModal from '../components/ShareModal.vue'
 
 import { useSounds } from '../composables/useSounds'
 import { useTracks } from '../composables/useTracks'
@@ -21,6 +23,8 @@ import { useReactions } from '../composables/useReactions'
 import { useRecording } from '../composables/useRecording'
 import { useScreenshot } from '../composables/useScreenshot'
 import { useRoom } from '../composables/useRoom'
+
+const showShareModal = ref(false)
 
 const route = useRoute()
 const { t } = useI18n()
@@ -256,10 +260,12 @@ deps.recording = recordingCtx
         @pick-reaction="(emoji) => { reactionCtx.sendReaction(emoji); showReactionPicker = false }"
         @toggle-panel="togglePanel"
         @open-settings="showDeviceSettings = true"
+        @open-share="showShareModal = true"
         @leave="leaveRoom"
       />
 
       <DeviceSettings v-if="showDeviceSettings" :room="room" @close="showDeviceSettings = false" />
+      <ShareModal :room-name="roomName" :show="showShareModal" @close="showShareModal = false" />
     </template>
   </div>
 </template>

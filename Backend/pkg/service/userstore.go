@@ -37,6 +37,16 @@ const (
 	RoomLobbyPendingPrefix = "room_lobby_pending:"
 	// RoomLobbyDecisionPrefix is a hash of username => "approved"/"rejected"
 	RoomLobbyDecisionPrefix = "room_lobby_decision:"
+	// RoomFilesPrefix is a list of file metadata JSON per room
+	RoomFilesPrefix = "room_files:"
+	// FilesKey is a hash of fileID => FileMetadata JSON
+	FilesKey = "files"
+	// MaxRoomFiles is the max number of file records per room
+	MaxRoomFiles = 100
+	// ShareLinksKey is a hash of code => ShareLink JSON
+	ShareLinksKey = "share_links"
+	// ShareLinksByRoomKey is a hash of roomName => code
+	ShareLinksByRoomKey = "share_links_by_room"
 )
 
 // RedisUserStore implements UserStore backed by Redis
@@ -174,6 +184,105 @@ func (s *RedisUserStore) GetLobbyDecision(ctx context.Context, roomName string, 
 	return data, err
 }
 
+func (s *RedisUserStore) StoreFileMetadata(ctx context.Context, file *FileMetadata) error {
+	data, err := json.Marshal(file)
+	if err != nil {
+		return err
+	}
+	pipe := s.rc.Pipeline()
+	pipe.HSet(ctx, FilesKey, file.ID, string(data))
+	key := RoomFilesPrefix + file.RoomName
+	pipe.RPush(ctx, key, file.ID)
+	pipe.LTrim(ctx, key, -MaxRoomFiles, -1)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+func (s *RedisUserStore) LoadFileMetadata(ctx context.Context, fileID string) (*FileMetadata, error) {
+	data, err := s.rc.HGet(ctx, FilesKey, fileID).Result()
+	if err == redis.Nil {
+		return nil, ErrFileNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	var file FileMetadata
+	if err := json.Unmarshal([]byte(data), &file); err != nil {
+		return nil, err
+	}
+	return &file, nil
+}
+
+func (s *RedisUserStore) ListRoomFiles(ctx context.Context, roomName string) ([]*FileMetadata, error) {
+	ids, err := s.rc.LRange(ctx, RoomFilesPrefix+roomName, 0, -1).Result()
+	if err != nil {
+		return nil, err
+	}
+	files := make([]*FileMetadata, 0, len(ids))
+	for _, id := range ids {
+		data, err := s.rc.HGet(ctx, FilesKey, id).Result()
+		if err != nil {
+			continue
+		}
+		var file FileMetadata
+		if err := json.Unmarshal([]byte(data), &file); err != nil {
+			continue
+		}
+		files = append(files, &file)
+	}
+	return files, nil
+}
+
+func (s *RedisUserStore) StoreShareLink(ctx context.Context, link *ShareLink) error {
+	data, err := json.Marshal(link)
+	if err != nil {
+		return err
+	}
+	pipe := s.rc.Pipeline()
+	pipe.HSet(ctx, ShareLinksKey, link.Code, string(data))
+	pipe.HSet(ctx, ShareLinksByRoomKey, link.RoomName, link.Code)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
+func (s *RedisUserStore) LoadShareLink(ctx context.Context, code string) (*ShareLink, error) {
+	data, err := s.rc.HGet(ctx, ShareLinksKey, code).Result()
+	if err == redis.Nil {
+		return nil, ErrShareLinkNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	var link ShareLink
+	if err := json.Unmarshal([]byte(data), &link); err != nil {
+		return nil, err
+	}
+	return &link, nil
+}
+
+func (s *RedisUserStore) LoadShareLinkByRoom(ctx context.Context, roomName string) (*ShareLink, error) {
+	code, err := s.rc.HGet(ctx, ShareLinksByRoomKey, roomName).Result()
+	if err == redis.Nil {
+		return nil, ErrShareLinkNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	return s.LoadShareLink(ctx, code)
+}
+
+func (s *RedisUserStore) DeleteShareLink(ctx context.Context, code string) error {
+	link, err := s.LoadShareLink(ctx, code)
+	if err != nil {
+		return err
+	}
+	pipe := s.rc.Pipeline()
+	pipe.HDel(ctx, ShareLinksKey, code)
+	pipe.HDel(ctx, ShareLinksByRoomKey, link.RoomName)
+	_, err = pipe.Exec(ctx)
+	return err
+}
+
 // LocalUserStore implements UserStore backed by in-memory map (single-node only)
 type LocalUserStore struct {
 	users          map[string]*UserRecord
@@ -182,6 +291,10 @@ type LocalUserStore struct {
 	lobbyEnabled   map[string]bool
 	lobbyPending   map[string]map[string]bool
 	lobbyDecisions map[string]map[string]string
+	files          map[string]*FileMetadata
+	roomFiles      map[string][]string
+	shareLinks     map[string]*ShareLink
+	shareLinkRoom  map[string]string // roomName => code
 	lock           sync.RWMutex
 }
 
@@ -193,6 +306,10 @@ func NewLocalUserStore() *LocalUserStore {
 		lobbyEnabled:   make(map[string]bool),
 		lobbyPending:   make(map[string]map[string]bool),
 		lobbyDecisions: make(map[string]map[string]string),
+		files:          make(map[string]*FileMetadata),
+		roomFiles:      make(map[string][]string),
+		shareLinks:     make(map[string]*ShareLink),
+		shareLinkRoom:  make(map[string]string),
 	}
 }
 
@@ -342,4 +459,81 @@ func (s *LocalUserStore) GetLobbyDecision(_ context.Context, roomName string, us
 	s.lock.RLock()
 	defer s.lock.RUnlock()
 	return s.lobbyDecisions[roomName][username], nil
+}
+
+func (s *LocalUserStore) StoreFileMetadata(_ context.Context, file *FileMetadata) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.files[file.ID] = file
+	s.roomFiles[file.RoomName] = append(s.roomFiles[file.RoomName], file.ID)
+	if len(s.roomFiles[file.RoomName]) > MaxRoomFiles {
+		s.roomFiles[file.RoomName] = s.roomFiles[file.RoomName][len(s.roomFiles[file.RoomName])-MaxRoomFiles:]
+	}
+	return nil
+}
+
+func (s *LocalUserStore) LoadFileMetadata(_ context.Context, fileID string) (*FileMetadata, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	file, ok := s.files[fileID]
+	if !ok {
+		return nil, ErrFileNotFound
+	}
+	return file, nil
+}
+
+func (s *LocalUserStore) ListRoomFiles(_ context.Context, roomName string) ([]*FileMetadata, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	ids := s.roomFiles[roomName]
+	files := make([]*FileMetadata, 0, len(ids))
+	for _, id := range ids {
+		if f, ok := s.files[id]; ok {
+			files = append(files, f)
+		}
+	}
+	return files, nil
+}
+
+func (s *LocalUserStore) StoreShareLink(_ context.Context, link *ShareLink) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.shareLinks[link.Code] = link
+	s.shareLinkRoom[link.RoomName] = link.Code
+	return nil
+}
+
+func (s *LocalUserStore) LoadShareLink(_ context.Context, code string) (*ShareLink, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	link, ok := s.shareLinks[code]
+	if !ok {
+		return nil, ErrShareLinkNotFound
+	}
+	return link, nil
+}
+
+func (s *LocalUserStore) LoadShareLinkByRoom(_ context.Context, roomName string) (*ShareLink, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	code, ok := s.shareLinkRoom[roomName]
+	if !ok {
+		return nil, ErrShareLinkNotFound
+	}
+	link, ok := s.shareLinks[code]
+	if !ok {
+		return nil, ErrShareLinkNotFound
+	}
+	return link, nil
+}
+
+func (s *LocalUserStore) DeleteShareLink(_ context.Context, code string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	link, ok := s.shareLinks[code]
+	if ok {
+		delete(s.shareLinkRoom, link.RoomName)
+		delete(s.shareLinks, code)
+	}
+	return nil
 }

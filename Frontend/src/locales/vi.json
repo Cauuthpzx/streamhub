@@ -100,7 +100,15 @@
     "fullscreen": "Toàn màn hình",
     "exitFullscreen": "Thoát toàn màn hình",
     "screenshot": "Chụp ảnh",
-    "reply": "Trả lời"
+    "reply": "Trả lời",
+    "attachFile": "Đính kèm tệp",
+    "share": "Chia sẻ",
+    "download": "Tải xuống"
+  },
+  "share": {
+    "title": "Chia sẻ liên kết phòng",
+    "hint": "Bất kỳ ai có liên kết này đều có thể tham gia phòng",
+    "resolving": "Đang xử lý liên kết chia sẻ..."
   },
   "participants": {
     "title": "Người tham gia",
@@ -202,7 +210,11 @@
     "agentDispatchDeleteFailed": "Không thể xoá agent dispatch",
     "lobbyPending": "Bạn đang trong phòng chờ",
     "lobbyRejected": "Yêu cầu tham gia của bạn bị từ chối",
-    "invalidRequestBody": "Dữ liệu yêu cầu không hợp lệ"
+    "invalidRequestBody": "Dữ liệu yêu cầu không hợp lệ",
+    "fileTooLarge": "Tệp quá lớn (tối đa 10 MB)",
+    "fileNotFound": "Không tìm thấy tệp",
+    "shareLinkNotFound": "Liên kết chia sẻ không tồn tại hoặc đã hết hạn",
+    "fileUploadFailed": "Không thể tải tệp lên"
   },
   "log": {
     "userRegistered": "Đã đăng ký người dùng",
@@ -225,7 +237,11 @@
     "noActiveVideo": "Không có video nào đang hoạt động để chụp",
     "lobbyApproved": "Đã phê duyệt người dùng phòng chờ",
     "lobbyRejected": "Đã từ chối người dùng phòng chờ",
-    "setRoomLobbyFailed": "Không thể thiết lập phòng chờ"
+    "setRoomLobbyFailed": "Không thể thiết lập phòng chờ",
+    "fileUploaded": "Đã tải tệp lên",
+    "fileUploadFailed": "Không thể tải tệp lên",
+    "shareLinkCreated": "Đã tạo liên kết chia sẻ",
+    "shareLinkResolved": "Đã xử lý liên kết chia sẻ"
   },
   "ingress": {
     "title": "Luồng vào RTMP/WHIP",

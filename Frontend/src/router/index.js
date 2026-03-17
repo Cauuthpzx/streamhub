@@ -27,6 +27,12 @@ const routes = [
     component: () => import('../views/RoomView.vue'),
     meta: { requiresAuth: true },
   },
+  {
+    path: '/share/:code',
+    name: 'ShareResolve',
+    component: () => import('../views/ShareResolveView.vue'),
+    meta: { requiresAuth: true },
+  },
 ]
 
 const router = createRouter({

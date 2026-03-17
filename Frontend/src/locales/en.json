@@ -100,7 +100,15 @@
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen",
     "screenshot": "Screenshot",
-    "reply": "Reply"
+    "reply": "Reply",
+    "attachFile": "Attach file",
+    "share": "Share",
+    "download": "Download"
+  },
+  "share": {
+    "title": "Share room link",
+    "hint": "Anyone with this link can join the room",
+    "resolving": "Resolving share link..."
   },
   "participants": {
     "title": "Participants",
@@ -202,7 +210,11 @@
     "agentDispatchDeleteFailed": "Failed to delete agent dispatch",
     "lobbyPending": "You are in the waiting room",
     "lobbyRejected": "Your request to join was rejected",
-    "invalidRequestBody": "Invalid request body"
+    "invalidRequestBody": "Invalid request body",
+    "fileTooLarge": "File is too large (max 10 MB)",
+    "fileNotFound": "File not found",
+    "shareLinkNotFound": "Share link not found or expired",
+    "fileUploadFailed": "Failed to upload file"
   },
   "log": {
     "userRegistered": "User registered",
@@ -225,7 +237,11 @@
     "noActiveVideo": "No active video to capture",
     "lobbyApproved": "Lobby user approved",
     "lobbyRejected": "Lobby user rejected",
-    "setRoomLobbyFailed": "Failed to set room lobby"
+    "setRoomLobbyFailed": "Failed to set room lobby",
+    "fileUploaded": "File uploaded",
+    "fileUploadFailed": "Failed to upload file",
+    "shareLinkCreated": "Share link created",
+    "shareLinkResolved": "Share link resolved"
   },
   "ingress": {
     "title": "RTMP/WHIP Ingress",

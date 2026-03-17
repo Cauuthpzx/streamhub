@@ -2,7 +2,7 @@
 import { useI18n } from 'vue-i18n'
 import {
   Mic, MicOff, VideoIcon, VideoOff, LogOut, MonitorUp, MonitorOff,
-  MessageSquare, Hand, Smile, Settings, Circle, Square, Camera,
+  MessageSquare, Hand, Smile, Settings, Circle, Square, Camera, Share2,
 } from 'lucide-vue-next'
 import AppTooltip from './AppTooltip.vue'
 
@@ -25,7 +25,7 @@ defineProps({
 const emit = defineEmits([
   'toggleMic', 'toggleCam', 'toggleScreen', 'toggleRecording',
   'screenshot', 'toggleHand', 'toggleReactionPicker', 'pickReaction',
-  'togglePanel', 'openSettings', 'leave',
+  'togglePanel', 'openSettings', 'openShare', 'leave',
 ])
 </script>
 
@@ -140,6 +140,16 @@ const emit = defineEmits([
             v-if="unreadCount > 0 && !panelOpen"
             class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-3xs font-bold text-white flex items-center justify-center"
           >{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
+        </button>
+      </AppTooltip>
+
+      <!-- Share -->
+      <AppTooltip :content="t('chat.share')" position="top">
+        <button
+          @click="emit('openShare')"
+          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
+        >
+          <Share2 class="w-4 h-4" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 

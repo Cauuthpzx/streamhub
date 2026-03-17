@@ -128,6 +128,17 @@ type UserStore interface {
 	ListLobbyPending(ctx context.Context, roomName string) ([]string, error)
 	SetLobbyDecision(ctx context.Context, roomName string, username string, approved bool) error
 	GetLobbyDecision(ctx context.Context, roomName string, username string) (string, error) // "approved", "rejected", ""
+
+	// File sharing
+	StoreFileMetadata(ctx context.Context, file *FileMetadata) error
+	LoadFileMetadata(ctx context.Context, fileID string) (*FileMetadata, error)
+	ListRoomFiles(ctx context.Context, roomName string) ([]*FileMetadata, error)
+
+	// Share links
+	StoreShareLink(ctx context.Context, link *ShareLink) error
+	LoadShareLink(ctx context.Context, code string) (*ShareLink, error)
+	LoadShareLinkByRoom(ctx context.Context, roomName string) (*ShareLink, error)
+	DeleteShareLink(ctx context.Context, code string) error
 }
 
 // ChatMessage represents a single chat message in a room
@@ -139,6 +150,9 @@ type ChatMessage struct {
 	Timestamp int64  `json:"timestamp"`
 	ReplyTo   string `json:"reply_to,omitempty"`   // ID of parent message
 	ReplyText string `json:"reply_text,omitempty"` // preview snippet of parent
+	FileID    string `json:"file_id,omitempty"`
+	FileName  string `json:"file_name,omitempty"`
+	FileSize  int64  `json:"file_size,omitempty"`
 }
 
 // UserRecord represents a registered user account
@@ -146,6 +160,25 @@ type UserRecord struct {
 	Username     string `json:"username"`
 	PasswordHash string `json:"password_hash"`
 	CreatedAt    int64  `json:"created_at"`
+}
+
+// FileMetadata represents an uploaded file in a room
+type FileMetadata struct {
+	ID        string `json:"id"`
+	RoomName  string `json:"room_name"`
+	Sender    string `json:"sender"`
+	FileName  string `json:"file_name"`
+	FileSize  int64  `json:"file_size"`
+	MimeType  string `json:"mime_type"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+// ShareLink represents a shareable invite link for a room
+type ShareLink struct {
+	Code      string `json:"code"`
+	RoomName  string `json:"room_name"`
+	CreatedBy string `json:"created_by"`
+	CreatedAt int64  `json:"created_at"`
 }
 
 //counterfeiter:generate . AgentStore

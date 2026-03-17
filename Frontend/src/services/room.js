@@ -154,3 +154,69 @@ export async function getChatHistory(room, limit = 100) {
   if (!res.ok) throw new Error(data.error || 'error.loadHistoryFailed')
   return data.messages || []
 }
+
+// File sharing
+
+export async function uploadFile(room, file) {
+  const formData = new FormData()
+  formData.append('room', room)
+  formData.append('file', file)
+  const res = await fetch(`${AUTH_BASE}/file/upload`, {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${getToken()}` },
+    body: formData,
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.fileUploadFailed')
+  return data
+}
+
+export function getFileDownloadURL(fileID) {
+  return `${AUTH_BASE}/file/download/${fileID}`
+}
+
+export async function listRoomFiles(room) {
+  const res = await fetch(`${AUTH_BASE}/file/list`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data.files || []
+}
+
+// Share links
+
+export async function createShareLink(room) {
+  const res = await fetch(`${AUTH_BASE}/share/create`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data
+}
+
+export async function getShareLink(room) {
+  const res = await fetch(`${AUTH_BASE}/share/get`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.shareLinkNotFound')
+  return data
+}
+
+export async function resolveShareLink(code) {
+  const res = await fetch(`${AUTH_BASE}/share/resolve`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.shareLinkNotFound')
+  return data
+}

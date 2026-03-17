@@ -26,11 +26,9 @@ export function useRoom(roomName, username, deps) {
   const participants = ref([])
   const micEnabled = ref(true)
   const camEnabled = ref(true)
-  const screenEnabled = ref(false)
   const panelOpen = ref(false)
   const panelTab = ref('chat')
   const unreadCount = ref(0)
-  const screenShareTrack = ref(null)
   const activeSpeakers = ref(new Set())
   const pinnedSid = ref(null)
   const fullscreenSid = ref(null)
@@ -55,7 +53,11 @@ export function useRoom(roomName, username, deps) {
   }
 
   // event handlers
-  function handleParticipantUpdate() { updateParticipants() }
+  function handleParticipantUpdate() {
+    updateParticipants()
+    // Safety: cleanup stale screen shares from disconnected participants
+    if (deps.screenShares) deps.screenShares.cleanupStaleShares(participants.value)
+  }
 
   function handleActiveSpeakers(speakers) {
     activeSpeakers.value = new Set(speakers.map((s) => s.identity))
@@ -74,9 +76,9 @@ export function useRoom(roomName, username, deps) {
   function handleTrackSubscribed(track, _publication, participant) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
-      screenShareTrack.value = { track, identity: participant.identity }
+      deps.screenShares.addScreenShare(track, participant.identity, track.sid)
       nextTick(() => {
-        deps.tracks.attachScreenShare(track)
+        deps.tracks.attachScreenShareByIdentity(track, participant.identity)
         deps.tracks.reattachAll()
       })
     } else {
@@ -84,12 +86,10 @@ export function useRoom(roomName, username, deps) {
     }
   }
 
-  function handleTrackUnsubscribed(track) {
+  function handleTrackUnsubscribed(track, _publication, participant) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
-      screenShareTrack.value = null
-      const container = document.getElementById('screen-share-container')
-      if (container) container.innerHTML = ''
+      deps.screenShares.removeScreenShare(participant.identity)
       nextTick(() => deps.tracks.reattachAll())
     }
     const el = document.getElementById(`track-${track.sid}`)
@@ -155,8 +155,19 @@ export function useRoom(roomName, username, deps) {
       r.on(RoomEvent.ParticipantDisconnected, handleParticipantUpdate)
       r.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
       r.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-      r.on(RoomEvent.LocalTrackPublished, handleParticipantUpdate)
-      r.on(RoomEvent.LocalTrackUnpublished, handleParticipantUpdate)
+      r.on(RoomEvent.LocalTrackPublished, (pub) => {
+        handleParticipantUpdate()
+        if (pub.track && pub.track.source === Track.Source.ScreenShare) {
+          deps.screenShares.addScreenShare(pub.track, username, pub.track.sid)
+          nextTick(() => deps.tracks.attachScreenShareByIdentity(pub.track, username))
+        }
+      })
+      r.on(RoomEvent.LocalTrackUnpublished, (pub) => {
+        handleParticipantUpdate()
+        if (pub.track && pub.track.source === Track.Source.ScreenShare) {
+          deps.screenShares.removeScreenShare(username)
+        }
+      })
       r.on(RoomEvent.Disconnected, handleDisconnect)
       r.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers)
       r.on(RoomEvent.ConnectionQualityChanged, handleConnectionQuality)
@@ -243,37 +254,6 @@ export function useRoom(roomName, username, deps) {
     if (camEnabled.value) deps.tracks.attachLocalVideo()
   }
 
-  async function toggleScreen() {
-    if (!room.value) return
-    try {
-      const r = toRaw(room.value)
-      await r.localParticipant.setScreenShareEnabled(!screenEnabled.value)
-      screenEnabled.value = !screenEnabled.value
-
-      if (screenEnabled.value) {
-        screenShareTrack.value = { track: null, identity: username }
-        await nextTick()
-        r.localParticipant.videoTrackPublications.forEach((pub) => {
-          if (pub.track && pub.track.source === Track.Source.ScreenShare) {
-            screenShareTrack.value = { track: pub.track, identity: username }
-            nextTick(() => {
-              deps.tracks.attachScreenShare(pub.track)
-              deps.tracks.reattachAll()
-            })
-          }
-        })
-      } else {
-        screenShareTrack.value = null
-        const container = document.getElementById('screen-share-container')
-        if (container) container.innerHTML = ''
-        await nextTick()
-        deps.tracks.reattachAll()
-      }
-    } catch (_) {
-      // user cancelled
-    }
-  }
-
   function togglePin(sid) {
     pinnedSid.value = pinnedSid.value === sid ? null : sid
     nextTick(() => deps.tracks.reattachAll())
@@ -316,7 +296,7 @@ export function useRoom(roomName, username, deps) {
     switch (e.key.toLowerCase()) {
       case 'm': toggleMic(); break
       case 'v': toggleCam(); break
-      case 's': toggleScreen(); break
+      case 's': deps.screenShares.toggleLocalScreen(room); break
       case 'h': deps.reactions.toggleHand(); break
       case 'r': deps.recording.toggleRecording(); break
       case 'p': deps.screenshot?.() ; break
@@ -369,11 +349,9 @@ export function useRoom(roomName, username, deps) {
     participants,
     micEnabled,
     camEnabled,
-    screenEnabled,
     panelOpen,
     panelTab,
     unreadCount,
-    screenShareTrack,
     activeSpeakers,
     pinnedSid,
     fullscreenSid,
@@ -384,7 +362,6 @@ export function useRoom(roomName, username, deps) {
     handlePreJoinCancel,
     toggleMic,
     toggleCam,
-    toggleScreen,
     togglePin,
     toggleFullscreen,
     togglePanel,

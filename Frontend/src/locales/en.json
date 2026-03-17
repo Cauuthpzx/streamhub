@@ -90,7 +90,8 @@
     "reactions": "Reactions",
     "pin": "Pin",
     "unpin": "Unpin",
-    "fullscreen": "Fullscreen"
+    "fullscreen": "Fullscreen",
+    "exitFullscreen": "Exit fullscreen"
   },
   "participants": {
     "title": "Participants",

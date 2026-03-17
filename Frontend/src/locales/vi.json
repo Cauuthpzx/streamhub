@@ -90,7 +90,8 @@
     "reactions": "Biểu cảm",
     "pin": "Ghim",
     "unpin": "Bỏ ghim",
-    "fullscreen": "Toàn màn hình"
+    "fullscreen": "Toàn màn hình",
+    "exitFullscreen": "Thoát toàn màn hình"
   },
   "participants": {
     "title": "Người tham gia",

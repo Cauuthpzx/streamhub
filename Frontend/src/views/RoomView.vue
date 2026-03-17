@@ -24,6 +24,7 @@ import {
   Smile,
   Pin,
   Maximize,
+  Minimize,
   Settings,
 } from 'lucide-vue-next'
 import { getLivekitToken, getUsername } from '../services/auth'
@@ -578,10 +579,19 @@ onUnmounted(() => {
                   <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
                 </div>
               </div>
-              <!-- Tile controls -->
-              <div class="absolute top-2 right-2 flex gap-1 z-20 opacity-0 hover-parent:opacity-100 transition-opacity">
-                <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer"><Pin class="w-3.5 h-3.5 text-amber-400" :stroke-width="2" /></button>
-                <button @click="toggleFullscreen(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer"><Maximize class="w-3.5 h-3.5 text-white" :stroke-width="2" /></button>
+              <!-- Tile controls — always visible on pinned tile -->
+              <div class="absolute top-2 right-2 flex gap-1 z-30">
+                <AppTooltip :content="t('chat.unpin')" position="bottom">
+                  <button @click="togglePin(participant.sid)" class="bg-black/60 hover:bg-black/80 rounded p-1.5 cursor-pointer transition-colors">
+                    <Pin class="w-4 h-4 text-amber-400" :stroke-width="2" />
+                  </button>
+                </AppTooltip>
+                <AppTooltip :content="fullscreenSid === participant.sid ? t('chat.exitFullscreen') : t('chat.fullscreen')" position="bottom">
+                  <button @click="toggleFullscreen(participant.sid)" class="bg-black/60 hover:bg-black/80 rounded p-1.5 cursor-pointer transition-colors">
+                    <Minimize v-if="fullscreenSid === participant.sid" class="w-4 h-4 text-white" :stroke-width="2" />
+                    <Maximize v-else class="w-4 h-4 text-white" :stroke-width="2" />
+                  </button>
+                </AppTooltip>
               </div>
             </div>
             <!-- Side strip of other participants -->
@@ -604,7 +614,9 @@ onUnmounted(() => {
                   {{ participant.identity }}
                 </div>
                 <div class="absolute top-1 right-1 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-0.5 cursor-pointer"><Pin class="w-3 h-3 text-white" :stroke-width="2" /></button>
+                  <AppTooltip :content="t('chat.pin')" position="bottom">
+                    <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-0.5 cursor-pointer"><Pin class="w-3 h-3 text-white" :stroke-width="2" /></button>
+                  </AppTooltip>
                 </div>
               </div>
             </div>
@@ -643,12 +655,17 @@ onUnmounted(() => {
 
               <!-- Tile controls (pin + fullscreen) — show on hover -->
               <div class="absolute top-2 right-2 flex gap-1 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer">
-                  <Pin class="w-3.5 h-3.5 text-white" :stroke-width="2" />
-                </button>
-                <button @click="toggleFullscreen(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer">
-                  <Maximize class="w-3.5 h-3.5 text-white" :stroke-width="2" />
-                </button>
+                <AppTooltip :content="t('chat.pin')" position="bottom">
+                  <button @click="togglePin(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer">
+                    <Pin class="w-3.5 h-3.5 text-white" :stroke-width="2" />
+                  </button>
+                </AppTooltip>
+                <AppTooltip :content="fullscreenSid === participant.sid ? t('chat.exitFullscreen') : t('chat.fullscreen')" position="bottom">
+                  <button @click="toggleFullscreen(participant.sid)" class="bg-black/50 hover:bg-black/70 rounded p-1 cursor-pointer">
+                    <Minimize v-if="fullscreenSid === participant.sid" class="w-3.5 h-3.5 text-white" :stroke-width="2" />
+                    <Maximize v-else class="w-3.5 h-3.5 text-white" :stroke-width="2" />
+                  </button>
+                </AppTooltip>
               </div>
 
               <!-- Name + status bar -->

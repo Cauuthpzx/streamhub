@@ -66,7 +66,13 @@
     "metadataPlaceholder": "Room description or notes...",
     "save": "Save",
     "unlimited": "∞",
-    "connectFailed": "Failed to connect to room"
+    "connectFailed": "Failed to connect to room",
+    "lobbyEnable": "Enable waiting room",
+    "lobbyEnableHint": "Participants must be approved before joining",
+    "lobbyBadge": "Waiting room",
+    "lobbyWaiting": "Waiting for host approval",
+    "lobbyWaitingDesc": "The host will let you in shortly...",
+    "lobbyCancel": "Cancel"
   },
   "chat": {
     "title": "Chat",
@@ -93,7 +99,8 @@
     "unpin": "Unpin",
     "fullscreen": "Fullscreen",
     "exitFullscreen": "Exit fullscreen",
-    "screenshot": "Screenshot"
+    "screenshot": "Screenshot",
+    "reply": "Reply"
   },
   "participants": {
     "title": "Participants",
@@ -106,7 +113,10 @@
     "moveTo": "Move {name} to:",
     "move": "Move",
     "selectRoom": "Select a room",
-    "noOtherRooms": "No other rooms available"
+    "noOtherRooms": "No other rooms available",
+    "lobbyPending": "Waiting for approval",
+    "approve": "Approve",
+    "reject": "Reject"
   },
   "prejoin": {
     "title": "Ready to join?",
@@ -189,7 +199,10 @@
     "egressStartFailed": "Failed to start recording",
     "egressStopFailed": "Failed to stop recording",
     "missingFields": "Required fields are missing",
-    "agentDispatchDeleteFailed": "Failed to delete agent dispatch"
+    "agentDispatchDeleteFailed": "Failed to delete agent dispatch",
+    "lobbyPending": "You are in the waiting room",
+    "lobbyRejected": "Your request to join was rejected",
+    "invalidRequestBody": "Invalid request body"
   },
   "log": {
     "userRegistered": "User registered",
@@ -209,7 +222,10 @@
     "startEgressFailed": "Failed to start egress",
     "listEgressFailed": "Failed to list egress",
     "stopEgressFailed": "Failed to stop egress",
-    "noActiveVideo": "No active video to capture"
+    "noActiveVideo": "No active video to capture",
+    "lobbyApproved": "Lobby user approved",
+    "lobbyRejected": "Lobby user rejected",
+    "setRoomLobbyFailed": "Failed to set room lobby"
   },
   "ingress": {
     "title": "RTMP/WHIP Ingress",

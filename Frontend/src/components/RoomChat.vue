@@ -1,7 +1,7 @@
 <script setup>
 import { ref, toRaw, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Send, Smile } from 'lucide-vue-next'
+import { Send, Smile, Reply, X } from 'lucide-vue-next'
 import { RoomEvent } from 'livekit-client'
 import { sendChatMessage, getChatHistory } from '../services/room'
 
@@ -21,6 +21,24 @@ const loadingHistory = ref(false)
 const showEmojiPicker = ref(false)
 const emojiPickerRef = ref(null)
 const emojiBtnRef = ref(null)
+const replyTo = ref(null) // { id, sender, text }
+
+function setReply(msg) {
+  replyTo.value = { id: msg.id, sender: msg.sender, text: msg.text.slice(0, 80) }
+  nextTick(() => chatInput.value?.focus())
+}
+function clearReply() { replyTo.value = null }
+
+// Markdown-like rendering: **bold**, *italic*, `code`, [link](url)
+function renderMarkdown(text) {
+  return text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-600 px-1 rounded text-xs font-mono">$1</code>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-indigo-500 hover:underline">$1</a>')
+    .replace(/(^|\s)(https?:\/\/[^\s<]+)/g, '$1<a href="$2" target="_blank" rel="noopener" class="text-indigo-500 hover:underline">$2</a>')
+}
 
 const emojis = Object.freeze([
   '😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊',
@@ -91,6 +109,8 @@ async function loadHistory() {
       text: msg.text,
       time: msg.timestamp,
       isLocal: msg.sender === props.username,
+      replyTo: msg.reply_to || '',
+      replyText: msg.reply_text || '',
     }))
     scrollToBottom()
   } catch (_) {
@@ -110,6 +130,8 @@ function onDataReceived(payload, participant) {
       text: msg.text,
       time: Date.now(),
       isLocal: false,
+      replyTo: msg.replyTo || '',
+      replyText: msg.replyText || '',
     })
     scrollToBottom()
   } catch (_) {
@@ -121,9 +143,15 @@ async function sendMessage() {
   const text = input.value.trim()
   if (!text || !props.room) return
 
+  const reply = replyTo.value
+  const msgData = { type: 'chat', text, sender: props.username }
+  if (reply) {
+    msgData.replyTo = reply.id
+    msgData.replyText = reply.text
+  }
+
   // send via DataChannel for real-time delivery
-  const payload = JSON.stringify({ type: 'chat', text, sender: props.username })
-  toRaw(props.room).localParticipant.publishData(encoder.encode(payload), {
+  toRaw(props.room).localParticipant.publishData(encoder.encode(JSON.stringify(msgData)), {
     reliable: true,
   })
 
@@ -133,13 +161,19 @@ async function sendMessage() {
     text,
     time: Date.now(),
     isLocal: true,
+    replyTo: reply?.id || '',
+    replyText: reply?.text || '',
   })
 
   input.value = ''
+  replyTo.value = null
   scrollToBottom()
 
   // persist to backend (fire-and-forget)
-  sendChatMessage(props.roomName, text).catch(() => {})
+  sendChatMessage(props.roomName, text, {
+    replyTo: reply?.id,
+    replyText: reply?.text,
+  }).catch(() => {})
 }
 
 // listen for data messages
@@ -168,15 +202,49 @@ onMounted(loadHistory)
       <div
         v-for="msg in messages"
         :key="msg.id"
+        class="group/msg flex"
+        :class="msg.isLocal ? 'justify-end' : 'justify-start'"
       >
-        <div class="flex items-baseline gap-1.5">
-          <span
-            class="text-xs font-medium shrink-0"
-            :class="msg.isLocal ? 'text-indigo-400' : 'text-emerald-400'"
-          >{{ msg.sender }}</span>
-          <span class="text-2xs text-gray-500 shrink-0">{{ formatTime(msg.time) }}</span>
+        <div
+          class="relative max-w-[85%] rounded-xl px-3 py-1.5 transition-colors"
+          :class="msg.isLocal
+            ? 'bg-indigo-600 text-white rounded-br-sm'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm'"
+        >
+          <!-- Reply context -->
+          <div v-if="msg.replyTo" class="mb-1 pl-2 border-l-2 rounded-sm py-0.5 px-1"
+            :class="msg.isLocal ? 'border-indigo-300 bg-indigo-500/30' : 'border-indigo-400/50 bg-gray-200/50 dark:bg-gray-700/50'"
+          >
+            <span class="text-2xs opacity-70 truncate block">{{ msg.replyText }}</span>
+          </div>
+          <!-- Sender + time -->
+          <div class="flex items-baseline gap-2">
+            <span
+              class="text-sm font-semibold shrink-0"
+              :class="msg.isLocal ? 'text-indigo-200' : 'text-emerald-500 dark:text-emerald-400'"
+            >{{ msg.isLocal ? '' : msg.sender }}</span>
+            <span class="text-xs shrink-0 ml-auto"
+              :class="msg.isLocal ? 'text-indigo-300' : 'text-gray-400 dark:text-gray-500'"
+            >{{ formatTime(msg.time) }}</span>
+          </div>
+          <!-- Message body -->
+          <p class="text-sm break-words leading-snug chat-markdown"
+            :class="msg.isLocal ? 'text-white' : 'text-gray-700 dark:text-gray-200'"
+            v-html="renderMarkdown(msg.text)"
+          ></p>
+          <!-- Reply button on hover -->
+          <button
+            type="button"
+            @click="setReply(msg)"
+            class="absolute top-1 opacity-0 group-hover:opacity-100 transition-opacity rounded p-0.5 cursor-pointer"
+            :class="msg.isLocal
+              ? 'left-1 bg-indigo-500 hover:bg-indigo-400 -translate-x-full -ml-1'
+              : 'right-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'"
+            :title="t('chat.reply')"
+          >
+            <Reply class="w-3 h-3" :class="msg.isLocal ? 'text-white' : 'text-gray-500 dark:text-gray-400'" :stroke-width="2" />
+          </button>
         </div>
-        <p class="text-sm text-gray-700 dark:text-gray-200 break-words leading-snug mt-0.5">{{ msg.text }}</p>
       </div>
     </div>
 
@@ -200,6 +268,18 @@ onMounted(loadHistory)
           </div>
         </div>
       </Transition>
+
+      <!-- Reply preview bar -->
+      <div v-if="replyTo" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-800/40">
+        <Reply class="w-3.5 h-3.5 text-indigo-400 shrink-0" :stroke-width="2" />
+        <div class="flex-1 min-w-0">
+          <span class="text-2xs font-medium text-indigo-500">{{ replyTo.sender }}</span>
+          <p class="text-2xs text-gray-500 dark:text-gray-400 truncate">{{ replyTo.text }}</p>
+        </div>
+        <button type="button" @click="clearReply" class="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
+          <X class="w-3.5 h-3.5" :stroke-width="2" />
+        </button>
+      </div>
 
       <form @submit.prevent="sendMessage" class="p-2 flex gap-2 items-center">
         <button

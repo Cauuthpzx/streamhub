@@ -9,7 +9,7 @@ function authHeaders() {
   }
 }
 
-export async function createRoom(name, { maxParticipants = 0, password = '' } = {}) {
+export async function createRoom(name, { maxParticipants = 0, password = '', lobbyEnabled = false } = {}) {
   const res = await fetch(`${AUTH_BASE}/create`, {
     method: 'POST',
     headers: authHeaders(),
@@ -17,6 +17,7 @@ export async function createRoom(name, { maxParticipants = 0, password = '' } = 
       name,
       max_participants: maxParticipants,
       password: password || undefined,
+      lobby_enabled: lobbyEnabled || undefined,
     }),
   })
   const data = await res.json()
@@ -86,15 +87,61 @@ export async function updateRoomMetadata(room, metadata) {
   return twirpCall('UpdateRoomMetadata', { room, metadata })
 }
 
-export async function sendChatMessage(room, text) {
+export async function sendChatMessage(room, text, { replyTo, replyText } = {}) {
   const res = await fetch(`${AUTH_BASE}/chat/send`, {
     method: 'POST',
     headers: authHeaders(),
-    body: JSON.stringify({ room, text }),
+    body: JSON.stringify({ room, text, reply_to: replyTo, reply_text: replyText }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || 'error.sendMessageFailed')
   return data
+}
+
+// Lobby (waiting room)
+
+export async function getLobbyPending(room) {
+  const res = await fetch(`${AUTH_BASE}/lobby/pending`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data.pending || []
+}
+
+export async function approveLobbyUser(room, username) {
+  const res = await fetch(`${AUTH_BASE}/lobby/approve`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room, username }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data
+}
+
+export async function rejectLobbyUser(room, username) {
+  const res = await fetch(`${AUTH_BASE}/lobby/reject`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room, username }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data
+}
+
+export async function getLobbyStatus(room) {
+  const res = await fetch(`${AUTH_BASE}/lobby/status`, {
+    method: 'POST',
+    headers: authHeaders(),
+    body: JSON.stringify({ room }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'error.internal')
+  return data.status || ''
 }
 
 export async function getChatHistory(room, limit = 100) {

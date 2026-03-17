@@ -31,6 +31,12 @@ const (
 	RoomChatPrefix = "room_chat:"
 	// MaxChatHistory is the max number of messages to keep per room
 	MaxChatHistory = 200
+	// RoomLobbyKey is a hash of roomName => "1" (lobby enabled)
+	RoomLobbyKey = "room_lobbies"
+	// RoomLobbyPendingPrefix is a set of pending usernames per room
+	RoomLobbyPendingPrefix = "room_lobby_pending:"
+	// RoomLobbyDecisionPrefix is a hash of username => "approved"/"rejected"
+	RoomLobbyDecisionPrefix = "room_lobby_decision:"
 )
 
 // RedisUserStore implements UserStore backed by Redis
@@ -126,19 +132,67 @@ func (s *RedisUserStore) LoadChatMessages(ctx context.Context, roomName string, 
 	return messages, nil
 }
 
+func (s *RedisUserStore) SetRoomLobby(ctx context.Context, roomName string, enabled bool) error {
+	if enabled {
+		return s.rc.HSet(ctx, RoomLobbyKey, roomName, "1").Err()
+	}
+	return s.rc.HDel(ctx, RoomLobbyKey, roomName).Err()
+}
+
+func (s *RedisUserStore) IsRoomLobbyEnabled(ctx context.Context, roomName string) (bool, error) {
+	return s.rc.HExists(ctx, RoomLobbyKey, roomName).Result()
+}
+
+func (s *RedisUserStore) AddLobbyPending(ctx context.Context, roomName string, username string) error {
+	return s.rc.SAdd(ctx, RoomLobbyPendingPrefix+roomName, username).Err()
+}
+
+func (s *RedisUserStore) RemoveLobbyPending(ctx context.Context, roomName string, username string) error {
+	return s.rc.SRem(ctx, RoomLobbyPendingPrefix+roomName, username).Err()
+}
+
+func (s *RedisUserStore) ListLobbyPending(ctx context.Context, roomName string) ([]string, error) {
+	return s.rc.SMembers(ctx, RoomLobbyPendingPrefix+roomName).Result()
+}
+
+func (s *RedisUserStore) SetLobbyDecision(ctx context.Context, roomName string, username string, approved bool) error {
+	key := RoomLobbyDecisionPrefix + roomName
+	val := "rejected"
+	if approved {
+		val = "approved"
+	}
+	// remove from pending
+	s.rc.SRem(ctx, RoomLobbyPendingPrefix+roomName, username)
+	return s.rc.HSet(ctx, key, username, val).Err()
+}
+
+func (s *RedisUserStore) GetLobbyDecision(ctx context.Context, roomName string, username string) (string, error) {
+	data, err := s.rc.HGet(ctx, RoomLobbyDecisionPrefix+roomName, username).Result()
+	if err == redis.Nil {
+		return "", nil
+	}
+	return data, err
+}
+
 // LocalUserStore implements UserStore backed by in-memory map (single-node only)
 type LocalUserStore struct {
-	users         map[string]*UserRecord
-	roomPasswords map[string]string
-	chatMessages  map[string][]*ChatMessage
-	lock          sync.RWMutex
+	users          map[string]*UserRecord
+	roomPasswords  map[string]string
+	chatMessages   map[string][]*ChatMessage
+	lobbyEnabled   map[string]bool
+	lobbyPending   map[string]map[string]bool
+	lobbyDecisions map[string]map[string]string
+	lock           sync.RWMutex
 }
 
 func NewLocalUserStore() *LocalUserStore {
 	return &LocalUserStore{
-		users:         make(map[string]*UserRecord),
-		roomPasswords: make(map[string]string),
-		chatMessages:  make(map[string][]*ChatMessage),
+		users:          make(map[string]*UserRecord),
+		roomPasswords:  make(map[string]string),
+		chatMessages:   make(map[string][]*ChatMessage),
+		lobbyEnabled:   make(map[string]bool),
+		lobbyPending:   make(map[string]map[string]bool),
+		lobbyDecisions: make(map[string]map[string]string),
 	}
 }
 
@@ -221,4 +275,71 @@ func (s *LocalUserStore) LoadChatMessages(_ context.Context, roomName string, li
 	result := make([]*ChatMessage, limit)
 	copy(result, msgs[start:])
 	return result, nil
+}
+
+func (s *LocalUserStore) SetRoomLobby(_ context.Context, roomName string, enabled bool) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if enabled {
+		s.lobbyEnabled[roomName] = true
+	} else {
+		delete(s.lobbyEnabled, roomName)
+	}
+	return nil
+}
+
+func (s *LocalUserStore) IsRoomLobbyEnabled(_ context.Context, roomName string) (bool, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.lobbyEnabled[roomName], nil
+}
+
+func (s *LocalUserStore) AddLobbyPending(_ context.Context, roomName string, username string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	if s.lobbyPending[roomName] == nil {
+		s.lobbyPending[roomName] = make(map[string]bool)
+	}
+	s.lobbyPending[roomName][username] = true
+	return nil
+}
+
+func (s *LocalUserStore) RemoveLobbyPending(_ context.Context, roomName string, username string) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	delete(s.lobbyPending[roomName], username)
+	return nil
+}
+
+func (s *LocalUserStore) ListLobbyPending(_ context.Context, roomName string) ([]string, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	pending := s.lobbyPending[roomName]
+	result := make([]string, 0, len(pending))
+	for u := range pending {
+		result = append(result, u)
+	}
+	return result, nil
+}
+
+func (s *LocalUserStore) SetLobbyDecision(_ context.Context, roomName string, username string, approved bool) error {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	// remove from pending
+	delete(s.lobbyPending[roomName], username)
+	if s.lobbyDecisions[roomName] == nil {
+		s.lobbyDecisions[roomName] = make(map[string]string)
+	}
+	if approved {
+		s.lobbyDecisions[roomName][username] = "approved"
+	} else {
+		s.lobbyDecisions[roomName][username] = "rejected"
+	}
+	return nil
+}
+
+func (s *LocalUserStore) GetLobbyDecision(_ context.Context, roomName string, username string) (string, error) {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.lobbyDecisions[roomName][username], nil
 }

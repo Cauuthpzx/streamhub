@@ -20,6 +20,8 @@ export function useRoom(roomName, username, deps) {
   const preJoinSettings = ref(null)
   const connected = ref(false)
   const connecting = ref(false)
+  const lobbyWaiting = ref(false)
+  const lobbyRejected = ref(false)
   const error = ref('')
   const participants = ref([])
   const micEnabled = ref(true)
@@ -117,7 +119,31 @@ export function useRoom(roomName, username, deps) {
       const roomPassword = sessionStorage.getItem(`room_password:${roomName}`)
       if (roomPassword) sessionStorage.removeItem(`room_password:${roomName}`)
 
-      const { access_token } = await getLivekitToken(roomName, roomPassword)
+      const tokenResp = await getLivekitToken(roomName, roomPassword)
+      const { access_token } = tokenResp
+
+      // lobby (waiting room) — poll until approved
+      if (tokenResp.lobby_pending) {
+        lobbyWaiting.value = true
+        connecting.value = false
+        const { getLobbyStatus } = await import('../services/room')
+        const pollInterval = setInterval(async () => {
+          try {
+            const status = await getLobbyStatus(roomName)
+            if (status === 'approved') {
+              clearInterval(pollInterval)
+              lobbyWaiting.value = false
+              connectRoom() // retry with approved status
+            } else if (status === 'rejected') {
+              clearInterval(pollInterval)
+              lobbyWaiting.value = false
+              lobbyRejected.value = true
+              error.value = t('error.lobbyRejected')
+            }
+          } catch (_) { /* keep polling */ }
+        }, 2000)
+        return
+      }
 
       const r = new Room({
         adaptiveStream: true,
@@ -300,6 +326,8 @@ export function useRoom(roomName, username, deps) {
     showPreJoin,
     connected,
     connecting,
+    lobbyWaiting,
+    lobbyRejected,
     error,
     participants,
     micEnabled,

@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil } from 'lucide-vue-next'
+import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, Pencil, ShieldCheck } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom, updateRoomMetadata } from '../services/room'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
@@ -24,6 +24,7 @@ const showCreate = ref(false)
 const newRoomName = ref('')
 const newRoomMaxParticipants = ref(0)
 const newRoomPassword = ref('')
+const newRoomLobby = ref(false)
 
 async function fetchRooms() {
   loading.value = true
@@ -45,10 +46,12 @@ async function handleCreate() {
     await createRoom(newRoomName.value.trim(), {
       maxParticipants: parseInt(newRoomMaxParticipants.value) || 0,
       password: newRoomPassword.value,
+      lobbyEnabled: newRoomLobby.value,
     })
     newRoomName.value = ''
     newRoomMaxParticipants.value = 0
     newRoomPassword.value = ''
+    newRoomLobby.value = false
     showCreate.value = false
     await fetchRooms()
   } catch (e) {
@@ -197,6 +200,11 @@ onMounted(fetchRooms)
               class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text"
             />
           </div>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input v-model="newRoomLobby" type="checkbox" class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+            <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('room.lobbyEnable') }}</span>
+            <span class="text-3xs text-gray-400">({{ t('room.lobbyEnableHint') }})</span>
+          </label>
           <div class="flex gap-2 pt-1">
             <button
               type="submit"
@@ -249,6 +257,9 @@ onMounted(fetchRooms)
                 </AppTooltip>
                 <AppTooltip v-else :content="t('room.openRoom')" position="top">
                   <LockOpen class="w-3 h-3 text-green-400 shrink-0" :stroke-width="2" />
+                </AppTooltip>
+                <AppTooltip v-if="room.has_lobby" :content="t('room.lobbyBadge')" position="top">
+                  <ShieldCheck class="w-3 h-3 text-indigo-400 shrink-0" :stroke-width="2" />
                 </AppTooltip>
               </div>
               <div class="flex items-center gap-3 mt-0.5">

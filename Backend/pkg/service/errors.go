@@ -62,4 +62,6 @@ var (
 	ErrRoomPasswordRequired  = psrpc.NewErrorf(psrpc.Unauthenticated, "error.roomPasswordRequired")
 	ErrRoomPasswordIncorrect = psrpc.NewErrorf(psrpc.Unauthenticated, "error.roomPasswordIncorrect")
 	ErrRoomNameEmpty         = psrpc.NewErrorf(psrpc.InvalidArgument, "error.roomNameEmpty")
+	ErrLobbyPending          = psrpc.NewErrorf(psrpc.FailedPrecondition, "error.lobbyPending")
+	ErrLobbyRejected         = psrpc.NewErrorf(psrpc.PermissionDenied, "error.lobbyRejected")
 )

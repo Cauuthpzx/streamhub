@@ -66,7 +66,13 @@
     "metadataPlaceholder": "Mô tả hoặc ghi chú phòng...",
     "save": "Lưu",
     "unlimited": "∞",
-    "connectFailed": "Không thể kết nối phòng"
+    "connectFailed": "Không thể kết nối phòng",
+    "lobbyEnable": "Bật phòng chờ",
+    "lobbyEnableHint": "Người tham gia cần được phê duyệt trước khi vào",
+    "lobbyBadge": "Phòng chờ",
+    "lobbyWaiting": "Đang chờ chủ phòng phê duyệt",
+    "lobbyWaitingDesc": "Chủ phòng sẽ cho bạn vào trong giây lát...",
+    "lobbyCancel": "Hủy"
   },
   "chat": {
     "title": "Trò chuyện",
@@ -93,7 +99,8 @@
     "unpin": "Bỏ ghim",
     "fullscreen": "Toàn màn hình",
     "exitFullscreen": "Thoát toàn màn hình",
-    "screenshot": "Chụp ảnh"
+    "screenshot": "Chụp ảnh",
+    "reply": "Trả lời"
   },
   "participants": {
     "title": "Người tham gia",
@@ -106,7 +113,10 @@
     "moveTo": "Chuyển {name} đến:",
     "move": "Chuyển",
     "selectRoom": "Chọn phòng",
-    "noOtherRooms": "Không có phòng nào khác"
+    "noOtherRooms": "Không có phòng nào khác",
+    "lobbyPending": "Đang chờ phê duyệt",
+    "approve": "Chấp nhận",
+    "reject": "Từ chối"
   },
   "prejoin": {
     "title": "Sẵn sàng tham gia?",
@@ -189,7 +199,10 @@
     "egressStartFailed": "Không thể bắt đầu ghi hình",
     "egressStopFailed": "Không thể dừng ghi hình",
     "missingFields": "Thiếu các trường bắt buộc",
-    "agentDispatchDeleteFailed": "Không thể xoá agent dispatch"
+    "agentDispatchDeleteFailed": "Không thể xoá agent dispatch",
+    "lobbyPending": "Bạn đang trong phòng chờ",
+    "lobbyRejected": "Yêu cầu tham gia của bạn bị từ chối",
+    "invalidRequestBody": "Dữ liệu yêu cầu không hợp lệ"
   },
   "log": {
     "userRegistered": "Đã đăng ký người dùng",
@@ -209,7 +222,10 @@
     "startEgressFailed": "Không thể bắt đầu egress",
     "listEgressFailed": "Không thể tải danh sách egress",
     "stopEgressFailed": "Không thể dừng egress",
-    "noActiveVideo": "Không có video nào đang hoạt động để chụp"
+    "noActiveVideo": "Không có video nào đang hoạt động để chụp",
+    "lobbyApproved": "Đã phê duyệt người dùng phòng chờ",
+    "lobbyRejected": "Đã từ chối người dùng phòng chờ",
+    "setRoomLobbyFailed": "Không thể thiết lập phòng chờ"
   },
   "ingress": {
     "title": "Luồng vào RTMP/WHIP",

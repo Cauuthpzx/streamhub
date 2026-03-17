@@ -66,7 +66,13 @@
     "metadataPlaceholder": "房间描述或备注...",
     "save": "保存",
     "unlimited": "∞",
-    "connectFailed": "无法连接房间"
+    "connectFailed": "无法连接房间",
+    "lobbyEnable": "启用等候室",
+    "lobbyEnableHint": "参与者需要批准才能加入",
+    "lobbyBadge": "等候室",
+    "lobbyWaiting": "等待主持人批准",
+    "lobbyWaitingDesc": "主持人将很快让您进入...",
+    "lobbyCancel": "取消"
   },
   "chat": {
     "title": "聊天",
@@ -93,7 +99,8 @@
     "unpin": "取消固定",
     "fullscreen": "全屏",
     "exitFullscreen": "退出全屏",
-    "screenshot": "截图"
+    "screenshot": "截图",
+    "reply": "回复"
   },
   "participants": {
     "title": "参与者",
@@ -106,7 +113,10 @@
     "moveTo": "将 {name} 移至：",
     "move": "移动",
     "selectRoom": "选择房间",
-    "noOtherRooms": "没有其他可用房间"
+    "noOtherRooms": "没有其他可用房间",
+    "lobbyPending": "等待批准",
+    "approve": "批准",
+    "reject": "拒绝"
   },
   "prejoin": {
     "title": "准备加入？",
@@ -189,7 +199,10 @@
     "egressStartFailed": "开始录制失败",
     "egressStopFailed": "停止录制失败",
     "missingFields": "缺少必填字段",
-    "agentDispatchDeleteFailed": "删除代理调度失败"
+    "agentDispatchDeleteFailed": "删除代理调度失败",
+    "lobbyPending": "您在等候室中",
+    "lobbyRejected": "您的加入请求被拒绝",
+    "invalidRequestBody": "无效的请求体"
   },
   "log": {
     "userRegistered": "用户已注册",
@@ -209,7 +222,10 @@
     "startEgressFailed": "开始egress失败",
     "listEgressFailed": "获取egress列表失败",
     "stopEgressFailed": "停止egress失败",
-    "noActiveVideo": "没有可捕获的活动视频"
+    "noActiveVideo": "没有可捕获的活动视频",
+    "lobbyApproved": "已批准等候室用户",
+    "lobbyRejected": "已拒绝等候室用户",
+    "setRoomLobbyFailed": "设置等候室失败"
   },
   "ingress": {
     "title": "RTMP/WHIP 推流",

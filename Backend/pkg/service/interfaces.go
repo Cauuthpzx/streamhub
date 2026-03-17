@@ -119,6 +119,15 @@ type UserStore interface {
 	// Chat message history
 	StoreChatMessage(ctx context.Context, roomName string, msg *ChatMessage) error
 	LoadChatMessages(ctx context.Context, roomName string, limit int) ([]*ChatMessage, error)
+
+	// Lobby (waiting room)
+	SetRoomLobby(ctx context.Context, roomName string, enabled bool) error
+	IsRoomLobbyEnabled(ctx context.Context, roomName string) (bool, error)
+	AddLobbyPending(ctx context.Context, roomName string, username string) error
+	RemoveLobbyPending(ctx context.Context, roomName string, username string) error
+	ListLobbyPending(ctx context.Context, roomName string) ([]string, error)
+	SetLobbyDecision(ctx context.Context, roomName string, username string, approved bool) error
+	GetLobbyDecision(ctx context.Context, roomName string, username string) (string, error) // "approved", "rejected", ""
 }
 
 // ChatMessage represents a single chat message in a room
@@ -128,6 +137,8 @@ type ChatMessage struct {
 	Sender    string `json:"sender"`
 	Text      string `json:"text"`
 	Timestamp int64  `json:"timestamp"`
+	ReplyTo   string `json:"reply_to,omitempty"`   // ID of parent message
+	ReplyText string `json:"reply_text,omitempty"` // preview snippet of parent
 }
 
 // UserRecord represents a registered user account

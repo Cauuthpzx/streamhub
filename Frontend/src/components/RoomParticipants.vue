@@ -1,9 +1,10 @@
 <script setup>
-import { ref, toRaw, watch, onMounted } from 'vue'
+import { ref, toRaw, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft } from 'lucide-vue-next'
+import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft, UserCheck, UserMinus } from 'lucide-vue-next'
 import { Track } from 'livekit-client'
-import { removeParticipant, muteTrack, moveParticipant, listRooms } from '../services/room'
+import { removeParticipant, muteTrack, moveParticipant, listRooms, getLobbyPending, approveLobbyUser, rejectLobbyUser } from '../services/room'
+import AppTooltip from './AppTooltip.vue'
 
 const { t } = useI18n()
 
@@ -20,6 +21,34 @@ const actionError = ref('')
 const moveTarget = ref(null) // { identity }
 const moveDestination = ref('')
 const availableRooms = ref([])
+const lobbyPending = ref([])
+
+let lobbyPollTimer = null
+function startLobbyPoll() {
+  stopLobbyPoll()
+  pollLobby()
+  lobbyPollTimer = setInterval(pollLobby, 3000)
+}
+function stopLobbyPoll() {
+  if (lobbyPollTimer) { clearInterval(lobbyPollTimer); lobbyPollTimer = null }
+}
+async function pollLobby() {
+  try {
+    lobbyPending.value = await getLobbyPending(props.roomName)
+  } catch (_) { /* ignore */ }
+}
+async function handleApprove(username) {
+  try {
+    await approveLobbyUser(props.roomName, username)
+    lobbyPending.value = lobbyPending.value.filter((u) => u !== username)
+  } catch (e) { actionError.value = t(e.message) }
+}
+async function handleReject(username) {
+  try {
+    await rejectLobbyUser(props.roomName, username)
+    lobbyPending.value = lobbyPending.value.filter((u) => u !== username)
+  } catch (e) { actionError.value = t(e.message) }
+}
 
 let buildListTimer = null
 function debouncedBuildList() {
@@ -110,6 +139,9 @@ watch(() => props.room, (r, oldR) => {
   if (oldR) events.forEach((e) => toRaw(oldR).off(e, debouncedBuildList))
   if (r) events.forEach((e) => toRaw(r).on(e, debouncedBuildList))
 }, { immediate: true })
+
+onMounted(startLobbyPoll)
+onUnmounted(stopLobbyPoll)
 </script>
 
 <template>
@@ -145,6 +177,35 @@ watch(() => props.room, (r, oldR) => {
       <p v-if="availableRooms.length === 0" class="text-2xs text-gray-400 mt-1">{{ t('participants.noOtherRooms') }}</p>
     </div>
 
+    <!-- Lobby pending -->
+    <div v-if="lobbyPending.length > 0" class="border-b border-gray-200 dark:border-gray-700">
+      <p class="px-3 pt-2 pb-1 text-xs font-medium text-amber-500 uppercase tracking-wider">{{ t('participants.lobbyPending') }} ({{ lobbyPending.length }})</p>
+      <div
+        v-for="user in lobbyPending"
+        :key="'lobby-' + user"
+        class="flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-900/10"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-6 h-6 bg-amber-200 dark:bg-amber-800 rounded-full flex items-center justify-center text-2xs font-semibold text-amber-700 dark:text-amber-300 shrink-0">
+            {{ (user || '?')[0].toUpperCase() }}
+          </div>
+          <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ user }}</span>
+        </div>
+        <div class="flex items-center gap-1 shrink-0">
+          <AppTooltip :content="t('participants.approve')" position="top">
+            <button @click="handleApprove(user)" class="w-7 h-7 rounded flex items-center justify-center text-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer transition-colors">
+              <UserCheck class="w-3.5 h-3.5" :stroke-width="1.8" />
+            </button>
+          </AppTooltip>
+          <AppTooltip :content="t('participants.reject')" position="top">
+            <button @click="handleReject(user)" class="w-7 h-7 rounded flex items-center justify-center text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors">
+              <UserMinus class="w-3.5 h-3.5" :stroke-width="1.8" />
+            </button>
+          </AppTooltip>
+        </div>
+      </div>
+    </div>
+
     <!-- List -->
     <div class="flex-1 overflow-y-auto">
       <div
@@ -157,7 +218,7 @@ watch(() => props.room, (r, oldR) => {
             {{ (p.identity || '?')[0].toUpperCase() }}
           </div>
           <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ p.identity }}</span>
-          <span v-if="p.isLocal" class="text-2xs text-indigo-500 font-medium shrink-0">({{ t('participants.you') }})</span>
+          <span v-if="p.isLocal" class="text-xs text-indigo-500 font-medium shrink-0">({{ t('participants.you') }})</span>
         </div>
 
         <div class="flex items-center gap-1 shrink-0">

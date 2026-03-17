@@ -81,6 +81,11 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/room/list", s.handleRoomList)
 	mux.HandleFunc("/auth/room/chat/send", s.handleChatSend)
 	mux.HandleFunc("/auth/room/chat/history", s.handleChatHistory)
+	// Lobby (waiting room)
+	mux.HandleFunc("/auth/room/lobby/pending", s.handleLobbyPending)
+	mux.HandleFunc("/auth/room/lobby/approve", s.handleLobbyApprove)
+	mux.HandleFunc("/auth/room/lobby/reject", s.handleLobbyReject)
+	mux.HandleFunc("/auth/room/lobby/status", s.handleLobbyStatus)
 	// Ingress (RTMP/WHIP)
 	mux.HandleFunc("/auth/ingress/create", s.handleIngressCreate)
 	mux.HandleFunc("/auth/ingress/list", s.handleIngressList)
@@ -286,8 +291,9 @@ type tokenRequest struct {
 }
 
 type tokenResponse struct {
-	AccessToken string `json:"access_token"`
-	Username    string `json:"username"`
+	AccessToken  string `json:"access_token"`
+	Username     string `json:"username"`
+	LobbyPending bool   `json:"lobby_pending,omitempty"`
 }
 
 func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
@@ -341,6 +347,26 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// check lobby (waiting room) — if enabled and not yet approved, add to pending
+	lobbyPending := false
+	if req.Room != "" {
+		lobbyEnabled, _ := s.userStore.IsRoomLobbyEnabled(r.Context(), req.Room)
+		if lobbyEnabled {
+			decision, _ := s.userStore.GetLobbyDecision(r.Context(), req.Room, username)
+			switch decision {
+			case "approved":
+				// user was approved, proceed normally
+			case "rejected":
+				writeJSON(w, http.StatusForbidden, errorResponse{Error: ErrLobbyRejected.Error()})
+				return
+			default:
+				// not yet decided — add to pending
+				_ = s.userStore.AddLobbyPending(r.Context(), req.Room, username)
+				lobbyPending = true
+			}
+		}
+	}
+
 	// build LiveKit access token with grants based on request
 	grant := &auth.VideoGrant{
 		RoomCreate: true,
@@ -366,8 +392,9 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 
 	logger.Debugw("log.issuedLivekitToken", "username", username, "room", req.Room)
 	writeJSON(w, http.StatusOK, tokenResponse{
-		AccessToken: accessToken,
-		Username:    username,
+		AccessToken:  accessToken,
+		Username:     username,
+		LobbyPending: lobbyPending,
 	})
 }
 
@@ -377,6 +404,7 @@ type roomCreateRequest struct {
 	Name            string `json:"name"`
 	Password        string `json:"password,omitempty"`
 	MaxParticipants uint32 `json:"max_participants,omitempty"`
+	LobbyEnabled    bool   `json:"lobby_enabled,omitempty"`
 }
 
 type roomInfo struct {
@@ -385,6 +413,7 @@ type roomInfo struct {
 	NumParticipants uint32 `json:"num_participants"`
 	MaxParticipants uint32 `json:"max_participants"`
 	HasPassword     bool   `json:"has_password"`
+	HasLobby        bool   `json:"has_lobby"`
 	CreatedAt       int64  `json:"created_at"`
 }
 
@@ -432,6 +461,13 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	// store lobby setting if enabled
+	if req.LobbyEnabled {
+		if err := s.userStore.SetRoomLobby(r.Context(), req.Name, true); err != nil {
+			logger.Errorw("log.setRoomLobbyFailed", err, "room", req.Name)
+		}
+	}
+
 	// store room password if provided
 	if req.Password != "" {
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
@@ -447,13 +483,14 @@ func (s *UserAuthService) handleRoomCreate(w http.ResponseWriter, r *http.Reques
 		}
 	}
 
-	logger.Infow("log.roomCreated", "username", username, "room", req.Name, "hasPassword", req.Password != "", "maxParticipants", req.MaxParticipants)
+	logger.Infow("log.roomCreated", "username", username, "room", req.Name, "hasPassword", req.Password != "", "hasLobby", req.LobbyEnabled, "maxParticipants", req.MaxParticipants)
 	writeJSON(w, http.StatusCreated, roomInfo{
 		SID:             room.Sid,
 		Name:            room.Name,
 		NumParticipants: room.NumParticipants,
 		MaxParticipants: room.MaxParticipants,
 		HasPassword:     req.Password != "",
+		HasLobby:        req.LobbyEnabled,
 		CreatedAt:       room.CreationTime,
 	})
 }
@@ -485,12 +522,14 @@ func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request)
 	rooms := make([]roomInfo, 0, len(resp.Rooms))
 	for _, room := range resp.Rooms {
 		hasPassword, _ := s.userStore.RoomHasPassword(r.Context(), room.Name)
+		hasLobby, _ := s.userStore.IsRoomLobbyEnabled(r.Context(), room.Name)
 		rooms = append(rooms, roomInfo{
 			SID:             room.Sid,
 			Name:            room.Name,
 			NumParticipants: room.NumParticipants,
 			MaxParticipants: room.MaxParticipants,
 			HasPassword:     hasPassword,
+			HasLobby:        hasLobby,
 			CreatedAt:       room.CreationTime,
 		})
 	}
@@ -501,8 +540,10 @@ func (s *UserAuthService) handleRoomList(w http.ResponseWriter, r *http.Request)
 // chat types
 
 type chatSendRequest struct {
-	Room string `json:"room"`
-	Text string `json:"text"`
+	Room      string `json:"room"`
+	Text      string `json:"text"`
+	ReplyTo   string `json:"reply_to,omitempty"`
+	ReplyText string `json:"reply_text,omitempty"`
 }
 
 type chatHistoryRequest struct {
@@ -543,6 +584,8 @@ func (s *UserAuthService) handleChatSend(w http.ResponseWriter, r *http.Request)
 		Sender:    username,
 		Text:      req.Text,
 		Timestamp: time.Now().UnixMilli(),
+		ReplyTo:   req.ReplyTo,
+		ReplyText: req.ReplyText,
 	}
 
 	if err := s.userStore.StoreChatMessage(r.Context(), req.Room, msg); err != nil {
@@ -592,6 +635,120 @@ func (s *UserAuthService) handleChatHistory(w http.ResponseWriter, r *http.Reque
 	}
 
 	writeJSON(w, http.StatusOK, chatHistoryResponse{Messages: messages})
+}
+
+// --- Lobby (waiting room) handlers ---
+
+type lobbyRoomRequest struct {
+	Room string `json:"room"`
+}
+
+type lobbyDecisionRequest struct {
+	Room     string `json:"room"`
+	Username string `json:"username"`
+}
+
+type lobbyPendingResponse struct {
+	Pending []string `json:"pending"`
+}
+
+type lobbyStatusResponse struct {
+	Status string `json:"status"` // "approved", "rejected", "pending", ""
+}
+
+func (s *UserAuthService) handleLobbyPending(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	if _, err := s.verifyUserToken(r); err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+	var req lobbyRoomRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	pending, err := s.userStore.ListLobbyPending(r.Context(), req.Room)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+	writeJSON(w, http.StatusOK, lobbyPendingResponse{Pending: pending})
+}
+
+func (s *UserAuthService) handleLobbyApprove(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	if _, err := s.verifyUserToken(r); err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+	var req lobbyDecisionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Room == "" || req.Username == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	if err := s.userStore.SetLobbyDecision(r.Context(), req.Room, req.Username, true); err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+	logger.Infow("log.lobbyApproved", "room", req.Room, "username", req.Username)
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *UserAuthService) handleLobbyReject(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	if _, err := s.verifyUserToken(r); err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+	var req lobbyDecisionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Room == "" || req.Username == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	if err := s.userStore.SetLobbyDecision(r.Context(), req.Room, req.Username, false); err != nil {
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.internal"})
+		return
+	}
+	logger.Infow("log.lobbyRejected", "room", req.Room, "username", req.Username)
+	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (s *UserAuthService) handleLobbyStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		writeJSON(w, http.StatusMethodNotAllowed, errorResponse{Error: "error.methodNotAllowed"})
+		return
+	}
+	username, err := s.verifyUserToken(r)
+	if err != nil {
+		writeJSON(w, http.StatusUnauthorized, errorResponse{Error: ErrInvalidCredentials.Error()})
+		return
+	}
+	var req lobbyRoomRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Room == "" {
+		writeJSON(w, http.StatusBadRequest, errorResponse{Error: "error.invalidRequest"})
+		return
+	}
+	decision, _ := s.userStore.GetLobbyDecision(r.Context(), req.Room, username)
+	if decision == "" {
+		// check if still in pending
+		pending, _ := s.userStore.ListLobbyPending(r.Context(), req.Room)
+		for _, p := range pending {
+			if p == username {
+				decision = "pending"
+				break
+			}
+		}
+	}
+	writeJSON(w, http.StatusOK, lobbyStatusResponse{Status: decision})
 }
 
 // --- Ingress handlers ---

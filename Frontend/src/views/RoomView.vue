@@ -36,7 +36,7 @@ const { takeScreenshot } = useScreenshot(roomName)
 const deps = { tracks: null, sounds, reactions: null, recording: null, screenshot: takeScreenshot }
 
 const {
-  room, showPreJoin, connected, connecting, error,
+  room, showPreJoin, connected, connecting, lobbyWaiting, lobbyRejected, error,
   participants, micEnabled, camEnabled, screenEnabled,
   panelOpen, panelTab, unreadCount, screenShareTrack,
   activeSpeakers, pinnedSid, fullscreenSid, connectionQualities,
@@ -92,6 +92,21 @@ deps.recording = recordingCtx
         <div class="text-center">
           <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
           <p class="text-gray-500 dark:text-gray-400 mt-4 text-sm">{{ t('chat.connecting', { room: roomName }) }}</p>
+        </div>
+      </div>
+
+      <!-- Lobby waiting -->
+      <div v-else-if="lobbyWaiting" class="flex-1 flex items-center justify-center">
+        <div class="text-center max-w-sm">
+          <div class="w-16 h-16 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <div class="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ t('room.lobbyWaiting') }}</h3>
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ t('room.lobbyWaitingDesc') }}</p>
+          <button
+            @click="$router.push('/home')"
+            class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          >{{ t('room.cancel') }}</button>
         </div>
       </div>
 

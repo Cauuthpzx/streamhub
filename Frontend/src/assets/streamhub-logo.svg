@@ -1,18 +1,25 @@
-<svg width="100%" viewBox="0 0 680 45" xmlns="http://www.w3.org/2000/svg">
+<svg width="100%" viewBox="0 0 255 45" xmlns="http://www.w3.org/2000/svg">
 <defs>
   <style>
     .logo-text-stream {
       font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
       font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
       fill: #e2e8f0;
+    }
+    .logo-text-dash {
+      font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      fill: #64748b;
     }
     .logo-text-hub {
       font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
       font-size: 22px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
       fill: #38bdf8;
     }
     .logo-tag {
@@ -24,6 +31,7 @@
     }
     @media (prefers-color-scheme: light) {
       .logo-text-stream { fill: #1e293b; }
+      .logo-text-dash { fill: #94a3b8; }
       .logo-text-hub { fill: #0284c7; }
       .logo-tag { fill: #94a3b8; }
     }
@@ -76,15 +84,13 @@
 <!-- Divider -->
 <line x1="68" y1="10" x2="68" y2="35" stroke="#334155" stroke-width="0.8"/>
 
-<!-- Text -->
-<text x="76" y="29" class="logo-text-stream">STREAM</text>
-<circle cx="193" cy="26" r="2" fill="#38bdf8" opacity="0.7"/>
-<text x="197" y="29" class="logo-text-hub">HUB</text>
+<!-- Text: STREAM - HUB -->
+<text x="76" y="28" class="logo-text-stream">STREAM<tspan class="logo-text-dash"> - </tspan><tspan class="logo-text-hub">HUB</tspan></text>
 
 <!-- Stream underline -->
-<rect x="76" y="31" width="167" height="0.6" rx="0.3" fill="url(#streamLine)" opacity="0.4"/>
+<rect x="76" y="30.5" width="170" height="0.6" rx="0.3" fill="url(#streamLine)" opacity="0.4"/>
 
-<!-- Tagline centered under STREAMHUB text block (x=76 to x=243, center=159.5) -->
-<text x="159.5" y="41" class="logo-tag" text-anchor="middle">LIVE · SHARE · CONNECT</text>
+<!-- Tagline -->
+<text x="161" y="40" class="logo-tag" text-anchor="middle">LIVE · SHARE · CONNECT</text>
 
 </svg>

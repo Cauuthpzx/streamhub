@@ -105,9 +105,9 @@ onMounted(fetchRooms)
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-md dark:shadow-gray-900/50">
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-gray-900/40">
       <div class="px-6 h-[45px] flex items-center justify-between">
-        <AppLogo :height="30" :show-tagline="false" />
+        <AppLogo :height="40" />
         <div class="flex items-center gap-3">
           <ThemeToggle />
           <LanguageSwitcher />

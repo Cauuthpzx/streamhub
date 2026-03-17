@@ -82,6 +82,14 @@
     "leave": "Leave room",
     "loadingHistory": "Loading messages..."
   },
+  "participants": {
+    "title": "Participants",
+    "you": "you",
+    "kick": "Remove from room",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "empty": "No participants"
+  },
   "error": {
     "methodNotAllowed": "Method not allowed",
     "invalidRequest": "Invalid request body",

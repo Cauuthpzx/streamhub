@@ -9,7 +9,7 @@ defineProps({
   <svg
     :height="height"
     :style="{ height: height + 'px', width: 'auto' }"
-    :viewBox="showTagline ? '0 0 680 45' : '0 0 680 33'"
+    viewBox="0 0 255 45"
     xmlns="http://www.w3.org/2000/svg"
     class="shrink-0"
   >
@@ -29,25 +29,55 @@ defineProps({
       </linearGradient>
     </defs>
 
-    <!-- Center circle -->
-    <circle cx="22.5" cy="22.5" r="5.5" fill="url(#shf-nodeGrad)"/>
+    <!-- Center circle — glows brightest last -->
+    <circle cx="22.5" cy="22.5" r="5.5" fill="url(#shf-nodeGrad)" opacity="0.4">
+      <animate attributeName="opacity" values="0.4;0.4;0.4;0.4;0.4;1;0.4" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="5.5;5.5;5.5;5.5;5.5;7;5.5" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Center glow effect -->
+    <circle cx="22.5" cy="22.5" r="10" fill="url(#shf-nodeGrad)" opacity="0">
+      <animate attributeName="opacity" values="0;0;0;0;0;0.35;0" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="5;5;5;5;5;12;5" dur="6s" repeatCount="indefinite"/>
+    </circle>
+
     <!-- Orbit ring -->
     <circle cx="22.5" cy="22.5" r="13" fill="none" stroke="url(#shf-ringGrad)" stroke-width="0.8" stroke-dasharray="3 2.5" opacity="0.6"/>
     <!-- Outer ring -->
     <circle cx="22.5" cy="22.5" r="19" fill="none" stroke="url(#shf-ringGrad)" stroke-width="0.5" opacity="0.25"/>
-    <!-- Satellite nodes -->
-    <circle cx="22.5" cy="9.5" r="2.8" fill="#818cf8"/>
-    <circle cx="33.7" cy="29" r="2.8" fill="#38bdf8"/>
-    <circle cx="11.3" cy="29" r="2.4" fill="#7dd3fc" opacity="0.85"/>
-    <circle cx="35.5" cy="18" r="1.8" fill="#c4b5fd" opacity="0.7"/>
-    <circle cx="9.5" cy="18" r="1.8" fill="#93c5fd" opacity="0.7"/>
+
+    <!-- Satellite node 1: Top (12h) — Pink -->
+    <circle cx="22.5" cy="9.5" r="2.8" fill="#db2777" opacity="0.2">
+      <animate attributeName="opacity" values="1;0.2;0.2;0.2;0.2;0.2" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="3.5;2.8;2.8;2.8;2.8;2.8" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Satellite node 2: Top-right (2h) — Orange -->
+    <circle cx="35.5" cy="18" r="2.2" fill="#ea580c" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;1;0.2;0.2;0.2;0.2" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2.2;3;2.2;2.2;2.2;2.2" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Satellite node 3: Bottom-right (4h) — Cyan -->
+    <circle cx="33.7" cy="29" r="2.8" fill="#0891b2" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.2;1;0.2;0.2;0.2" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2.8;2.8;3.5;2.8;2.8;2.8" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Satellite node 4: Bottom-left (8h) — Purple -->
+    <circle cx="11.3" cy="29" r="2.4" fill="#7c3aed" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.2;0.2;1;0.2;0.2" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2.4;2.4;2.4;3.2;2.4;2.4" dur="6s" repeatCount="indefinite"/>
+    </circle>
+    <!-- Satellite node 5: Top-left (10h) — Emerald -->
+    <circle cx="9.5" cy="18" r="2.2" fill="#059669" opacity="0.2">
+      <animate attributeName="opacity" values="0.2;0.2;0.2;0.2;1;0.2" dur="6s" repeatCount="indefinite"/>
+      <animate attributeName="r" values="2.2;2.2;2.2;2.2;3;2.2" dur="6s" repeatCount="indefinite"/>
+    </circle>
+
     <!-- Connector lines -->
-    <line x1="22.5" y1="17" x2="22.5" y2="12.3" stroke="#818cf8" stroke-width="0.8" opacity="0.6"/>
-    <line x1="26.5" y1="26" x2="31" y2="27" stroke="#38bdf8" stroke-width="0.8" opacity="0.6"/>
-    <line x1="18.5" y1="26" x2="14" y2="27" stroke="#7dd3fc" stroke-width="0.7" opacity="0.5"/>
-    <line x1="27.8" y1="20.5" x2="33.7" y2="19" stroke="#c4b5fd" stroke-width="0.6" opacity="0.45"/>
-    <line x1="17.2" y1="20.5" x2="11.3" y2="19" stroke="#93c5fd" stroke-width="0.6" opacity="0.45"/>
-    <line x1="24.5" y1="12.1" x2="31.2" y2="26.5" stroke="#818cf8" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.3"/>
+    <line x1="22.5" y1="17" x2="22.5" y2="12.3" stroke="#db2777" stroke-width="0.8" opacity="0.5"/>
+    <line x1="27.8" y1="20.5" x2="33.7" y2="19" stroke="#ea580c" stroke-width="0.7" opacity="0.5"/>
+    <line x1="26.5" y1="26" x2="31" y2="27" stroke="#0891b2" stroke-width="0.8" opacity="0.5"/>
+    <line x1="18.5" y1="26" x2="14" y2="27" stroke="#7c3aed" stroke-width="0.7" opacity="0.5"/>
+    <line x1="17.2" y1="20.5" x2="11.3" y2="19" stroke="#059669" stroke-width="0.7" opacity="0.5"/>
+    <line x1="24.5" y1="12.1" x2="31.2" y2="26.5" stroke="#818cf8" stroke-width="0.5" stroke-dasharray="2 2" opacity="0.25"/>
 
     <!-- Streaming pulse bars -->
     <rect x="44" y="16" width="3" height="13" rx="1.5" fill="#38bdf8" opacity="0.9"/>
@@ -58,32 +88,35 @@ defineProps({
     <!-- Divider -->
     <line x1="68" y1="10" x2="68" y2="35" class="logo-divider" stroke-width="0.8"/>
 
-    <!-- Text -->
-    <text x="76" y="29" class="logo-text-stream">STREAM</text>
-    <circle cx="193" cy="26" r="2" fill="#38bdf8" opacity="0.7"/>
-    <text x="197" y="29" class="logo-text-hub">HUB</text>
+    <!-- Text + Tagline block (both centered at same midpoint) -->
+    <text x="160" y="28" class="logo-text" text-anchor="middle">
+      <tspan class="logo-text-stream">STREAM</tspan>
+      <tspan class="logo-text-dash"> - </tspan>
+      <tspan class="logo-text-hub">HUB</tspan>
+    </text>
 
     <!-- Stream underline -->
-    <rect x="76" y="31" width="167" height="0.6" rx="0.3" fill="url(#shf-streamLine)" opacity="0.4"/>
+    <rect x="76" y="30.5" width="170" height="0.6" rx="0.3" fill="url(#shf-streamLine)" opacity="0.4"/>
 
-    <!-- Tagline -->
-    <text v-if="showTagline" x="159.5" y="41" class="logo-tag" text-anchor="middle">LIVE · SHARE · CONNECT</text>
+    <!-- Tagline — same center as text above -->
+    <text v-if="showTagline" x="160" y="40" class="logo-tag" text-anchor="middle">LIVE · SHARE · CONNECT</text>
   </svg>
 </template>
 
 <style scoped>
-.logo-text-stream {
+.logo-text {
   font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
   font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
+  font-weight: 900;
+  letter-spacing: 1.5px;
+}
+.logo-text-stream {
   fill: #1e293b;
 }
+.logo-text-dash {
+  fill: #94a3b8;
+}
 .logo-text-hub {
-  font-family: 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.5px;
   fill: #0284c7;
 }
 .logo-tag {
@@ -99,6 +132,9 @@ defineProps({
 
 :where(.dark, .dark *) .logo-text-stream {
   fill: #e2e8f0;
+}
+:where(.dark, .dark *) .logo-text-dash {
+  fill: #64748b;
 }
 :where(.dark, .dark *) .logo-text-hub {
   fill: #38bdf8;

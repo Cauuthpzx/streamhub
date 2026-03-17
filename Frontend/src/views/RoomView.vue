@@ -23,6 +23,7 @@ import {
 } from 'lucide-vue-next'
 import { getLivekitToken, getUsername } from '../services/auth'
 import RoomChat from '../components/RoomChat.vue'
+import RoomParticipants from '../components/RoomParticipants.vue'
 import AppLogo from '../components/AppLogo.vue'
 
 const route = useRoute()
@@ -40,6 +41,7 @@ const micEnabled = ref(true)
 const camEnabled = ref(true)
 const screenEnabled = ref(false)
 const chatOpen = ref(false)
+const participantsOpen = ref(false)
 const unreadCount = ref(0)
 
 function getLivekitUrl() {
@@ -212,7 +214,15 @@ async function toggleScreen() {
 
 function toggleChat() {
   chatOpen.value = !chatOpen.value
-  if (chatOpen.value) unreadCount.value = 0
+  if (chatOpen.value) {
+    unreadCount.value = 0
+    participantsOpen.value = false
+  }
+}
+
+function toggleParticipants() {
+  participantsOpen.value = !participantsOpen.value
+  if (participantsOpen.value) chatOpen.value = false
 }
 
 async function leaveRoom() {
@@ -230,11 +240,10 @@ onUnmounted(() => {
 <template>
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <header class="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-gray-900/40">
       <div class="px-4 h-[45px] flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <AppLogo :height="26" :show-tagline="false" />
-          <span class="text-gray-300 dark:text-gray-600">|</span>
+          <AppLogo :height="40" />
           <span class="font-semibold text-gray-900 dark:text-white text-sm">{{ roomName }}</span>
           <span class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
             <Users class="w-3 h-3" :stroke-width="2" />
@@ -298,20 +307,34 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Chat panel -->
+      <!-- Side panel: Participants or Chat -->
       <div
-        v-if="chatOpen"
+        v-if="participantsOpen || chatOpen"
         class="w-80 border-l border-gray-200 dark:border-gray-700 flex flex-col bg-gray-50 dark:bg-gray-800 shrink-0"
       >
+        <!-- Panel header -->
         <div class="h-[45px] flex items-center justify-between px-3 border-b border-gray-200 dark:border-gray-700">
-          <span class="text-sm font-medium text-gray-900 dark:text-white">{{ t('chat.title') }}</span>
+          <span class="text-sm font-medium text-gray-900 dark:text-white">
+            {{ participantsOpen ? t('participants.title') : t('chat.title') }}
+          </span>
           <button
-            @click="chatOpen = false"
+            @click="participantsOpen = false; chatOpen = false"
             class="text-xs text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white cursor-pointer"
           >{{ t('chat.close') }}</button>
         </div>
+
+        <!-- Participants panel -->
+        <RoomParticipants
+          v-if="participantsOpen && room"
+          :room="room"
+          :room-name="roomName"
+          :local-identity="username"
+          class="flex-1 min-h-0"
+        />
+
+        <!-- Chat panel -->
         <RoomChat
-          v-if="room"
+          v-if="chatOpen && room"
           :room="room"
           :room-name="roomName"
           :username="username"
@@ -353,6 +376,17 @@ onUnmounted(() => {
           >
             <MonitorUp v-if="!screenEnabled" class="w-4.5 h-4.5" :stroke-width="1.8" />
             <MonitorOff v-else class="w-4.5 h-4.5" :stroke-width="1.8" />
+          </button>
+        </AppTooltip>
+
+        <!-- Participants toggle -->
+        <AppTooltip :content="t('participants.title')" position="top">
+          <button
+            @click="toggleParticipants"
+            class="w-10 h-10 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            :class="participantsOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
+          >
+            <Users class="w-4.5 h-4.5" :stroke-width="1.8" />
           </button>
         </AppTooltip>
 

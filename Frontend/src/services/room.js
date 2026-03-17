@@ -35,20 +35,43 @@ export async function listRooms() {
 }
 
 export async function deleteRoom(name) {
-  // deleteRoom still uses Twirp RPC via a LiveKit token
+  return twirpCall('DeleteRoom', { room: name })
+}
+
+// Participant management via Twirp RPC (uses LiveKit token)
+
+async function twirpCall(method, body) {
   const { getLivekitToken } = await import('./auth')
   const { access_token } = await getLivekitToken()
-  const res = await fetch('/twirp/livekit.RoomService/DeleteRoom', {
+  const res = await fetch(`/twirp/livekit.RoomService/${method}`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${access_token}`,
     },
-    body: JSON.stringify({ room: name }),
+    body: JSON.stringify(body),
   })
   const data = await res.json()
-  if (!res.ok) throw new Error(data.msg || data.message || 'error.roomDeleteFailed')
+  if (!res.ok) throw new Error(data.msg || data.message || 'error.internal')
   return data
+}
+
+export async function listParticipants(room) {
+  const data = await twirpCall('ListParticipants', { room })
+  return data.participants || []
+}
+
+export async function removeParticipant(room, identity) {
+  return twirpCall('RemoveParticipant', { room, identity })
+}
+
+export async function muteTrack(room, identity, trackSid, muted) {
+  return twirpCall('MutePublishedTrack', {
+    room,
+    identity,
+    track_sid: trackSid,
+    muted,
+  })
 }
 
 export async function sendChatMessage(room, text) {

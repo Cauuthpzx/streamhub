@@ -82,6 +82,14 @@
     "leave": "Rời phòng",
     "loadingHistory": "Đang tải tin nhắn..."
   },
+  "participants": {
+    "title": "Người tham gia",
+    "you": "bạn",
+    "kick": "Mời ra khỏi phòng",
+    "mute": "Tắt tiếng",
+    "unmute": "Bật tiếng",
+    "empty": "Không có người tham gia"
+  },
   "error": {
     "methodNotAllowed": "Phương thức không được phép",
     "invalidRequest": "Dữ liệu yêu cầu không hợp lệ",

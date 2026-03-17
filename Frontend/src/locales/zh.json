@@ -82,6 +82,14 @@
     "leave": "离开房间",
     "loadingHistory": "正在加载消息..."
   },
+  "participants": {
+    "title": "参与者",
+    "you": "你",
+    "kick": "移出房间",
+    "mute": "静音",
+    "unmute": "取消静音",
+    "empty": "暂无参与者"
+  },
   "error": {
     "methodNotAllowed": "方法不允许",
     "invalidRequest": "无效的请求体",

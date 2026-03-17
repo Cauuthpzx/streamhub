@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { MonitorUp } from 'lucide-vue-next'
+import { MonitorUp, MicOff, VideoOff } from 'lucide-vue-next'
 import ParticipantAvatar from './ParticipantAvatar.vue'
 import ConnectionBars from './ConnectionBars.vue'
 
@@ -84,6 +84,14 @@ function getDisplayName(participant) {
             {{ getDisplayName(participant) }}
             <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
             <ConnectionBars :quality="connectionQualities[participant.identity]" />
+          </div>
+          <div class="absolute top-1 right-1 flex items-center gap-0.5 z-20">
+            <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
+              <MicOff class="w-2.5 h-2.5 text-white" :stroke-width="2" />
+            </span>
+            <span v-if="isLocal && !camEnabled" class="bg-red-500/80 rounded p-0.5">
+              <VideoOff class="w-2.5 h-2.5 text-white" :stroke-width="2" />
+            </span>
           </div>
         </div>
       </div>

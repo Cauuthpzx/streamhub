@@ -1,5 +1,4 @@
 import { ref, computed, nextTick, toRaw } from 'vue'
-import { Track } from 'livekit-client'
 
 export function useScreenShares(username, deps) {
   const screenShares = ref(new Map())
@@ -91,13 +90,7 @@ export function useScreenShares(username, deps) {
         removeScreenShare(username)
       } else {
         await r.localParticipant.setScreenShareEnabled(true)
-        await nextTick()
-        r.localParticipant.videoTrackPublications.forEach((pub) => {
-          if (pub.track && pub.track.source === Track.Source.ScreenShare) {
-            addScreenShare(pub.track, username, pub.track.sid)
-            nextTick(() => deps.tracks.attachScreenShareByIdentity(pub.track, username))
-          }
-        })
+        // LocalTrackPublished event in useRoom.js will call addScreenShare
       }
     } catch (_) {
       // user cancelled screen share picker

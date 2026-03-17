@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoOff, MonitorUp, Pin, Maximize, Minimize } from 'lucide-vue-next'
+import { MicOff, VideoOff, MonitorUp, Pin, Maximize, Minimize } from 'lucide-vue-next'
 import ParticipantAvatar from './ParticipantAvatar.vue'
 import ConnectionBars from './ConnectionBars.vue'
 import AppTooltip from './AppTooltip.vue'

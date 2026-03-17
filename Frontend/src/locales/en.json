@@ -8,9 +8,18 @@
     "light": "Light mode"
   },
   "features": {
-    "lowLatency": "Low latency",
-    "hdQuality": "HD quality",
-    "secure": "Secure"
+    "lowLatency": "Low Latency",
+    "hdQuality": "HD Quality",
+    "secure": "Secure",
+    "webrtc": "WebRTC",
+    "multiRoom": "Multi-Room",
+    "recording": "Recording",
+    "lowLatencyDesc": "Ultra-low latency real-time streaming",
+    "hdQualityDesc": "Crystal clear HD video & audio",
+    "secureDesc": "End-to-end encrypted connections",
+    "webrtcDesc": "Native WebRTC peer-to-peer protocol",
+    "multiRoomDesc": "Create and manage multiple rooms",
+    "recordingDesc": "Record sessions to MP4/HLS"
   },
   "auth": {
     "welcomeBack": "Welcome back",
@@ -37,7 +46,12 @@
     "passwordMismatch": "Passwords do not match",
     "registerFailed": "Registration failed",
     "loginFailed": "Login failed",
-    "tokenFailed": "Failed to get token"
+    "tokenFailed": "Failed to get token",
+    "liveStreaming": "Live Streaming",
+    "strengthWeak": "Weak",
+    "strengthMedium": "Fair",
+    "strengthGood": "Good",
+    "strengthStrong": "Strong"
   },
   "room": {
     "title": "Rooms",
@@ -72,7 +86,13 @@
     "lobbyBadge": "Waiting room",
     "lobbyWaiting": "Waiting for host approval",
     "lobbyWaitingDesc": "The host will let you in shortly...",
-    "lobbyCancel": "Cancel"
+    "lobbyCancel": "Cancel",
+    "goHome": "Back to rooms",
+    "leaveRoom": "Leave this room",
+    "youAreCreator": "You created this room",
+    "online": "online",
+    "creatorCannotLeave": "Room creator cannot leave. Delete the room instead.",
+    "onlyCreatorCanDelete": "Only the room creator can delete this room"
   },
   "chat": {
     "title": "Chat",
@@ -103,7 +123,8 @@
     "reply": "Reply",
     "attachFile": "Attach file",
     "share": "Share",
-    "download": "Download"
+    "download": "Download",
+    "screenSharing": "{name} is sharing screen"
   },
   "share": {
     "title": "Share room link",
@@ -214,7 +235,9 @@
     "fileTooLarge": "File is too large (max 10 MB)",
     "fileNotFound": "File not found",
     "shareLinkNotFound": "Share link not found or expired",
-    "fileUploadFailed": "Failed to upload file"
+    "fileUploadFailed": "Failed to upload file",
+    "creatorCannotLeave": "Room creator cannot leave. Delete the room instead.",
+    "onlyCreatorCanDelete": "Only the room creator can delete this room"
   },
   "log": {
     "userRegistered": "User registered",
@@ -303,5 +326,11 @@
     "downloadReady": "Recording ready for download",
     "download": "Download",
     "recordingInProgress": "Recording"
+  },
+  "screenLayout": {
+    "title": "Screen layout",
+    "grid": "Grid",
+    "tabs": "Tabs",
+    "spotlight": "Spotlight"
   }
 }

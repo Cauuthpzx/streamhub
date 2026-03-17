@@ -10,7 +10,16 @@
   "features": {
     "lowLatency": "Độ trễ thấp",
     "hdQuality": "Chất lượng HD",
-    "secure": "Bảo mật"
+    "secure": "Bảo mật",
+    "webrtc": "WebRTC",
+    "multiRoom": "Đa phòng",
+    "recording": "Ghi hình",
+    "lowLatencyDesc": "Phát trực tiếp độ trễ siêu thấp",
+    "hdQualityDesc": "Video & âm thanh HD sắc nét",
+    "secureDesc": "Kết nối mã hóa đầu cuối",
+    "webrtcDesc": "Giao thức WebRTC peer-to-peer",
+    "multiRoomDesc": "Tạo và quản lý nhiều phòng",
+    "recordingDesc": "Ghi phiên họp ra MP4/HLS"
   },
   "auth": {
     "welcomeBack": "Chào mừng trở lại",
@@ -37,7 +46,12 @@
     "passwordMismatch": "Mật khẩu không khớp",
     "registerFailed": "Đăng ký thất bại",
     "loginFailed": "Đăng nhập thất bại",
-    "tokenFailed": "Không thể lấy token"
+    "tokenFailed": "Không thể lấy token",
+    "liveStreaming": "Phát trực tiếp",
+    "strengthWeak": "Yếu",
+    "strengthMedium": "Trung bình",
+    "strengthGood": "Khá",
+    "strengthStrong": "Mạnh"
   },
   "room": {
     "title": "Phòng",
@@ -72,7 +86,13 @@
     "lobbyBadge": "Phòng chờ",
     "lobbyWaiting": "Đang chờ chủ phòng phê duyệt",
     "lobbyWaitingDesc": "Chủ phòng sẽ cho bạn vào trong giây lát...",
-    "lobbyCancel": "Hủy"
+    "lobbyCancel": "Hủy",
+    "goHome": "Về trang chủ",
+    "leaveRoom": "Thoát phòng",
+    "youAreCreator": "Bạn là người tạo phòng",
+    "online": "trực tuyến",
+    "creatorCannotLeave": "Người tạo phòng không thể rời. Hãy xóa phòng thay thế.",
+    "onlyCreatorCanDelete": "Chỉ người tạo phòng mới có thể xóa"
   },
   "chat": {
     "title": "Trò chuyện",
@@ -103,7 +123,8 @@
     "reply": "Trả lời",
     "attachFile": "Đính kèm tệp",
     "share": "Chia sẻ",
-    "download": "Tải xuống"
+    "download": "Tải xuống",
+    "screenSharing": "{name} đang chia sẻ màn hình"
   },
   "share": {
     "title": "Chia sẻ liên kết phòng",
@@ -214,7 +235,9 @@
     "fileTooLarge": "Tệp quá lớn (tối đa 10 MB)",
     "fileNotFound": "Không tìm thấy tệp",
     "shareLinkNotFound": "Liên kết chia sẻ không tồn tại hoặc đã hết hạn",
-    "fileUploadFailed": "Không thể tải tệp lên"
+    "fileUploadFailed": "Không thể tải tệp lên",
+    "creatorCannotLeave": "Người tạo phòng không thể rời. Hãy xóa phòng thay thế.",
+    "onlyCreatorCanDelete": "Chỉ người tạo phòng mới có thể xóa"
   },
   "log": {
     "userRegistered": "Đã đăng ký người dùng",
@@ -303,5 +326,11 @@
     "downloadReady": "Bản ghi đã sẵn sàng tải xuống",
     "download": "Tải xuống",
     "recordingInProgress": "Đang ghi"
+  },
+  "screenLayout": {
+    "title": "Bố cục màn hình",
+    "grid": "Lưới",
+    "tabs": "Tab",
+    "spotlight": "Nổi bật"
   }
 }

@@ -10,7 +10,16 @@
   "features": {
     "lowLatency": "低延迟",
     "hdQuality": "高清画质",
-    "secure": "安全可靠"
+    "secure": "安全可靠",
+    "webrtc": "WebRTC",
+    "multiRoom": "多房间",
+    "recording": "录制",
+    "lowLatencyDesc": "超低延迟实时推流",
+    "hdQualityDesc": "高清视频与音频",
+    "secureDesc": "端到端加密连接",
+    "webrtcDesc": "原生WebRTC点对点协议",
+    "multiRoomDesc": "创建和管理多个房间",
+    "recordingDesc": "录制会话为MP4/HLS"
   },
   "auth": {
     "welcomeBack": "欢迎回来",
@@ -37,7 +46,12 @@
     "passwordMismatch": "两次密码不一致",
     "registerFailed": "注册失败",
     "loginFailed": "登录失败",
-    "tokenFailed": "获取令牌失败"
+    "tokenFailed": "获取令牌失败",
+    "liveStreaming": "直播",
+    "strengthWeak": "弱",
+    "strengthMedium": "中等",
+    "strengthGood": "良好",
+    "strengthStrong": "强"
   },
   "room": {
     "title": "房间",
@@ -72,7 +86,13 @@
     "lobbyBadge": "等候室",
     "lobbyWaiting": "等待主持人批准",
     "lobbyWaitingDesc": "主持人将很快让您进入...",
-    "lobbyCancel": "取消"
+    "lobbyCancel": "取消",
+    "goHome": "返回首页",
+    "leaveRoom": "退出房间",
+    "youAreCreator": "您是房间创建者",
+    "online": "在线",
+    "creatorCannotLeave": "房间创建者无法离开，请删除房间。",
+    "onlyCreatorCanDelete": "只有房间创建者才能删除"
   },
   "chat": {
     "title": "聊天",
@@ -103,7 +123,8 @@
     "reply": "回复",
     "attachFile": "附加文件",
     "share": "分享",
-    "download": "下载"
+    "download": "下载",
+    "screenSharing": "{name} 正在共享屏幕"
   },
   "share": {
     "title": "分享房间链接",
@@ -214,7 +235,9 @@
     "fileTooLarge": "文件过大（最大10 MB）",
     "fileNotFound": "文件未找到",
     "shareLinkNotFound": "分享链接不存在或已过期",
-    "fileUploadFailed": "文件上传失败"
+    "fileUploadFailed": "文件上传失败",
+    "creatorCannotLeave": "房间创建者无法离开，请删除房间。",
+    "onlyCreatorCanDelete": "只有房间创建者才能删除"
   },
   "log": {
     "userRegistered": "用户已注册",
@@ -303,5 +326,11 @@
     "downloadReady": "录制已准备好下载",
     "download": "下载",
     "recordingInProgress": "录制中"
+  },
+  "screenLayout": {
+    "title": "屏幕布局",
+    "grid": "网格",
+    "tabs": "标签页",
+    "spotlight": "聚焦"
   }
 }

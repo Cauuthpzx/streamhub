@@ -92,7 +92,10 @@
     "youAreCreator": "Bạn là người tạo phòng",
     "online": "trực tuyến",
     "creatorCannotLeave": "Người tạo phòng không thể rời. Hãy xóa phòng thay thế.",
-    "onlyCreatorCanDelete": "Chỉ người tạo phòng mới có thể xóa"
+    "onlyCreatorCanDelete": "Chỉ người tạo phòng mới có thể xóa",
+    "deleteConfirmTitle": "Xóa phòng?",
+    "deleteConfirmDesc": "Thao tác này sẽ xóa vĩnh viễn \"{name}\" và ngắt kết nối tất cả người tham gia. Không thể hoàn tác.",
+    "deleteRoom": "Xóa phòng"
   },
   "chat": {
     "title": "Trò chuyện",

@@ -92,7 +92,10 @@
     "youAreCreator": "You created this room",
     "online": "online",
     "creatorCannotLeave": "Room creator cannot leave. Delete the room instead.",
-    "onlyCreatorCanDelete": "Only the room creator can delete this room"
+    "onlyCreatorCanDelete": "Only the room creator can delete this room",
+    "deleteConfirmTitle": "Delete room?",
+    "deleteConfirmDesc": "This will permanently delete \"{name}\" and disconnect all participants. This cannot be undone.",
+    "deleteRoom": "Delete room"
   },
   "chat": {
     "title": "Chat",

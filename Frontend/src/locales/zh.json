@@ -92,7 +92,10 @@
     "youAreCreator": "您是房间创建者",
     "online": "在线",
     "creatorCannotLeave": "房间创建者无法离开，请删除房间。",
-    "onlyCreatorCanDelete": "只有房间创建者才能删除"
+    "onlyCreatorCanDelete": "只有房间创建者才能删除",
+    "deleteConfirmTitle": "删除房间？",
+    "deleteConfirmDesc": "此操作将永久删除\"{name}\"并断开所有参与者的连接，无法撤销。",
+    "deleteRoom": "删除房间"
   },
   "chat": {
     "title": "聊天",

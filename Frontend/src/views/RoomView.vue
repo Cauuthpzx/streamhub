@@ -1,9 +1,10 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Users, MessageSquare } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
+import { getRoomMembers } from '../services/room'
 
 import AppLogo from '../components/AppLogo.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
@@ -22,9 +23,11 @@ import { useTracks } from '../composables/useTracks'
 import { useReactions } from '../composables/useReactions'
 import { useRecording } from '../composables/useRecording'
 import { useScreenshot } from '../composables/useScreenshot'
+import { useScreenShares } from '../composables/useScreenShares'
 import { useRoom } from '../composables/useRoom'
 
 const showShareModal = ref(false)
+const isCreator = ref(false)
 
 const route = useRoute()
 const { t } = useI18n()
@@ -37,16 +40,16 @@ const { takeScreenshot } = useScreenshot(roomName)
 
 // useRoom needs tracks/reactions/recording — but tracks needs room ref from useRoom
 // Solution: create a mutable deps object, pass it in, then fill after useRoom returns
-const deps = { tracks: null, sounds, reactions: null, recording: null, screenshot: takeScreenshot }
+const deps = { tracks: null, sounds, reactions: null, recording: null, screenshot: takeScreenshot, screenShares: null }
 
 const {
   room, showPreJoin, connected, connecting, lobbyWaiting, lobbyRejected, error,
-  participants, micEnabled, camEnabled, screenEnabled,
-  panelOpen, panelTab, unreadCount, screenShareTrack,
+  participants, micEnabled, camEnabled,
+  panelOpen, panelTab, unreadCount,
   activeSpeakers, pinnedSid, fullscreenSid, connectionQualities,
   showReactionPicker, showDeviceSettings,
   handlePreJoin, handlePreJoinCancel,
-  toggleMic, toggleCam, toggleScreen, togglePin, toggleFullscreen,
+  toggleMic, toggleCam, togglePin, toggleFullscreen,
   togglePanel, switchTab, leaveRoom,
 } = useRoom(roomName, username, deps)
 
@@ -54,10 +57,21 @@ const {
 const tracks = useTracks(room)
 const reactionCtx = useReactions(room, username)
 const recordingCtx = useRecording(room, roomName, t)
+const screenSharesCtx = useScreenShares(username, { tracks })
 
 deps.tracks = tracks
 deps.reactions = reactionCtx
 deps.recording = recordingCtx
+deps.screenShares = screenSharesCtx
+
+// fetch creator status once connected
+watch(connected, async (val) => {
+  if (!val) return
+  try {
+    const members = await getRoomMembers(roomName)
+    isCreator.value = members.some((m) => m.username === username && m.role === 'creator')
+  } catch (_) { /* non-critical */ }
+})
 </script>
 
 <template>
@@ -171,7 +185,11 @@ deps.recording = recordingCtx
         <!-- Video grid -->
         <VideoGrid
           :participants="participants"
-          :screen-share-track="screenShareTrack"
+          :has-screen-shares="screenSharesCtx.hasScreenShares.value"
+          :screen-layout="screenSharesCtx.screenLayout.value"
+          :screen-share-list="screenSharesCtx.screenShareList.value"
+          :active-screen-idx="screenSharesCtx.activeScreenIdx.value"
+          :spotlight-identity="screenSharesCtx.spotlightIdentity.value"
           :active-speakers="activeSpeakers"
           :raised-hands="reactionCtx.raisedHands.value"
           :connection-qualities="connectionQualities"
@@ -182,6 +200,9 @@ deps.recording = recordingCtx
           :username="username"
           @pin="togglePin"
           @fullscreen="toggleFullscreen"
+          @set-layout="screenSharesCtx.setLayout($event)"
+          @set-active-screen="screenSharesCtx.setActiveScreen($event)"
+          @set-spotlight="screenSharesCtx.setSpotlight($event)"
         />
 
         <!-- Side panel -->
@@ -232,7 +253,10 @@ deps.recording = recordingCtx
               :room="room"
               :room-name="roomName"
               :local-identity="username"
+              :is-creator="isCreator"
               class="flex-1 min-h-0"
+              @leave-room="leaveRoom"
+              @room-deleted="leaveRoom"
             />
           </div>
         </Transition>
@@ -243,7 +267,9 @@ deps.recording = recordingCtx
         v-if="connected"
         :mic-enabled="micEnabled"
         :cam-enabled="camEnabled"
-        :screen-enabled="screenEnabled"
+        :screen-enabled="screenSharesCtx.screenEnabled.value"
+        :has-screen-shares="screenSharesCtx.hasScreenShares.value"
+        :screen-layout="screenSharesCtx.screenLayout.value"
         :recording="recordingCtx.recording.value"
         :recording-loading="recordingCtx.recordingLoading.value"
         :hand-raised="reactionCtx.raisedHands.value.has(username)"
@@ -252,7 +278,8 @@ deps.recording = recordingCtx
         :unread-count="unreadCount"
         @toggle-mic="toggleMic"
         @toggle-cam="toggleCam"
-        @toggle-screen="toggleScreen"
+        @toggle-screen="screenSharesCtx.toggleLocalScreen(room)"
+        @set-layout="screenSharesCtx.cycleLayout()"
         @toggle-recording="recordingCtx.toggleRecording()"
         @screenshot="takeScreenshot"
         @toggle-hand="reactionCtx.toggleHand()"
@@ -261,7 +288,7 @@ deps.recording = recordingCtx
         @toggle-panel="togglePanel"
         @open-settings="showDeviceSettings = true"
         @open-share="showShareModal = true"
-        @leave="leaveRoom"
+        @go-home="leaveRoom"
       />
 
       <DeviceSettings v-if="showDeviceSettings" :room="room" @close="showDeviceSettings = false" />

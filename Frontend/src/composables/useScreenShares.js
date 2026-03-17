@@ -69,7 +69,7 @@ export function useScreenShares(username, deps) {
   // Safety: cleanup stale entries when participants change
   function cleanupStaleShares(currentParticipants) {
     const activeIdentities = new Set(currentParticipants.map(p => p.participant.identity))
-    for (const identity of screenShares.value.keys()) {
+    for (const identity of [...screenShares.value.keys()]) {
       if (!activeIdentities.has(identity)) {
         removeScreenShare(identity)
       }

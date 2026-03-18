@@ -270,16 +270,16 @@ async function handleRegister() {
 
 /* ── Light mode ── */
 .auth-header:not(:where(.dark, .dark *)) .auth-title { color: #0f172a; }
-.auth-header:not(:where(.dark, .dark *)) .auth-desc { color: #64748b; }
+.auth-header:not(:where(.dark, .dark *)) .auth-desc { color: #475569; }
 .auth-error-box:not(:where(.dark, .dark *)) {
-  background: rgba(239, 68, 68, 0.06);
-  border-color: rgba(239, 68, 68, 0.15);
+  background: rgba(239, 68, 68, 0.08);
+  border-color: rgba(239, 68, 68, 0.2);
   color: #dc2626;
 }
 .str-bar:not(:where(.dark, .dark *)) {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(0, 0, 0, 0.07);
 }
-.auth-switch:not(:where(.dark, .dark *)) { color: #94a3b8; }
-.auth-switch:not(:where(.dark, .dark *)) .auth-switch-link { color: #6366f1; }
+.auth-switch:not(:where(.dark, .dark *)) { color: #64748b; }
+.auth-switch:not(:where(.dark, .dark *)) .auth-switch-link { color: #6366f1; font-weight: 700; }
 .auth-switch:not(:where(.dark, .dark *)) .auth-switch-link:hover { color: #4f46e5; }
 </style>

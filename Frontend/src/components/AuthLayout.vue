@@ -160,10 +160,10 @@ onMounted(() => {
   -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, black 30%, transparent 100%);
 }
 
-/* ── Orbital rings ── */
+/* ── Orbital rings ── center tại 42% để nằm giữa logo và feature cards */
 .auth-orbital {
   position: absolute;
-  top: 50%;
+  top: 42%;
   left: 50%;
   border-radius: 50%;
   pointer-events: none;
@@ -261,29 +261,32 @@ onMounted(() => {
   align-items: center;
   max-width: 380px;
   width: 100%;
+  /* Đẩy toàn bộ content lên trên — orbital rings nằm giữa tự nhiên */
+  padding-bottom: 24px;
 }
 
-/* Logo - BIG */
+/* Logo + tagline block — nằm phía trên orbital */
 .auth-logo-wrap {
-  margin-bottom: 28px;
+  margin-bottom: 12px;
   filter: drop-shadow(0 4px 24px rgba(99, 102, 241, 0.2));
+  margin-top: -40px; /* kéo lên khỏi center */
 }
 
 /* Tagline - PROMINENT */
 .auth-tagline {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 500;
   line-height: 1.7;
   color: #c8d3e6;
   text-align: center;
-  margin: 0 0 36px;
-  max-width: 340px;
+  margin: 0 0 200px; /* tạo khoảng trống = chiều cao orbital zone */
+  max-width: 320px;
 }
 :where(.dark, .dark *) .auth-tagline {
   color: #b0bdd4;
 }
 
-/* ── Feature Cards Grid ── */
+/* ── Feature Cards Grid ── nằm SAU tagline margin = dưới orbital */
 .auth-features-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -432,75 +435,85 @@ onMounted(() => {
   width: 100%;
 }
 
+/* Light mode: card nổi lên trên nền xám */
+.auth-page:not(:where(.dark, .dark *)) .auth-card {
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
 /* ══════════════════════════════════════
    LIGHT MODE OVERRIDES
    Use body-level class check to avoid
    :not(.dark) descendant matching bug
    ══════════════════════════════════════ */
 
-/* Brand panel light */
+/* Brand panel light — nền đậm hơn để tương phản */
 .auth-page:not(:where(.dark, .dark *)) .auth-brand {
-  background: linear-gradient(160deg, #eef2ff 0%, #f8fafc 40%, #f0f9ff 100%);
-  border-right-color: rgba(0, 0, 0, 0.06);
+  background: linear-gradient(160deg, #1e1b4b 0%, #1e3a5f 50%, #0f2744 100%);
+  border-right-color: rgba(0, 0, 0, 0.18);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-grid {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-orbital--1 {
-  border-color: rgba(99, 102, 241, 0.14);
+  border-color: rgba(129, 140, 248, 0.25);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-orbital--2 {
-  border-color: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.2);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-glow--1 {
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-glow--2 {
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-glow--3 {
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.16) 0%, transparent 70%);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-tagline {
-  color: #475569;
+  color: #cbd5e1;
 }
+/* Feature cards — nền tối để nổi lên trên brand panel */
 .auth-page:not(:where(.dark, .dark *)) .auth-fcard {
-  background: rgba(255, 255, 255, 0.6);
-  border-color: rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-fcard:hover {
-  border-color: rgba(99, 102, 241, 0.25);
-  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(129, 140, 248, 0.35);
+  background: rgba(129, 140, 248, 0.1);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-fcard-title {
-  color: #1e293b;
+  color: #e2e8f0;
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-fcard-desc {
   color: #94a3b8;
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-logo-wrap {
-  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.08));
+  filter: drop-shadow(0 4px 24px rgba(99, 102, 241, 0.35));
 }
 
-/* Form panel light */
+/* Form panel light — nền trắng xám nhẹ, card nổi rõ */
 .auth-page:not(:where(.dark, .dark *)) .auth-form-panel {
-  background: #f8fafc;
+  background: #f1f5f9;
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-form-gridbg {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
+    linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-form-glow-tr {
-  background: radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.06), transparent 60%);
+  background: radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.1), transparent 60%);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-form-glow-bl {
-  background: radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.05), transparent 60%);
+  background: radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.08), transparent 60%);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-particle {
-  opacity: 0.35;
+  opacity: 0.5;
 }
 
 /* ── RESPONSIVE ── */

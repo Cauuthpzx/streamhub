@@ -214,11 +214,12 @@ const { t } = useI18n()
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard-title) {
   color: #1e1b4b;
 }
-.auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard-desc) {
-  color: #64748b;
-}
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-logo-block) {
   filter: drop-shadow(0 2px 12px rgba(99, 102, 241, 0.2));
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-slogan) {
+  color: #6366f1;
+  opacity: 0.8;
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-particle) {
   opacity: 0.3;

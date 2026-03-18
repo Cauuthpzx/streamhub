@@ -32,9 +32,10 @@ const { particles, features } = useAuthBrand()
     </div>
 
     <div class="auth-brand-inner">
-      <!-- Logo: icon + STREAM-HUB + LIVE·SHARE·CONNECT -->
+      <!-- Logo + slogan -->
       <div class="auth-logo-block">
-        <AppLogo :height="52" :show-tagline="true" />
+        <AppLogo :height="68" :show-tagline="false" />
+        <p class="auth-slogan">LIVE · SHARE · CONNECT</p>
       </div>
 
       <!-- Description -->
@@ -189,8 +190,21 @@ const { particles, features } = useAuthBrand()
 
 /* ── Logo block ── */
 .auth-logo-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.25));
   animation: auth-card-in 0.9s cubic-bezier(.16,1,.3,1) 0.2s both;
+}
+.auth-slogan {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 4px;
+  color: #818cf8;
+  opacity: 0.85;
+  text-align: center;
 }
 
 /* ── Description ── */
@@ -203,18 +217,19 @@ const { particles, features } = useAuthBrand()
   animation: auth-card-in 0.9s cubic-bezier(.16,1,.3,1) 0.4s both;
 }
 
-/* ── Feature cards ── */
+/* ── Feature cards — 3 cols, 2 rows ── */
 .auth-features-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 9px;
   width: 100%;
 }
 .auth-fcard {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 10px;
-  padding: 12px 14px;
+  gap: 8px;
+  padding: 10px 10px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.055);
   border-radius: 14px;
@@ -233,9 +248,9 @@ const { particles, features } = useAuthBrand()
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 .auth-fcard-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,15 +266,16 @@ const { particles, features } = useAuthBrand()
   min-width: 0;
 }
 .auth-fcard-title {
-  font-size: 12.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #eef0ff;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .auth-fcard-desc {
-  font-size: 11px;
-  color: #4a5070;
-  line-height: 1.4;
+  display: none;
 }
 /* RESPONSIVE */
 @media (max-width: 1024px) {

@@ -1,13 +1,6 @@
-import { getToken } from './auth'
+import { authHeaders } from './apiClient'
 
 const BASE = '/auth/ingress'
-
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${getToken()}`,
-  }
-}
 
 export async function createIngress(name, room, inputType = 'rtmp', identity = '') {
   const res = await fetch(`${BASE}/create`, {

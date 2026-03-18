@@ -1,13 +1,7 @@
 import { getToken } from './auth'
+import { authHeaders } from './apiClient'
 
 const AUTH_BASE = '/auth/room'
-
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${getToken()}`,
-  }
-}
 
 export async function createRoom(name, { maxParticipants = 0, password = '', lobbyEnabled = false } = {}) {
   const res = await fetch(`${AUTH_BASE}/create`, {
@@ -200,17 +194,6 @@ export async function uploadFile(room, file) {
 
 export function getFileDownloadURL(fileID) {
   return `${AUTH_BASE}/file/download/${fileID}`
-}
-
-export async function listRoomFiles(room) {
-  const res = await fetch(`${AUTH_BASE}/file/list`, {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ room }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'error.internal')
-  return data.files || []
 }
 
 // Share links

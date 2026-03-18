@@ -1,13 +1,6 @@
-import { getToken } from './auth'
+import { authHeaders } from './apiClient'
 
 const BASE = '/auth/agent'
-
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${getToken()}`,
-  }
-}
 
 export async function createAgentDispatch(room, agentName, metadata = '') {
   const res = await fetch(`${BASE}/dispatch`, {

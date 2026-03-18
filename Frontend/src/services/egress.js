@@ -1,13 +1,6 @@
-import { getToken } from './auth'
+import { authHeaders } from './apiClient'
 
 const BASE = '/auth/egress'
-
-function authHeaders() {
-  return {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${getToken()}`,
-  }
-}
 
 export async function startEgress(room) {
   const res = await fetch(`${BASE}/start`, {

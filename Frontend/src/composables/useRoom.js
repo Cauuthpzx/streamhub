@@ -272,18 +272,19 @@ export function useRoom(roomName, username, deps) {
       const r = new Room({
         adaptiveStream: true,
         dynacast: true,
-        // Capture max resolution — browser scale down cho simulcast layers
+        // Capture 1080p — đủ cho layer cao nhất 1080p simulcast
         videoCaptureDefaults: {
           resolution: VideoPresets.h1080.resolution,
         },
-        // Simulcast 3 layers + codec preference
+        // Simulcast 3 layers: 160kbps → 800kbps → 3Mbps (h180→h540→h1080)
+        // Dynacast tự pause layer cao khi bandwidth không đủ
         publishDefaults: {
           simulcast: true,
-          videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360, VideoPresets.h720],
+          videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h540, VideoPresets.h1080],
           videoCodec: preferredCodec,
           backupCodec: true,
-          // Screen share dùng VP9/AV1 tốt hơn cho content-based (text, UI)
-          screenShareEncoding: ScreenSharePresets.h1080fps15.encoding,
+          // Screen share 1080p@30fps — mượt cho video/demo, VP9/AV1 nén tốt
+          screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
         },
       })
 
@@ -401,7 +402,7 @@ export function useRoom(roomName, username, deps) {
     try {
       const r = toRaw(room.value)
       await r.localParticipant.setScreenShareEnabled(!screenEnabled.value, {
-        resolution: ScreenSharePresets.h1080fps15.resolution,
+        resolution: ScreenSharePresets.h1080fps30.resolution,
         contentHint: 'detail',
         // screen share không cần simulcast — 1 layer SFU tự scale
         simulcast: false,

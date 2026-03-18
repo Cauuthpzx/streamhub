@@ -41,8 +41,8 @@ rtc:
     mid_quality: 2s
     high_quality: 1500ms
 
-  # Phase 1: Packet buffer — đủ cho 720p@30fps + jitter buffer audio 4s
-  packet_buffer_size_video: 2000
+  # Packet buffer — đủ cho 1080p@30fps@3Mbps + jitter buffer audio 4s
+  packet_buffer_size_video: 3000
   packet_buffer_size_audio: 400
 
   # Phase 3 preview: giải phóng bandwidth layer cao nhanh hơn

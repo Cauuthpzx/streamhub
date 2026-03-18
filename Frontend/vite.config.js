@@ -13,11 +13,19 @@ export default defineConfig({
     target: 'esnext',
     minify: 'terser',
     cssMinify: true,
+    terserOptions: {
+      compress: {
+        drop_console: true,
+        drop_debugger: true,
+        pure_funcs: ['console.warn', 'console.info'],
+      },
+    },
     rollupOptions: {
       output: {
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router', 'vue-i18n'],
           'livekit': ['livekit-client'],
+          'lucide': ['lucide-vue-next'],
         },
       },
     },

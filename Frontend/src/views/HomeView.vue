@@ -11,6 +11,7 @@ import ThemeToggle from '../components/ThemeToggle.vue'
 import UserMenu from '../components/UserMenu.vue'
 import AppLogo from '../components/AppLogo.vue'
 import NotificationDropdown from '../components/NotificationDropdown.vue'
+import AppTooltip from '../components/AppTooltip.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -107,6 +108,7 @@ function confirmJoin() {
 }
 
 let ws = null
+let _wsMounted = true
 
 function connectEventWS() {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -120,6 +122,7 @@ function connectEventWS() {
   }
   ws.onclose = () => {
     ws = null
+    if (_wsMounted) setTimeout(connectEventWS, 3000)
   }
 }
 
@@ -129,6 +132,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  _wsMounted = false
   if (ws) { ws.close(); ws = null }
 })
 </script>

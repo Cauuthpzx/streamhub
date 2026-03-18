@@ -5,8 +5,10 @@ import { Send, Smile, Reply, X, Paperclip, FileIcon, Download } from 'lucide-vue
 import { RoomEvent } from 'livekit-client'
 import { sendChatMessage, getChatHistory, uploadFile, getFileDownloadURL } from '../services/room'
 import { getProfile } from '../services/auth'
+import { useNotifications } from '../composables/useNotifications'
 
 const { t } = useI18n()
+const _notif = useNotifications()
 
 const props = defineProps({
   room: { type: Object, required: true },
@@ -39,7 +41,7 @@ async function handleFileSelect(e) {
   const file = e.target.files?.[0]
   if (!file || !props.room) return
   if (file.size > MAX_FILE_SIZE) {
-    alert(t('error.fileTooLarge'))
+    _notif.system.error(t('error.fileTooLarge'))
     if (fileInputRef.value) fileInputRef.value.value = ''
     return
   }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { LogOut, ChevronDown, Pencil, X, Save } from 'lucide-vue-next'
@@ -54,6 +54,10 @@ function closeDialog() {
   const p = getProfile()
   if (p) applyProfile(p)
 }
+
+onUnmounted(() => {
+  if (closeTimer) clearTimeout(closeTimer)
+})
 
 async function saveEdit() {
   saving.value = true

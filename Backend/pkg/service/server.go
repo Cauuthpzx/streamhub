@@ -153,6 +153,7 @@ func NewLivekitServer(conf *config.Config,
 	if userAuthService != nil {
 		userAuthService.SetupRoutes(mux)
 	}
+	mux.HandleFunc("/health", s.healthCheckJSON)
 	mux.HandleFunc("/", s.defaultHandler)
 
 	s.httpServer = &http.Server{
@@ -375,6 +376,12 @@ func (s *LivekitServer) defaultHandler(w http.ResponseWriter, r *http.Request) {
 	} else {
 		http.NotFound(w, r)
 	}
+}
+
+func (s *LivekitServer) healthCheckJSON(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	_, _ = fmt.Fprintf(w, `{"status":"ok","version":%q}`, version.Version)
 }
 
 func (s *LivekitServer) healthCheck(w http.ResponseWriter, _ *http.Request) {

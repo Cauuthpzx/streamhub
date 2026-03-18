@@ -240,7 +240,8 @@
     "shareLinkNotFound": "分享链接不存在或已过期",
     "fileUploadFailed": "文件上传失败",
     "creatorCannotLeave": "房间创建者无法离开，请删除房间。",
-    "onlyCreatorCanDelete": "只有房间创建者才能删除"
+    "onlyCreatorCanDelete": "只有房间创建者才能删除",
+    "rateLimitExceeded": "请求过于频繁，请稍后再试"
   },
   "log": {
     "userRegistered": "用户已注册",

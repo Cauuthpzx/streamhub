@@ -1,17 +1,10 @@
 import { ref, toRaw, nextTick, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import {
-  Room,
-  RoomEvent,
-  Track,
-  VideoPresets,
-  ScreenSharePresets,
-  ConnectionQuality,
-  DisconnectReason,
-  createLocalTracks,
-} from 'livekit-client'
 import { useNotifications } from './useNotifications'
+import { useRoomEvents } from './useRoomEvents'
+import { useRoomControls } from './useRoomControls'
+import { useRoomConnect } from './useRoomConnect'
 
 // Detect preferred video codec: AV1 > H264 > VP9 > VP8
 function detectPreferredCodec() {
@@ -34,7 +27,7 @@ export function useRoom(roomName, username, deps) {
   const notif = useNotifications()
   const roomNotif = notif.room(roomName)
 
-  // state
+  // ── state ──────────────────────────────────────────────────────────
   const room = ref(null)
   const showPreJoin = ref(true)
   const preJoinSettings = ref(null)
@@ -50,7 +43,7 @@ export function useRoom(roomName, username, deps) {
   const panelOpen = ref(false)
   const panelTab = ref('chat')
   const unreadCount = ref(0)
-  const screenShares = ref([]) // [{ track, identity, sid }]
+  const screenShares = ref([])
   const activeSpeakers = ref(new Set())
   const pinnedSid = ref(null)
   const focusedSid = ref(null)
@@ -59,19 +52,13 @@ export function useRoom(roomName, username, deps) {
   const showReactionPicker = ref(false)
   const showDeviceSettings = ref(false)
 
-  let _lobbyPollInterval = null
+  const SESSION_KEY = `prejoin:${roomName}`
 
-  // helpers
-  function getLivekitUrl() {
-    const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    return `${proto}://${window.location.host}`
-  }
-
+  // ── helpers ────────────────────────────────────────────────────────
   function participantEntry(p, isLocal) {
     return {
       participant: p,
       isLocal,
-      // snapshot trạng thái tại thời điểm gọi — plain values, Vue track được
       isMicOn: p.isMicrophoneEnabled,
       isCamOn: p.isCameraEnabled,
       isScreenOn: p.isScreenShareEnabled,
@@ -86,382 +73,18 @@ export function useRoom(roomName, username, deps) {
     participants.value = list
   }
 
-  // event handlers
-  function handleParticipantUpdate() { updateParticipants() }
-
-  function handleParticipantDisconnected(participant) {
-    updateParticipants()
-    // cleanup pinned/fullscreen if that participant left
-    if (pinnedSid.value === participant.sid) pinnedSid.value = null
-    if (focusedSid.value === participant.sid) focusedSid.value = null
-    if (fullscreenSid.value === participant.sid) {
-      fullscreenSid.value = null
-      if (document.fullscreenElement) document.exitFullscreen()
-    }
-    // cleanup screen shares
-    screenShares.value = screenShares.value.filter(s => s.identity !== participant.identity)
-    // cleanup connection quality
-    const { [participant.identity]: _, ...rest } = connectionQualities.value
-    connectionQualities.value = rest
+  // ── composables ────────────────────────────────────────────────────
+  const eventsState = {
+    participants, pinnedSid, focusedSid, fullscreenSid,
+    screenShares, activeSpeakers, connectionQualities, updateParticipants,
   }
+  const events = useRoomEvents(room, roomName, username, deps, eventsState, roomNotif, t)
 
-  function handleActiveSpeakers(speakers) {
-    activeSpeakers.value = new Set(speakers.map((s) => s.identity))
-  }
-
-  function handleConnectionQuality(quality, participant) {
-    const map = {
-      [ConnectionQuality.Excellent]: 'excellent',
-      [ConnectionQuality.Good]: 'good',
-      [ConnectionQuality.Poor]: 'poor',
-      [ConnectionQuality.Lost]: 'lost',
-    }
-    connectionQualities.value = { ...connectionQualities.value, [participant.identity]: map[quality] || 'unknown' }
-  }
-
-  function displayName(participant) {
-    try {
-      const meta = participant.metadata ? JSON.parse(participant.metadata) : null
-      return meta?.display_name || participant.identity
-    } catch (_) { return participant.identity }
-  }
-
-  function handleTrackSubscribed(track, publication, participant) {
-    updateParticipants()
-    const name = displayName(participant)
-    if (track.source === Track.Source.ScreenShare) {
-      screenShares.value = [...screenShares.value, { track, identity: participant.identity, sid: publication.trackSid }]
-      roomNotif.info(t('notification.screenShareStarted', { name }), null, 'screenShare')
-      nextTick(() => {
-        deps.tracks.reattachAll()
-      })
-    } else if (track.source === Track.Source.Camera) {
-      roomNotif.info(t('notification.camEnabled', { name }), null, 'cam')
-      nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
-    } else {
-      nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
-    }
-  }
-
-  function handleTrackUnsubscribed(track, publication, participant) {
-    updateParticipants()
-    const name = displayName(participant)
-    if (track.source === Track.Source.ScreenShare) {
-      screenShares.value = screenShares.value.filter(s => s.identity !== participant.identity)
-      roomNotif.info(t('notification.screenShareStopped', { name }), null, 'screenShare')
-      const container = document.getElementById(`screen-share-${participant.sid}`)
-      if (container) container.innerHTML = ''
-      nextTick(() => deps.tracks.reattachAll())
-    } else if (track.source === Track.Source.Camera) {
-      roomNotif.info(t('notification.camDisabled', { name }), null, 'cam')
-    }
-    const el = document.getElementById(`track-${track.sid}`)
-    if (el) el.remove()
-  }
-
-  function handleTrackMuted(publication, participant) {
-    if (participant.identity === username) return
-    const name = displayName(participant)
-    if (publication.source === Track.Source.Microphone) {
-      roomNotif.info(t('notification.micDisabled', { name }), null, 'mic')
-    }
-    // cam muted = handled by TrackUnsubscribed (camera track removed)
-  }
-
-  function handleTrackUnmuted(publication, participant) {
-    if (participant.identity === username) return
-    const name = displayName(participant)
-    if (publication.source === Track.Source.Microphone) {
-      roomNotif.info(t('notification.micEnabled', { name }), null, 'mic')
-    }
-    // cam unmuted = handled by TrackSubscribed (camera track added)
-  }
-
-  function handleLocalTrackPublished(publication) {
-    if (publication.source === Track.Source.ScreenShare) {
-      roomNotif.info(t('notification.youScreenShareStarted'), null, 'screenShare')
-    } else if (publication.source === Track.Source.Camera) {
-      roomNotif.info(t('notification.youCamEnabled'), null, 'cam')
-    } else if (publication.source === Track.Source.Microphone) {
-      roomNotif.info(t('notification.youMicEnabled'), null, 'mic')
-    }
-  }
-
-  function handleLocalTrackUnpublished(publication) {
-    if (publication.source === Track.Source.ScreenShare) {
-      roomNotif.info(t('notification.youScreenShareStopped'), null, 'screenShare')
-    } else if (publication.source === Track.Source.Camera) {
-      roomNotif.info(t('notification.youCamDisabled'), null, 'cam')
-    } else if (publication.source === Track.Source.Microphone) {
-      roomNotif.info(t('notification.youMicDisabled'), null, 'mic')
-    }
-  }
-
-  function notifyParticipantDisconnected(name, reason) {
-    switch (reason) {
-      case DisconnectReason.CLIENT_INITIATED:
-        roomNotif.info(t('notification.participantLeft', { name }), null, 'participantLeave')
-        break
-      case DisconnectReason.PARTICIPANT_REMOVED:
-        roomNotif.warning(t('notification.participantKicked', { name }), null, 'participantKick')
-        break
-      case DisconnectReason.DUPLICATE_IDENTITY:
-        roomNotif.warning(t('notification.participantDuplicate', { name }), null, 'participantLeave')
-        break
-      case DisconnectReason.SIGNAL_CLOSE:
-      case DisconnectReason.CONNECTION_TIMEOUT:
-      case DisconnectReason.MEDIA_FAILURE:
-        roomNotif.warning(t('notification.participantDisconnected', { name }), null, 'participantDisconnect')
-        break
-      case DisconnectReason.SERVER_SHUTDOWN:
-      case DisconnectReason.ROOM_DELETED:
-      case DisconnectReason.ROOM_CLOSED:
-        roomNotif.warning(t('notification.participantLeft', { name }), null, 'participantLeave')
-        break
-      default:
-        roomNotif.info(t('notification.participantLeft', { name }), null, 'participantLeave')
-    }
-  }
-
-  // sessionStorage key for this room — survives reload within same tab
-  const SESSION_KEY = `prejoin:${roomName}`
-
-  function handleDisconnect() {
-    sessionStorage.removeItem(SESSION_KEY)
-    connected.value = false
-    router.push('/home')
-  }
-
-  async function connectRoom() {
-    const { getLivekitToken } = await import('../services/auth')
-    connecting.value = true
-    error.value = ''
-
-    try {
-      const roomPassword = sessionStorage.getItem(`room_password:${roomName}`)
-      if (roomPassword) sessionStorage.removeItem(`room_password:${roomName}`)
-
-      const tokenResp = await getLivekitToken(roomName, roomPassword)
-      const { access_token } = tokenResp
-
-      // lobby (waiting room) — poll until approved
-      if (tokenResp.lobby_pending) {
-        lobbyWaiting.value = true
-        connecting.value = false
-        const { getLobbyStatus } = await import('../services/room')
-        _lobbyPollInterval = setInterval(async () => {
-          try {
-            const status = await getLobbyStatus(roomName)
-            if (status === 'approved') {
-              clearInterval(_lobbyPollInterval)
-              _lobbyPollInterval = null
-              lobbyWaiting.value = false
-              connectRoom() // retry with approved status
-            } else if (status === 'rejected') {
-              clearInterval(_lobbyPollInterval)
-              _lobbyPollInterval = null
-              lobbyWaiting.value = false
-              lobbyRejected.value = true
-              error.value = t('error.lobbyRejected')
-            }
-          } catch (_) { /* keep polling */ }
-        }, 2000)
-        return
-      }
-
-      const r = new Room({
-        adaptiveStream: true,
-        dynacast: true,
-        // Capture 1080p — đủ cho layer cao nhất 1080p simulcast
-        videoCaptureDefaults: {
-          resolution: VideoPresets.h1080.resolution,
-        },
-        // Simulcast 3 layers: 160kbps → 800kbps → 3Mbps (h180→h540→h1080)
-        // Dynacast tự pause layer cao khi bandwidth không đủ
-        publishDefaults: {
-          simulcast: true,
-          videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h540, VideoPresets.h1080],
-          videoCodec: preferredCodec,
-          backupCodec: true,
-          // Screen share 1080p@30fps — mượt cho video/demo, VP9/AV1 nén tốt
-          screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
-        },
-      })
-
-      r.on(RoomEvent.ParticipantConnected, (participant) => {
-        handleParticipantUpdate()
-        deps.sounds.playJoinSound()
-        roomNotif.success(t('notification.participantJoined', { name: displayName(participant) }), null, 'participantJoin')
-      })
-      r.on(RoomEvent.ParticipantDisconnected, (participant, reason) => {
-        const name = displayName(participant)
-        handleParticipantDisconnected(participant)
-        deps.sounds.playLeaveSound()
-        notifyParticipantDisconnected(name, reason)
-      })
-      r.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
-      r.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-      r.on(RoomEvent.LocalTrackPublished, (publication) => {
-        handleParticipantUpdate()
-        handleLocalTrackPublished(publication)
-      })
-      r.on(RoomEvent.LocalTrackUnpublished, (publication) => {
-        handleParticipantUpdate()
-        handleLocalTrackUnpublished(publication)
-      })
-      r.on(RoomEvent.TrackMuted, (publication, participant) => {
-        handleParticipantUpdate()
-        handleTrackMuted(publication, participant)
-      })
-      r.on(RoomEvent.TrackUnmuted, (publication, participant) => {
-        handleParticipantUpdate()
-        handleTrackUnmuted(publication, participant)
-      })
-      r.on(RoomEvent.Disconnected, handleDisconnect)
-      r.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers)
-      r.on(RoomEvent.ConnectionQualityChanged, handleConnectionQuality)
-      r.on(RoomEvent.ParticipantMetadataChanged, handleParticipantUpdate)
-
-      r.on(RoomEvent.DataReceived, () => {
-        if (!panelOpen.value || panelTab.value !== 'chat') {
-          unreadCount.value++
-          deps.sounds.playChatSound()
-        }
-      })
-
-      const pj = preJoinSettings.value || { micOn: true, camOn: true }
-
-      // prepare local tracks WHILE connecting — parallel
-      const trackOpts = { audio: pj.micOn, video: pj.camOn }
-      if (pj.audioDeviceId && pj.micOn) trackOpts.audio = { deviceId: { exact: pj.audioDeviceId } }
-      if (pj.videoDeviceId && pj.camOn) trackOpts.video = { deviceId: { exact: pj.videoDeviceId } }
-
-      const [, localTracksResult] = await Promise.all([
-        r.connect(getLivekitUrl(), access_token),
-        (pj.micOn || pj.camOn)
-          ? createLocalTracks(trackOpts).catch(() =>
-              createLocalTracks({ audio: true, video: false }).catch(() => [])
-            )
-          : Promise.resolve([]),
-      ])
-
-      // publish all tracks in parallel
-      await Promise.all(localTracksResult.map(track => r.localParticipant.publishTrack(track)))
-
-      micEnabled.value = localTracksResult.some(t => t.kind === 'audio') ? pj.micOn : false
-      camEnabled.value = localTracksResult.some(t => t.kind === 'video') ? pj.camOn : false
-
-      // set metadata non-blocking — does not delay room entry
-      ;(async () => {
-        try {
-          const { getProfile, fetchProfile } = await import('../services/auth')
-          let profile = getProfile()
-          if (!profile) profile = await fetchProfile()
-          if (profile && (profile.avatar || profile.display_name)) {
-            await r.localParticipant.setMetadata(JSON.stringify({
-              avatar: profile.avatar || '',
-              avatar_x: profile.avatar_x || 0.5,
-              avatar_y: profile.avatar_y || 0.5,
-              avatar_scale: profile.avatar_scale || 1,
-              display_name: profile.display_name || '',
-            }))
-          }
-        } catch (_) { /* non-critical */ }
-      })()
-
-      room.value = r
-      connected.value = true
-      deps.reactions.setupListeners()
-      updateParticipants()
-      await nextTick()
-      deps.tracks.attachLocalVideo()
-    } catch (e) {
-      error.value = t(e.message || 'room.connectFailed')
-    } finally {
-      connecting.value = false
-    }
-  }
-
-  // controls
-  async function toggleMic() {
-    if (!room.value) return
-    await toRaw(room.value).localParticipant.setMicrophoneEnabled(!micEnabled.value)
-    micEnabled.value = !micEnabled.value
-  }
-
-  async function toggleCam() {
-    if (!room.value) return
-    await toRaw(room.value).localParticipant.setCameraEnabled(!camEnabled.value)
-    camEnabled.value = !camEnabled.value
-    await nextTick()
-    if (camEnabled.value) deps.tracks.attachLocalVideo()
-  }
-
-  async function toggleScreen() {
-    if (!room.value) return
-    try {
-      const r = toRaw(room.value)
-      await r.localParticipant.setScreenShareEnabled(!screenEnabled.value, {
-        resolution: ScreenSharePresets.h1080fps30.resolution,
-        contentHint: 'detail',
-        // screen share không cần simulcast — 1 layer SFU tự scale
-        simulcast: false,
-        videoCodec: preferredCodec === 'av1' ? 'av1' : 'vp9',
-      })
-      screenEnabled.value = !screenEnabled.value
-
-      if (screenEnabled.value) {
-        await nextTick()
-        r.localParticipant.videoTrackPublications.forEach((pub) => {
-          if (pub.track && pub.track.source === Track.Source.ScreenShare) {
-            screenShares.value = [...screenShares.value.filter(s => s.identity !== username), { track: pub.track, identity: username, sid: pub.trackSid }]
-            nextTick(() => deps.tracks.reattachAll())
-          }
-        })
-      } else {
-        screenShares.value = screenShares.value.filter(s => s.identity !== username)
-        const localSid = r.localParticipant.sid
-        const container = document.getElementById(`screen-share-${localSid}`)
-        if (container) container.innerHTML = ''
-      }
-    } catch (_) {
-      // user cancelled
-    }
-  }
-
-  function toggleFocus(sid) {
-    focusedSid.value = focusedSid.value === sid ? null : sid
-    nextTick(() => deps.tracks.reattachAll())
-  }
-
-  function togglePin(sid) {
-    pinnedSid.value = pinnedSid.value === sid ? null : sid
-    nextTick(() => deps.tracks.reattachAll())
-  }
-
-  function toggleFullscreen(sid) {
-    if (fullscreenSid.value === sid) {
-      fullscreenSid.value = null
-      if (document.fullscreenElement) document.exitFullscreen()
-    } else {
-      fullscreenSid.value = sid
-      const el = document.getElementById(`tile-${sid}`)
-      if (el && el.requestFullscreen) el.requestFullscreen()
-    }
-  }
-
-  function onFullscreenChange() {
-    if (!document.fullscreenElement) fullscreenSid.value = null
-  }
-
-  function togglePanel() {
-    panelOpen.value = !panelOpen.value
-    if (panelOpen.value && panelTab.value === 'chat') unreadCount.value = 0
-  }
-
-  function switchTab(tab) {
-    panelTab.value = tab
-    if (tab === 'chat') unreadCount.value = 0
+  const controlsState = {
+    micEnabled, camEnabled, screenEnabled,
+    panelOpen, panelTab, unreadCount,
+    pinnedSid, focusedSid, fullscreenSid,
+    screenShares, connected,
   }
 
   async function leaveRoom() {
@@ -470,22 +93,16 @@ export function useRoom(roomName, username, deps) {
     router.push('/home')
   }
 
-  // keyboard shortcuts
-  function handleKeyboard(e) {
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return
-    if (!connected.value) return
-    switch (e.key.toLowerCase()) {
-      case 'm': toggleMic(); break
-      case 'v': toggleCam(); break
-      case 's': toggleScreen(); break
-      case 'h': deps.reactions.toggleHand(); break
-      case 'r': deps.recording.toggleRecording(); break
-      case 'p': deps.screenshot?.takeScreenshot?.() ; break
-      case 'l': leaveRoom(); break
-    }
-  }
+  const controls = useRoomControls(room, username, deps, controlsState, leaveRoom, preferredCodec)
 
-  // profile update handler — when user edits profile, re-broadcast metadata
+  const connectState = {
+    room, connected, connecting, lobbyWaiting, lobbyRejected, error,
+    micEnabled, camEnabled, panelOpen, panelTab, unreadCount,
+    preJoinSettings, router, roomNotif,
+  }
+  const conn = useRoomConnect(roomName, SESSION_KEY, deps, connectState, events, updateParticipants, t, preferredCodec)
+
+  // ── profile update ─────────────────────────────────────────────────
   async function handleProfileUpdate() {
     if (!room.value) return
     try {
@@ -503,13 +120,12 @@ export function useRoom(roomName, username, deps) {
     } catch (_) { /* non-critical */ }
   }
 
-  // lifecycle
+  // ── lifecycle ──────────────────────────────────────────────────────
   onMounted(() => {
-    document.addEventListener('fullscreenchange', onFullscreenChange)
-    document.addEventListener('keydown', handleKeyboard)
+    document.addEventListener('fullscreenchange', controls.onFullscreenChange)
+    document.addEventListener('keydown', controls.handleKeyboard)
     window.addEventListener('profile-updated', handleProfileUpdate)
 
-    // auto-join immediately (restore session on reload or create new)
     const saved = sessionStorage.getItem(SESSION_KEY)
     if (saved) {
       try { preJoinSettings.value = JSON.parse(saved) } catch (_) {}
@@ -518,19 +134,20 @@ export function useRoom(roomName, username, deps) {
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(preJoinSettings.value))
     }
     showPreJoin.value = false
-    connectRoom()
+    conn.connectRoom()
   })
 
   onUnmounted(() => {
-    if (_lobbyPollInterval) { clearInterval(_lobbyPollInterval); _lobbyPollInterval = null }
-    document.removeEventListener('fullscreenchange', onFullscreenChange)
-    document.removeEventListener('keydown', handleKeyboard)
+    conn.cleanup()
+    document.removeEventListener('fullscreenchange', controls.onFullscreenChange)
+    document.removeEventListener('keydown', controls.handleKeyboard)
     window.removeEventListener('profile-updated', handleProfileUpdate)
     deps.reactions.cleanupListeners()
     deps.recording.cleanup()
     if (room.value) toRaw(room.value).disconnect()
   })
 
+  // ── public API ─────────────────────────────────────────────────────
   return {
     room,
     connected,
@@ -553,14 +170,14 @@ export function useRoom(roomName, username, deps) {
     connectionQualities,
     showReactionPicker,
     showDeviceSettings,
-    toggleMic,
-    toggleCam,
-    toggleScreen,
-    toggleFocus,
-    togglePin,
-    toggleFullscreen,
-    togglePanel,
-    switchTab,
+    toggleMic: controls.toggleMic,
+    toggleCam: controls.toggleCam,
+    toggleScreen: controls.toggleScreen,
+    toggleFocus: controls.toggleFocus,
+    togglePin: controls.togglePin,
+    toggleFullscreen: controls.toggleFullscreen,
+    togglePanel: controls.togglePanel,
+    switchTab: controls.switchTab,
     leaveRoom,
   }
 }

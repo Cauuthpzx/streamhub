@@ -137,6 +137,58 @@ const { t } = useI18n()
 }
 
 /* ══════════════════════════════════════
+   LIGHT MODE OVERRIDES — brand panel
+   (managed here as .auth-page is the scoped root)
+   ══════════════════════════════════════ */
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-brand) {
+  background: linear-gradient(160deg, #1e1b4b 0%, #1e3a5f 50%, #0f2744 100%);
+  border-right-color: rgba(0, 0, 0, 0.18);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-grid) {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-orbital--1) {
+  border-color: rgba(129, 140, 248, 0.25);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-orbital--2) {
+  border-color: rgba(56, 189, 248, 0.2);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-glow--1) {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-glow--2) {
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-glow--3) {
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.16) 0%, transparent 70%);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-tagline) {
+  color: #cbd5e1;
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard) {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard:hover) {
+  border-color: rgba(129, 140, 248, 0.35);
+  background: rgba(129, 140, 248, 0.1);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard-title) {
+  color: #e2e8f0;
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard-desc) {
+  color: #94a3b8;
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-logo-wrap) {
+  filter: drop-shadow(0 4px 24px rgba(99, 102, 241, 0.35));
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-particle) {
+  opacity: 0.5;
+}
+
+/* ══════════════════════════════════════
    LIGHT MODE OVERRIDES — form panel
    ══════════════════════════════════════ */
 

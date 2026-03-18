@@ -31,6 +31,21 @@
   --spacing-grid-min: 200px;
 }
 
+/* ── Shared select — DeviceSettings, PreJoinScreen, HomeView, RoomParticipants ── */
+.sh-select {
+  width: 100%;
+  border-radius: 2px;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  color: #111827;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  outline: none;
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.sh-select:focus { box-shadow: 0 0 0 2px #6366f1; border-color: #6366f1; }
+.dark .sh-select { border-color: #4b5563; background: #374151; color: #f3f4f6; }
+
 /* Ensure text cursor is always visible on inputs */
 input,
 textarea,

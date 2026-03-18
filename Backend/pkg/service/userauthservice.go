@@ -86,8 +86,8 @@ func NewUserAuthService(
 }
 
 func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("/auth/register", s.handleRegister)
-	mux.HandleFunc("/auth/login", s.handleLogin)
+	mux.HandleFunc("/auth/register", RateLimitMiddleware(s.handleRegister))
+	mux.HandleFunc("/auth/login", RateLimitMiddleware(s.handleLogin))
 	mux.HandleFunc("/auth/token", s.handleToken)
 	mux.HandleFunc("/auth/room/create", s.handleRoomCreate)
 	mux.HandleFunc("/auth/room/list", s.handleRoomList)

@@ -240,7 +240,8 @@
     "shareLinkNotFound": "Share link not found or expired",
     "fileUploadFailed": "Failed to upload file",
     "creatorCannotLeave": "Room creator cannot leave. Delete the room instead.",
-    "onlyCreatorCanDelete": "Only the room creator can delete this room"
+    "onlyCreatorCanDelete": "Only the room creator can delete this room",
+    "rateLimitExceeded": "Too many requests, please try again later"
   },
   "log": {
     "userRegistered": "User registered",

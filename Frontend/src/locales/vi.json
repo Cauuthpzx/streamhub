@@ -240,7 +240,8 @@
     "shareLinkNotFound": "Liên kết chia sẻ không tồn tại hoặc đã hết hạn",
     "fileUploadFailed": "Không thể tải tệp lên",
     "creatorCannotLeave": "Người tạo phòng không thể rời. Hãy xóa phòng thay thế.",
-    "onlyCreatorCanDelete": "Chỉ người tạo phòng mới có thể xóa"
+    "onlyCreatorCanDelete": "Chỉ người tạo phòng mới có thể xóa",
+    "rateLimitExceeded": "Quá nhiều yêu cầu, vui lòng thử lại sau"
   },
   "log": {
     "userRegistered": "Đã đăng ký người dùng",

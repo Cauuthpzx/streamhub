@@ -1,24 +1,17 @@
 <script setup>
 import { MicOff, Mic, VideoOff, Video, MonitorUp, MonitorOff } from 'lucide-vue-next'
 import ConnectionBars from './ConnectionBars.vue'
+import { getDisplayName } from '../composables/useParticipantMeta'
 
 defineProps({
   participant: { type: Object, required: true },
   isLocal: { type: Boolean, default: false },
-  // plain reactive values từ participants entry — không đọc participant object trực tiếp
   isMicOn: { type: Boolean, default: true },
   isCamOn: { type: Boolean, default: true },
   isScreenOn: { type: Boolean, default: false },
   raisedHand: { type: Boolean, default: false },
   quality: { type: String, default: null },
 })
-
-function getDisplayName(participant) {
-  try {
-    const meta = JSON.parse(participant.metadata || '{}')
-    return meta.display_name || participant.identity
-  } catch { return participant.identity }
-}
 </script>
 
 <template>

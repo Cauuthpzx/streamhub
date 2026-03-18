@@ -181,7 +181,7 @@ onMounted(fetchRooms)
 
       <!-- Empty -->
       <div v-else-if="items.length === 0" class="text-center py-16">
-        <SvgIcon class="text-gray-300 dark:text-gray-600 mx-auto mb-3" name="bot" :size="40" :stroke-width="1.2" />
+        <SvgIcon class="mx-auto mb-3" name="bot" :size="48" themed />
         <p class="text-gray-500 dark:text-gray-400 text-sm">{{ selectedRoom ? t('agent.empty') : t('agent.selectRoomFirst') }}</p>
       </div>
 
@@ -194,7 +194,7 @@ onMounted(fetchRooms)
         >
           <div>
             <div class="flex items-center gap-2 mb-1">
-              <SvgIcon class="text-indigo-500" name="bot" :size="16" :stroke-width="1.8" />
+              <SvgIcon name="bot" :size="28" themed />
               <span class="font-medium text-gray-900 dark:text-white text-sm">{{ item.agent_name }}</span>
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">

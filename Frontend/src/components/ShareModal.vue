@@ -57,7 +57,7 @@ onMounted(() => {
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
           <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <SvgIcon class="w-4.5 h-4.5 text-indigo-500" name="link" :size="24" :stroke-width="2" />
+            <SvgIcon name="link" :size="28" themed />
             {{ t('share.title') }}
           </h3>
           <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">

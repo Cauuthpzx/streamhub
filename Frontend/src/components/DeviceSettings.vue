@@ -31,7 +31,7 @@ onMounted(loadDevices)
   <BaseDialog :show="true" max-width="max-w-md" @close="emit('close')">
     <div class="flex items-center justify-between mb-5">
       <div class="flex items-center gap-2">
-        <SvgIcon class="text-indigo-500" name="settings" :size="20" :stroke-width="2" />
+        <SvgIcon name="settings" :size="28" themed />
         <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('devices.title') }}</h3>
       </div>
       <button @click="emit('close')" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">

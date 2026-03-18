@@ -178,7 +178,7 @@ onUnmounted(() => {
 
       <!-- Empty state -->
       <div v-else-if="rooms.length === 0" class="text-center py-16">
-        <SvgIcon class="text-gray-300 dark:text-gray-600 mx-auto" name="door-open" :size="40" :stroke-width="1.5" />
+        <SvgIcon class="mx-auto" name="door-open" :size="48" themed />
         <p class="text-gray-500 dark:text-gray-400 mt-3">{{ t('room.empty') }}</p>
         <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">{{ t('room.emptyHint') }}</p>
       </div>
@@ -191,11 +191,7 @@ onUnmounted(() => {
           class="bg-white dark:bg-gray-800 rounded-sm border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card px-4 py-3 flex items-center justify-between hover:shadow-popup dark:hover:shadow-popup transition-all"
         >
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-9 h-9 rounded-sm flex items-center justify-center shrink-0"
-              :class="room.num_participants > 0 ? 'bg-green-50 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700/50'"
-            >
-              <SvgIcon name="video" :size="16" :stroke-width="1.8" />
-            </div>
+            <SvgIcon name="video" :size="36" themed />
             <div class="min-w-0">
               <div class="flex items-center gap-1.5">
                 <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ room.name }}</p>

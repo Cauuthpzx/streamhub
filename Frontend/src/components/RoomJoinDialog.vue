@@ -43,7 +43,7 @@ defineExpose({ reset })
   >
     <div class="bg-white dark:bg-gray-800 rounded-sm shadow-xl p-6 w-full max-w-sm mx-4">
       <div class="flex items-center gap-2 mb-4">
-        <SvgIcon class="text-amber-500" name="lock" :size="20" :stroke-width="2" />
+        <SvgIcon name="lock" :size="28" themed />
         <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('room.passwordRequired') }}</h3>
       </div>
       <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">

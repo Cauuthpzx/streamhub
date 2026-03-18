@@ -138,7 +138,7 @@ onMounted(() => {
 
       <!-- Empty -->
       <div v-else-if="items.length === 0" class="text-center py-16">
-        <SvgIcon class="text-gray-300 dark:text-gray-600 mx-auto mb-3" name="circle" :size="40" :stroke-width="1.2" />
+        <SvgIcon class="mx-auto mb-3" name="circle" :size="48" themed />
         <p class="text-gray-500 dark:text-gray-400 text-sm">{{ t('egress.empty') }}</p>
       </div>
 

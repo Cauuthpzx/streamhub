@@ -33,9 +33,7 @@ async function handleDelete() {
 <template>
   <BaseDialog :show="show" max-width="max-w-sm" @close="emit('close')">
     <div class="flex items-center gap-3 mb-4">
-      <div class="w-9 h-9 bg-red-100 dark:bg-red-900/30 rounded-sm flex items-center justify-center shrink-0">
-        <SvgIcon class="text-red-500" name="trash-2" :size="16" :stroke-width="2" />
-      </div>
+      <SvgIcon name="trash-2" :size="36" themed />
       <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('room.deleteConfirmTitle') }}</h3>
     </div>
     <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">

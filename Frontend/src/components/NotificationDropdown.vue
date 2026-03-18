@@ -163,7 +163,7 @@ function highlightName(msg) {
         <div class="overflow-y-auto max-h-[440px] notif-scroll">
           <!-- Empty -->
           <div v-if="notifications.length === 0" class="flex flex-col items-center justify-center py-12 gap-2">
-            <SvgIcon class="w-7 h-7 text-gray-200 dark:text-gray-700" name="bell" :size="24" :stroke-width="1.5" />
+            <SvgIcon name="bell" :size="40" themed />
             <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('notification.empty') }}</p>
           </div>
 
@@ -183,7 +183,7 @@ function highlightName(msg) {
               />
 
               <!-- type icon -->
-              <SvgIcon :name="TYPE_ICON[n.type]" :size="18" class="shrink-0" :class="TYPE_COLOR[n.type]" :stroke-width="2" />
+              <SvgIcon :name="TYPE_ICON[n.type]" :size="28" class="shrink-0" themed />
 
               <!-- content -->
               <div class="flex-1 min-w-0">

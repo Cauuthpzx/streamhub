@@ -81,34 +81,34 @@ onMounted(loadDevices)
         <h4 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">{{ t('devices.audioEnhance') }}</h4>
 
         <!-- AI Noise Suppression -->
-        <label class="flex items-center justify-between py-2 cursor-pointer">
-          <div>
+        <div class="flex items-center justify-between py-2">
+          <div class="min-w-0">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('devices.noiseSuppression') }}</span>
             <p class="text-2xs text-gray-400">{{ t('devices.noiseSuppressionDesc') }}</p>
           </div>
           <button
             @click="handleToggleNS"
-            class="relative w-10 h-5 rounded-full transition-colors"
+            class="relative w-10 h-5 rounded-full transition-colors shrink-0 ml-3 cursor-pointer"
             :class="noiseSuppressionEnabled ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-600'"
           >
             <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform" :class="noiseSuppressionEnabled ? 'translate-x-5' : ''"></span>
           </button>
-        </label>
+        </div>
 
         <!-- Audio Compressor + Auto Gain -->
-        <label class="flex items-center justify-between py-2 cursor-pointer">
-          <div>
+        <div class="flex items-center justify-between py-2">
+          <div class="min-w-0">
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('devices.autoGain') }}</span>
             <p class="text-2xs text-gray-400">{{ t('devices.autoGainDesc') }}</p>
           </div>
           <button
             @click="handleToggleComp"
-            class="relative w-10 h-5 rounded-full transition-colors"
+            class="relative w-10 h-5 rounded-full transition-colors shrink-0 ml-3 cursor-pointer"
             :class="compressorEnabled ? 'bg-indigo-500' : 'bg-gray-300 dark:bg-gray-600'"
           >
             <span class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform" :class="compressorEnabled ? 'translate-x-5' : ''"></span>
           </button>
-        </label>
+        </div>
       </div>
 
       <!-- Virtual Background -->

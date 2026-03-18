@@ -3,7 +3,7 @@ import { ref, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { setLocale } from '../i18n'
 
-const { locale } = useI18n()
+const { locale, t } = useI18n()
 const open = ref(false)
 let closeTimer = null
 

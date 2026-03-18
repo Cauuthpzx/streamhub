@@ -24,7 +24,7 @@ const isPassword = props.type === 'password'
     </label>
     <div class="ai-wrap" :class="{ 'ai-wrap--focus': focused, 'ai-wrap--error': error }">
       <div v-if="icon" class="ai-icon">
-        <SvgIcon :name="icon" :size="16" :stroke-width="1.8" />
+        <SvgIcon :name="icon" :size="24" themed />
       </div>
       <input
         :type="isPassword && !showPassword ? 'password' : 'text'"
@@ -43,8 +43,8 @@ const isPassword = props.type === 'password'
         class="ai-toggle"
         @click="showPassword = !showPassword"
       >
-        <SvgIcon v-if="showPassword" class="w-[18px] h-[18px]" name="eye" :size="24" :stroke-width="1.6" />
-        <SvgIcon v-else class="w-[18px] h-[18px]" name="eye-off" :size="24" :stroke-width="1.6" />
+        <SvgIcon v-if="showPassword" name="eye" :size="24" themed />
+        <SvgIcon v-else name="eye-off" :size="24" themed />
       </button>
     </div>
     <p v-if="error" class="ai-error">{{ error }}</p>

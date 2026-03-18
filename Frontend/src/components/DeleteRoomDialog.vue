@@ -51,7 +51,7 @@ async function handleDelete() {
         @click="handleDelete"
         class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-sm hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
       >
-        <SvgIcon v-if="!loading" name="trash-2" :size="14" :stroke-width="2" />
+        <SvgIcon v-if="!loading" name="trash-2" :size="22" themed />
         <span v-if="loading" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>
         {{ t('room.deleteRoom') }}
       </button>

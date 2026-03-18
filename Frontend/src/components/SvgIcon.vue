@@ -91,8 +91,8 @@ const themeStyle = computed(() => props.themed ? getIconThemeStyle(props.name) :
 .sh-icon-themed__bg svg {
   position: relative;
   z-index: 1;
-  stroke: var(--icon-stroke);
-  opacity: 0.85;
+  stroke: var(--icon-stroke2);
+  opacity: 1;
   transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s;
 }
 

@@ -19,7 +19,7 @@ const emit = defineEmits(['pick', 'cancel'])
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
           <h3 class="text-sm font-semibold text-gray-900 dark:text-white">{{ t('screen.choosePicker') }}</h3>
           <button @click="emit('cancel')" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
-            <SvgIcon name="x" :size="16" :stroke-width="2" />
+            <SvgIcon name="x" :size="24" themed />
           </button>
         </div>
 

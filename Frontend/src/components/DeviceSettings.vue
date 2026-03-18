@@ -35,7 +35,7 @@ onMounted(loadDevices)
         <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('devices.title') }}</h3>
       </div>
       <button @click="emit('close')" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
-        <SvgIcon name="x" :size="20" :stroke-width="2" />
+        <SvgIcon name="x" :size="24" themed />
       </button>
     </div>
 

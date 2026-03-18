@@ -29,83 +29,55 @@ const emit = defineEmits([
     <div class="flex items-center justify-center gap-2">
       <!-- Mic -->
       <AppTooltip :content="micEnabled ? t('chat.muteMic') : t('chat.unmuteMic')" position="top">
-        <button
-          @click="emit('toggleMic')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-          :class="micEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
-        >
-          <SvgIcon v-if="micEnabled" name="mic" :size="16" :stroke-width="1.8" />
-          <SvgIcon v-else name="mic-off" :size="16" :stroke-width="1.8" />
+        <button @click="emit('toggleMic')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon v-if="micEnabled" name="mic" :size="32" themed />
+          <SvgIcon v-else name="mic-off" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Camera -->
       <AppTooltip :content="camEnabled ? t('chat.camOff') : t('chat.camOn')" position="top">
-        <button
-          @click="emit('toggleCam')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-          :class="camEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
-        >
-          <SvgIcon v-if="camEnabled" name="video" :size="16" :stroke-width="1.8" />
-          <SvgIcon v-else name="video-off" :size="16" :stroke-width="1.8" />
+        <button @click="emit('toggleCam')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon v-if="camEnabled" name="video" :size="32" themed />
+          <SvgIcon v-else name="video-off" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Screen share -->
       <AppTooltip :content="t('chat.shareScreen')" position="top">
-        <button
-          @click="emit('toggleScreen')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-          :class="screenEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
-        >
-          <SvgIcon v-if="!screenEnabled" name="monitor-up" :size="16" :stroke-width="1.8" />
-          <SvgIcon v-else name="monitor-off" :size="16" :stroke-width="1.8" />
+        <button @click="emit('toggleScreen')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon v-if="!screenEnabled" name="monitor-up" :size="32" themed />
+          <SvgIcon v-else name="monitor-off" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Record -->
       <AppTooltip :content="recording ? t('egress.stop') : t('egress.startRecording')" position="top">
-        <button
-          @click="emit('toggleRecording')"
-          :disabled="recordingLoading"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
-          :class="recording ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
-        >
-          <SvgIcon v-if="recording" name="square" :size="14" :stroke-width="2" />
-          <SvgIcon v-else name="circle" :size="14" class="fill-red-500 text-red-500" :stroke-width="0" />
+        <button @click="emit('toggleRecording')" :disabled="recordingLoading" class="sh-bar-btn cursor-pointer disabled:opacity-50">
+          <SvgIcon v-if="recording" name="square" :size="32" themed />
+          <SvgIcon v-else name="circle" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Screenshot -->
       <AppTooltip :content="t('chat.screenshot')" position="top">
-        <button
-          @click="emit('screenshot')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
-        >
-          <SvgIcon name="camera" :size="16" :stroke-width="1.8" />
+        <button @click="emit('screenshot')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon name="camera" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Raise hand -->
       <AppTooltip :content="t('chat.raiseHand')" position="top">
-        <button
-          @click="emit('toggleHand')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-          :class="handRaised ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
-        >
-          <SvgIcon name="hand" :size="16" :stroke-width="1.8" />
+        <button @click="emit('toggleHand')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon name="hand" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Reactions -->
       <div class="relative">
         <AppTooltip :content="t('chat.reactions')" position="top">
-          <button
-            @click="emit('toggleReactionPicker')"
-            class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
-            :class="showReactionPicker ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
-          >
-            <SvgIcon name="smile" :size="16" :stroke-width="1.8" />
+          <button @click="emit('toggleReactionPicker')" class="sh-bar-btn cursor-pointer">
+            <SvgIcon name="smile" :size="32" themed />
           </button>
         </AppTooltip>
         <Transition name="fade">
@@ -125,12 +97,8 @@ const emit = defineEmits([
 
       <!-- Panel toggle -->
       <AppTooltip :content="t('chat.panel')" position="top">
-        <button
-          @click="emit('togglePanel')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer relative"
-          :class="panelOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
-        >
-          <SvgIcon name="message-square" :size="16" :stroke-width="1.8" />
+        <button @click="emit('togglePanel')" class="sh-bar-btn cursor-pointer relative">
+          <SvgIcon name="message-square" :size="32" themed />
           <span
             v-if="unreadCount > 0 && !panelOpen"
             class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-3xs font-bold text-white flex items-center justify-center"
@@ -140,33 +108,39 @@ const emit = defineEmits([
 
       <!-- Share -->
       <AppTooltip :content="t('chat.share')" position="top">
-        <button
-          @click="emit('openShare')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
-        >
-          <SvgIcon name="share-2" :size="16" :stroke-width="1.8" />
+        <button @click="emit('openShare')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon name="share-2" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Device settings -->
       <AppTooltip :content="t('devices.title')" position="top">
-        <button
-          @click="emit('openSettings')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
-        >
-          <SvgIcon name="settings" :size="16" :stroke-width="1.8" />
+        <button @click="emit('openSettings')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon name="settings" :size="32" themed />
         </button>
       </AppTooltip>
 
       <!-- Leave -->
       <AppTooltip :content="t('chat.leave')" position="top">
-        <button
-          @click="emit('leave')"
-          class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
-        >
-          <SvgIcon name="log-out" :size="16" :stroke-width="1.8" />
+        <button @click="emit('leave')" class="sh-bar-btn cursor-pointer">
+          <SvgIcon name="log-out" :size="32" themed />
         </button>
       </AppTooltip>
     </div>
   </div>
 </template>
+
+<style scoped>
+.sh-bar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, opacity 0.15s;
+}
+.sh-bar-btn:hover {
+  transform: scale(1.1);
+}
+.sh-bar-btn:active {
+  transform: scale(0.95);
+}
+</style>

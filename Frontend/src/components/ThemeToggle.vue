@@ -12,8 +12,8 @@ const { isDark, toggleTheme } = useTheme()
       @click="toggleTheme"
       class="w-8 h-8 rounded-sm flex items-center justify-center transition-colors cursor-pointer text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-700"
     >
-      <SvgIcon v-if="!isDark" name="moon" :size="16" :stroke-width="1.8" />
-      <SvgIcon v-else name="sun" :size="16" :stroke-width="1.8" />
+      <SvgIcon v-if="!isDark" name="moon" :size="28" themed />
+      <SvgIcon v-else name="sun" :size="28" themed />
     </button>
   </AppTooltip>
 </template>

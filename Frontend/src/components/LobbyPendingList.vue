@@ -34,7 +34,7 @@ const emit = defineEmits(['approve', 'reject'])
             @click="emit('approve', user)"
             class="w-7 h-7 rounded-sm flex items-center justify-center text-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer transition-colors"
           >
-            <SvgIcon name="user-check" :size="14" :stroke-width="1.8" />
+            <SvgIcon name="user-check" :size="24" themed />
           </button>
         </AppTooltip>
         <AppTooltip :content="t('participants.reject')" position="top">
@@ -42,7 +42,7 @@ const emit = defineEmits(['approve', 'reject'])
             @click="emit('reject', user)"
             class="w-7 h-7 rounded-sm flex items-center justify-center text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors"
           >
-            <SvgIcon name="user-minus" :size="14" :stroke-width="1.8" />
+            <SvgIcon name="user-minus" :size="24" themed />
           </button>
         </AppTooltip>
       </div>

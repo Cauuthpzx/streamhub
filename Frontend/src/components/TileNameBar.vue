@@ -18,11 +18,11 @@ defineProps({
     <span v-if="raisedHand" class="animate-wave shrink-0">✋</span>
     <span class="truncate font-medium">{{ getDisplayName(participant) }}</span>
     <ConnectionBars :quality="quality || 'unknown'" class="shrink-0" />
-    <SvgIcon v-if="isScreenOn" class="text-green-400 shrink-0" name="monitor-up" :size="12" :stroke-width="2" />
-    <SvgIcon v-else class="text-red-400 shrink-0" name="monitor-off" :size="12" :stroke-width="2" />
-    <SvgIcon v-if="isMicOn" class="text-green-400 shrink-0" name="mic" :size="12" :stroke-width="2" />
-    <SvgIcon v-else class="text-red-400 shrink-0" name="mic-off" :size="12" :stroke-width="2" />
-    <SvgIcon v-if="isCamOn" class="text-green-400 shrink-0" name="video" :size="12" :stroke-width="2" />
-    <SvgIcon v-else class="text-red-400 shrink-0" name="video-off" :size="12" :stroke-width="2" />
+    <SvgIcon v-if="isScreenOn" class="shrink-0" name="monitor-up" :size="18" themed />
+    <SvgIcon v-else class="shrink-0" name="monitor-off" :size="18" themed />
+    <SvgIcon v-if="isMicOn" class="shrink-0" name="mic" :size="18" themed />
+    <SvgIcon v-else class="shrink-0" name="mic-off" :size="18" themed />
+    <SvgIcon v-if="isCamOn" class="shrink-0" name="video" :size="18" themed />
+    <SvgIcon v-else class="shrink-0" name="video-off" :size="18" themed />
   </div>
 </template>

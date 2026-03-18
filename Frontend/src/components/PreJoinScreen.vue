@@ -92,7 +92,7 @@ onUnmounted(stopPreview)
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+  <div class="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
     <div class="bg-white dark:bg-gray-800 rounded-sm shadow-xl p-8 w-full max-w-lg mx-4">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white text-center mb-1">{{ t('prejoin.title') }}</h2>
       <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">{{ props.roomName }}</p>

@@ -136,9 +136,9 @@ watch(recordingCtx.downloadUrl, (url) => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
+  <div class="h-screen bg-gray-100 dark:bg-gray-900 flex flex-col overflow-hidden">
       <!-- Header -->
-      <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-bar-top dark:shadow-bar-top">
+      <header class="shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-bar-top dark:shadow-bar-top">
         <div class="px-4 h-bar flex items-center justify-between">
           <div class="flex items-center gap-3">
             <AppLogo :height="40" />

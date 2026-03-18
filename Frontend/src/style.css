@@ -222,6 +222,12 @@ textarea,
 .reaction-float-enter-from { opacity: 0; transform: scale(0.5); }
 .reaction-float-leave-to { opacity: 0; }
 
+/* ── Viewport lock — no page-level scroll ── */
+html, body, #app {
+  height: 100%;
+  overflow: hidden;
+}
+
 /* ── Typography — Inter (web standard, Seoul-grade clean) ── */
 html {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR',

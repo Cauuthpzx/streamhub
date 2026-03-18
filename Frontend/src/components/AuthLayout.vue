@@ -44,7 +44,8 @@ const { t } = useI18n()
 .auth-page {
   display: flex;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ══════════════════════════════════════

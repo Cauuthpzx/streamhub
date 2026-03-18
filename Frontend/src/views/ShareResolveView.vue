@@ -24,7 +24,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+  <div class="h-screen overflow-hidden bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
     <div v-if="loading" class="text-center">
       <div class="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
       <p class="text-gray-500 dark:text-gray-400 mt-4 text-sm">{{ t('share.resolving') }}</p>

@@ -119,9 +119,9 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="h-screen flex flex-col overflow-hidden bg-gray-50 dark:bg-gray-900">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-bar-top dark:shadow-bar-top">
+    <header class="shrink-0 bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-bar-top dark:shadow-bar-top">
       <div class="px-6 h-bar flex items-center justify-between">
         <AppLogo :height="40" />
         <div class="flex items-center gap-3">
@@ -134,7 +134,7 @@ onUnmounted(() => {
     </header>
 
     <!-- Content -->
-    <main class="max-w-3xl mx-auto px-6 py-8">
+    <main class="flex-1 overflow-y-auto max-w-3xl w-full mx-auto px-6 py-8">
       <!-- Title bar -->
       <div class="flex items-center justify-between mb-6">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('room.title') }}</h1>

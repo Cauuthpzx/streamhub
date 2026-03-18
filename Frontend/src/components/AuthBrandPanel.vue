@@ -30,21 +30,36 @@ const { particles, features } = useAuthBrand()
         }"
       />
     </div>
+
     <div class="auth-brand-inner">
-      <div class="auth-logo-wrap">
-        <AppLogo :height="64" />
+      <!-- Logo block: icon + name + slogan badge -->
+      <div class="auth-logo-block">
+        <div class="auth-logo-icon">
+          <AppLogo :height="52" :show-tagline="false" />
+        </div>
+        <div class="auth-logo-text">
+          <div class="auth-logo-name">
+            <span class="auth-name-main">STREAM</span>
+            <span class="auth-name-sep">—</span>
+            <span class="auth-name-accent">HUB</span>
+          </div>
+          <p class="auth-slogan">LIVE · SHARE · CONNECT</p>
+        </div>
       </div>
-      <h2 class="auth-tagline">
-        {{ t('app.tagline') }}
-      </h2>
+
+      <!-- Description -->
+      <p class="auth-desc">{{ t('app.tagline') }}</p>
+
+      <!-- Feature cards -->
       <div class="auth-features-grid">
         <div
-          v-for="f in features"
+          v-for="(f, i) in features"
           :key="f.key"
           class="auth-fcard"
+          :style="{ animationDelay: (0.5 + i * 0.07) + 's' }"
         >
           <div class="auth-fcard-icon" :class="'auth-fcard-icon--' + f.color">
-            <component :is="f.icon" class="w-4 h-4" :stroke-width="1.8" />
+            <component :is="f.icon" class="w-3.5 h-3.5" :stroke-width="1.8" />
           </div>
           <div class="auth-fcard-text">
             <span class="auth-fcard-title">{{ t('features.' + f.key) }}</span>
@@ -179,25 +194,73 @@ const { particles, features } = useAuthBrand()
   align-items: center;
   max-width: 380px;
   width: 100%;
-  padding-bottom: 24px;
+  gap: 28px;
 }
-.auth-logo-wrap {
-  margin-bottom: 12px;
-  filter: drop-shadow(0 4px 24px rgba(99, 102, 241, 0.2));
-  margin-top: -40px;
+
+/* ── Logo block ── */
+.auth-logo-block {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  animation: auth-card-in 0.9s cubic-bezier(.16,1,.3,1) 0.2s both;
 }
-.auth-tagline {
-  font-size: 15px;
+.auth-logo-icon {
+  filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.28));
+  flex-shrink: 0;
+}
+.auth-logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.auth-logo-name {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+}
+.auth-name-main {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  color: #eef0ff;
+  line-height: 1;
+}
+.auth-name-sep {
+  font-size: 24px;
+  font-weight: 300;
+  color: rgba(255,255,255,0.25);
+  line-height: 1;
+}
+.auth-name-accent {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  line-height: 1;
+  background: linear-gradient(135deg, #818cf8 0%, #e879f9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.auth-slogan {
+  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 10px;
   font-weight: 500;
-  line-height: 1.7;
-  color: #c8d3e6;
+  letter-spacing: 4px;
+  color: #818cf8;
+  opacity: 0.65;
+}
+
+/* ── Description ── */
+.auth-desc {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #8890b0;
   text-align: center;
-  margin: 0 0 200px; /* khoảng trống = chiều cao orbital zone */
-  max-width: 320px;
+  max-width: 340px;
+  animation: auth-card-in 0.9s cubic-bezier(.16,1,.3,1) 0.4s both;
 }
-:where(.dark, .dark *) .auth-tagline {
-  color: #b0bdd4;
-}
+
+/* ── Feature cards ── */
 .auth-features-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -206,49 +269,55 @@ const { particles, features } = useAuthBrand()
 }
 .auth-fcard {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 10px;
-  padding: 14px 14px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
-  transition: all 0.25s;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  border-radius: 14px;
+  backdrop-filter: blur(12px);
+  transition: border-color 0.3s, background 0.3s, transform 0.2s;
+  cursor: default;
+  animation: auth-fcard-in 0.6s cubic-bezier(.34,1.56,.64,1) both;
 }
 .auth-fcard:hover {
   border-color: rgba(129, 140, 248, 0.2);
   background: rgba(129, 140, 248, 0.04);
+  transform: translateY(-2px);
+}
+@keyframes auth-fcard-in {
+  from { opacity: 0; transform: scale(0.9) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 .auth-fcard-icon {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.auth-fcard-icon--cyan { background: rgba(56, 189, 248, 0.12); color: #38bdf8; }
-.auth-fcard-icon--blue { background: rgba(96, 165, 250, 0.12); color: #60a5fa; }
-.auth-fcard-icon--purple { background: rgba(167, 139, 250, 0.12); color: #a78bfa; }
+.auth-fcard-icon--cyan   { background: rgba(56, 189, 248, 0.1);  color: #38bdf8; }
+.auth-fcard-icon--blue   { background: rgba(96, 165, 250, 0.1);  color: #60a5fa; }
+.auth-fcard-icon--purple { background: rgba(129, 140, 248, 0.1); color: #818cf8; }
 .auth-fcard-text {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
 }
 .auth-fcard-title {
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 700;
-  color: #e2e8f0;
+  color: #eef0ff;
   letter-spacing: 0.2px;
 }
-:where(.dark, .dark *) .auth-fcard-title { color: #e2e8f0; }
 .auth-fcard-desc {
   font-size: 11px;
-  color: #64748b;
+  color: #4a5070;
   line-height: 1.4;
 }
-:where(.dark, .dark *) .auth-fcard-desc { color: #4b5e7a; }
 /* RESPONSIVE */
 @media (max-width: 1024px) {
   .auth-brand { display: none; }
@@ -258,6 +327,7 @@ const { particles, features } = useAuthBrand()
   .auth-orbital--1 { width: 360px; height: 360px; }
   .auth-orbital--2 { width: 270px; height: 270px; }
   .auth-features-grid { gap: 8px; }
-  .auth-fcard { padding: 10px 10px; }
+  .auth-fcard { padding: 10px 12px; }
+  .auth-name-main, .auth-name-accent { font-size: 24px; }
 }
 </style>

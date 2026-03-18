@@ -5,10 +5,16 @@ import { useI18n } from 'vue-i18n'
 import { AlertCircle, Loader2 } from 'lucide-vue-next'
 import AuthLayout from '../components/AuthLayout.vue'
 import AuthInput from '../components/AuthInput.vue'
-import { register, saveToken } from '../services/auth'
+import { login, register, saveToken } from '../services/auth'
+
+const props = defineProps({
+  mode: { type: String, default: 'login' }, // 'login' | 'register'
+})
 
 const router = useRouter()
 const { t } = useI18n()
+
+const isLogin = computed(() => props.mode === 'login')
 
 const username = ref('')
 const password = ref('')
@@ -16,7 +22,9 @@ const confirmPassword = ref('')
 const error = ref('')
 const loading = ref(false)
 
+// Password strength — chỉ dùng khi register
 const strength = computed(() => {
+  if (isLogin.value) return { score: 0, level: '', label: '' }
   const p = password.value
   if (!p) return { score: 0, level: '', label: '' }
   let score = 0
@@ -29,29 +37,24 @@ const strength = computed(() => {
   return { score, level: levels[score], label: keys[score] ? t(keys[score]) : '' }
 })
 
-async function handleRegister() {
+async function handleSubmit() {
   error.value = ''
 
-  if (!username.value || !password.value || !confirmPassword.value) {
+  if (!username.value || !password.value || (!isLogin.value && !confirmPassword.value)) {
     error.value = t('auth.fillAllFields')
     return
   }
-  if (username.value.length < 3) {
-    error.value = t('auth.usernameMinLength')
-    return
-  }
-  if (password.value.length < 6) {
-    error.value = t('auth.passwordMinLength')
-    return
-  }
-  if (password.value !== confirmPassword.value) {
-    error.value = t('auth.passwordMismatch')
-    return
+  if (!isLogin.value) {
+    if (username.value.length < 3) { error.value = t('auth.usernameMinLength'); return }
+    if (password.value.length < 6) { error.value = t('auth.passwordMinLength'); return }
+    if (password.value !== confirmPassword.value) { error.value = t('auth.passwordMismatch'); return }
   }
 
   loading.value = true
   try {
-    const data = await register(username.value, password.value)
+    const data = isLogin.value
+      ? await login(username.value, password.value)
+      : await register(username.value, password.value)
     saveToken(data.token, data.username)
     router.push('/home')
   } catch (e) {
@@ -65,8 +68,8 @@ async function handleRegister() {
 <template>
   <AuthLayout>
     <div class="auth-header">
-      <h1 class="auth-title">{{ t('auth.createAccount') }}</h1>
-      <p class="auth-desc">{{ t('auth.getStarted') }}</p>
+      <h1 class="auth-title">{{ isLogin ? t('auth.welcomeBack') : t('auth.createAccount') }}</h1>
+      <p class="auth-desc">{{ isLogin ? t('auth.signInSubtitle') : t('auth.getStarted') }}</p>
     </div>
 
     <Transition name="fade">
@@ -76,11 +79,11 @@ async function handleRegister() {
       </div>
     </Transition>
 
-    <form @submit.prevent="handleRegister" class="auth-form">
+    <form @submit.prevent="handleSubmit" class="auth-form">
       <AuthInput
         v-model="username"
         :label="t('auth.username')"
-        :placeholder="t('auth.chooseUsername')"
+        :placeholder="isLogin ? t('auth.usernamePlaceholder') : t('auth.chooseUsername')"
         icon="user"
       />
 
@@ -89,10 +92,11 @@ async function handleRegister() {
           v-model="password"
           :label="t('auth.password')"
           type="password"
-          :placeholder="t('auth.createPassword')"
+          :placeholder="isLogin ? t('auth.passwordPlaceholder') : t('auth.createPassword')"
           icon="lock"
         />
-        <div v-if="password" class="str-meter">
+        <!-- Strength meter — chỉ register -->
+        <div v-if="!isLogin && password" class="str-meter">
           <div class="str-bars">
             <span
               v-for="i in 4"
@@ -107,7 +111,9 @@ async function handleRegister() {
         </div>
       </div>
 
+      <!-- Confirm password — chỉ register -->
       <AuthInput
+        v-if="!isLogin"
         v-model="confirmPassword"
         :label="t('auth.confirmPassword')"
         type="password"
@@ -118,14 +124,25 @@ async function handleRegister() {
       <button type="submit" :disabled="loading" class="auth-btn">
         <span class="auth-btn-inner">
           <Loader2 v-if="loading" class="w-4 h-4 animate-spin" />
-          {{ loading ? t('auth.creatingAccount') : t('auth.createAccount') }}
+          <template v-if="isLogin">
+            {{ loading ? t('auth.signingIn') : t('auth.signIn') }}
+          </template>
+          <template v-else>
+            {{ loading ? t('auth.creatingAccount') : t('auth.createAccount') }}
+          </template>
         </span>
       </button>
     </form>
 
     <p class="auth-switch">
-      {{ t('auth.hasAccount') }}
-      <router-link to="/login" class="auth-switch-link">{{ t('auth.signIn') }}</router-link>
+      <template v-if="isLogin">
+        {{ t('auth.noAccount') }}
+        <router-link to="/register" class="auth-switch-link">{{ t('auth.createAccount') }}</router-link>
+      </template>
+      <template v-else>
+        {{ t('auth.hasAccount') }}
+        <router-link to="/login" class="auth-switch-link">{{ t('auth.signIn') }}</router-link>
+      </template>
     </p>
   </AuthLayout>
 </template>
@@ -178,11 +195,7 @@ async function handleRegister() {
   gap: 8px;
   margin-top: 6px;
 }
-.str-bars {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-}
+.str-bars { display: flex; gap: 4px; flex: 1; }
 .str-bar {
   flex: 1;
   height: 3px;
@@ -193,11 +206,7 @@ async function handleRegister() {
 .str-bar.active.weak   { background: #f87171; }
 .str-bar.active.medium { background: #fbbf24; }
 .str-bar.active.strong { background: #4ade80; }
-.str-label {
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
+.str-label { font-size: 11px; font-weight: 600; white-space: nowrap; }
 .str-label.weak   { color: #f87171; }
 .str-label.medium { color: #fbbf24; }
 .str-label.strong { color: #4ade80; }
@@ -226,31 +235,17 @@ async function handleRegister() {
   transform: translateY(-1px);
   box-shadow: 0 8px 30px rgba(99, 102, 241, 0.3), 0 2px 10px rgba(99, 102, 241, 0.2);
 }
-.auth-btn:active:not(:disabled) {
-  transform: translateY(0) scale(0.99);
-}
-.auth-btn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
+.auth-btn:active:not(:disabled) { transform: translateY(0) scale(0.99); }
+.auth-btn:disabled { opacity: 0.7; cursor: not-allowed; }
 .auth-btn::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
 }
-.auth-btn:hover:not(:disabled)::after {
-  animation: auth-shimmer 0.8s ease;
-}
-.auth-btn-inner {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
+.auth-btn:hover:not(:disabled)::after { animation: auth-shimmer 0.8s ease; }
+.auth-btn-inner { display: flex; align-items: center; justify-content: center; gap: 8px; }
 
 /* ── Switch link ── */
 .auth-switch {
@@ -276,9 +271,7 @@ async function handleRegister() {
   border-color: rgba(239, 68, 68, 0.2);
   color: #dc2626;
 }
-.str-bar:not(:where(.dark, .dark *)) {
-  background: rgba(0, 0, 0, 0.07);
-}
+.str-bar:not(:where(.dark, .dark *)) { background: rgba(0, 0, 0, 0.07); }
 .auth-switch:not(:where(.dark, .dark *)) { color: #64748b; }
 .auth-switch:not(:where(.dark, .dark *)) .auth-switch-link { color: #6366f1; font-weight: 700; }
 .auth-switch:not(:where(.dark, .dark *)) .auth-switch-link:hover { color: #4f46e5; }

@@ -87,6 +87,7 @@ export function useRoomConnect(roomName, SESSION_KEY, deps, state, events, updat
       const r = new Room({
         adaptiveStream: true,
         dynacast: true,
+        webAudioMix: false,
         videoCaptureDefaults: {
           resolution: VideoPresets.h1080.resolution,
         },

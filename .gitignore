@@ -1,6 +1,12 @@
 # Dependencies
 Frontend/node_modules/
 Frontend/dist/
+Desktop/node_modules/
+Desktop/dist/
+
+# Tauri build artifacts
+Desktop/src-tauri/target/
+Desktop/src-tauri/gen/
 
 # Backend binaries
 Backend/bin/

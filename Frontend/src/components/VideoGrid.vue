@@ -57,7 +57,7 @@ const tileStyle = computed(() => ({
             :id="`video-${participant.sid}`"
             class="z-20"
             :class="screenShares.some(s => s.identity === participant.identity)
-              ? 'absolute bottom-3 right-3 w-pip-w h-pip-h rounded-sm overflow-hidden shadow-xl border border-gray-700/50'
+              ? 'absolute bottom-0 left-0 w-pip-w h-pip-h overflow-hidden shadow-xl border border-gray-700/50'
               : 'absolute inset-0'"
           ></div>
           <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
@@ -100,7 +100,7 @@ const tileStyle = computed(() => ({
             :id="`video-${participant.sid}`"
             class="z-20"
             :class="screenShares.some(s => s.identity === participant.identity)
-              ? 'absolute bottom-1 right-1 w-10 h-8 rounded-sm overflow-hidden border border-gray-700/50'
+              ? 'absolute bottom-0 left-0 w-10 h-8 overflow-hidden border border-gray-700/50'
               : 'absolute inset-0'"
           ></div>
           <div class="absolute inset-0 flex items-center justify-center z-0">
@@ -130,7 +130,7 @@ const tileStyle = computed(() => ({
           :id="`video-${participant.sid}`"
           class="z-20"
           :class="screenShares.some(s => s.identity === participant.identity)
-            ? 'absolute bottom-3 right-3 w-pip-w h-pip-h rounded-sm overflow-hidden shadow-xl border border-gray-700/50'
+            ? 'absolute bottom-0 left-0 w-pip-w h-pip-h overflow-hidden shadow-xl border border-gray-700/50'
             : 'absolute inset-0'"
         ></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
@@ -171,7 +171,7 @@ const tileStyle = computed(() => ({
             :id="`video-${participant.sid}`"
             class="z-20"
             :class="screenShares.some(s => s.identity === participant.identity)
-              ? 'absolute bottom-1 right-1 w-10 h-8 rounded-sm overflow-hidden border border-gray-700/50'
+              ? 'absolute bottom-0 left-0 w-10 h-8 overflow-hidden border border-gray-700/50'
               : 'absolute inset-0'"
           ></div>
           <div class="absolute inset-0 flex items-center justify-center z-0">
@@ -216,7 +216,7 @@ const tileStyle = computed(() => ({
           :id="`video-${participant.sid}`"
           class="z-20"
           :class="screenShares.some(s => s.identity === participant.identity)
-            ? 'absolute bottom-3 right-3 w-pip-w h-pip-h rounded-sm overflow-hidden shadow-xl border border-gray-700/50'
+            ? 'absolute bottom-0 left-0 w-pip-w h-pip-h overflow-hidden shadow-xl border border-gray-700/50'
             : 'absolute inset-0'"
         ></div>
         <!-- Avatar fallback -->

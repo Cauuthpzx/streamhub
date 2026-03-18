@@ -22,7 +22,7 @@ function getDisplayName(participant) {
 </script>
 
 <template>
-  <div class="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 bg-black/60 rounded-sm px-2 py-0.5 text-xs text-white max-w-[calc(100%-1rem)] truncate">
+  <div class="absolute bottom-0 left-0 z-30 flex items-center gap-1.5 bg-black/60 px-2 py-0.5 text-xs text-white max-w-full truncate">
     <span v-if="raisedHand" class="animate-wave shrink-0">✋</span>
     <span class="truncate font-medium">{{ getDisplayName(participant) }}</span>
     <ConnectionBars :quality="quality || 'unknown'" class="shrink-0" />

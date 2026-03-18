@@ -1,9 +1,10 @@
 <script setup>
 import { computed } from 'vue'
-import { parseParticipantMeta, getAvatarStyle } from '../composables/useParticipantMeta'
+import { getAvatarStyle } from '../composables/useParticipantMeta'
 
 const props = defineProps({
   participant: { type: Object, required: true },
+  metadata: { type: String, default: '' },
   size: { type: String, default: 'md' },
 })
 
@@ -14,7 +15,10 @@ const sizeClass = {
   xl: 'w-20 h-20 text-2xl',
 }
 
-const meta = computed(() => parseParticipantMeta(props.participant))
+const meta = computed(() => {
+  const raw = props.metadata || props.participant?.metadata || '{}'
+  try { return JSON.parse(raw) } catch { return {} }
+})
 const hasAvatar = computed(() => !!meta.value.avatar)
 const avatarSrc = computed(() => hasAvatar.value ? `/avatars/${meta.value.avatar}.webp` : '')
 const avatarStyle = computed(() => hasAvatar.value ? getAvatarStyle(meta.value) : {})

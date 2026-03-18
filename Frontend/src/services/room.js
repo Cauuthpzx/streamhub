@@ -3,6 +3,10 @@ import { authHeaders } from './apiClient'
 
 const AUTH_BASE = '/auth/room'
 
+async function safeJson(res) {
+  try { return await res.json() } catch { return {} }
+}
+
 export async function createRoom(name, { maxParticipants = 0, password = '', lobbyEnabled = false } = {}) {
   const res = await fetch(`${AUTH_BASE}/create`, {
     method: 'POST',
@@ -14,7 +18,7 @@ export async function createRoom(name, { maxParticipants = 0, password = '', lob
       lobby_enabled: lobbyEnabled || undefined,
     }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.roomCreateFailed')
   return data
 }
@@ -24,7 +28,7 @@ export async function listRooms() {
     method: 'POST',
     headers: authHeaders(),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.roomListFailed')
   return data.rooms || []
 }
@@ -35,7 +39,7 @@ export async function deleteRoom(name) {
     headers: authHeaders(),
     body: JSON.stringify({ room: name }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.internal')
   return data
 }
@@ -46,18 +50,9 @@ export async function leaveRoom(name) {
     headers: authHeaders(),
     body: JSON.stringify({ room: name }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.internal')
   return data
-}
-
-export async function getRoomMembers(name) {
-  const res = await fetch(`${AUTH_BASE}/members?room=${encodeURIComponent(name)}`, {
-    headers: authHeaders(),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'error.internal')
-  return data.members || []
 }
 
 // Participant management via Twirp RPC (uses LiveKit token)
@@ -73,7 +68,7 @@ async function twirpCall(method, body) {
     },
     body: JSON.stringify(body),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.msg || data.message || 'error.internal')
   return data
 }
@@ -114,7 +109,7 @@ export async function sendChatMessage(room, text, { replyTo, replyText } = {}) {
     headers: authHeaders(),
     body: JSON.stringify({ room, text, reply_to: replyTo, reply_text: replyText }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.sendMessageFailed')
   return data
 }
@@ -127,7 +122,7 @@ export async function getLobbyPending(room) {
     headers: authHeaders(),
     body: JSON.stringify({ room }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.internal')
   return data.pending || []
 }
@@ -138,7 +133,7 @@ export async function approveLobbyUser(room, username) {
     headers: authHeaders(),
     body: JSON.stringify({ room, username }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.internal')
   return data
 }
@@ -149,20 +144,9 @@ export async function rejectLobbyUser(room, username) {
     headers: authHeaders(),
     body: JSON.stringify({ room, username }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.internal')
   return data
-}
-
-export async function getLobbyStatus(room) {
-  const res = await fetch(`${AUTH_BASE}/lobby/status`, {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ room }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'error.internal')
-  return data.status || ''
 }
 
 export async function getChatHistory(room, limit = 100) {
@@ -171,7 +155,7 @@ export async function getChatHistory(room, limit = 100) {
     headers: authHeaders(),
     body: JSON.stringify({ room, limit }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.loadHistoryFailed')
   return data.messages || []
 }
@@ -187,7 +171,7 @@ export async function uploadFile(room, file) {
     headers: { 'Authorization': `Bearer ${getToken()}` },
     body: formData,
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.fileUploadFailed')
   return data
 }
@@ -204,19 +188,8 @@ export async function createShareLink(room) {
     headers: authHeaders(),
     body: JSON.stringify({ room }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.internal')
-  return data
-}
-
-export async function getShareLink(room) {
-  const res = await fetch(`${AUTH_BASE}/share/get`, {
-    method: 'POST',
-    headers: authHeaders(),
-    body: JSON.stringify({ room }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || 'error.shareLinkNotFound')
   return data
 }
 
@@ -226,7 +199,7 @@ export async function resolveShareLink(code) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ code }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.shareLinkNotFound')
   return data
 }

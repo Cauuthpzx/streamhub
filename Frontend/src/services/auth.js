@@ -6,7 +6,8 @@ export async function register(username, password) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   })
-  const data = await res.json()
+  let data
+  try { data = await res.json() } catch { data = {} }
   if (!res.ok) throw new Error(data.error || 'auth.registerFailed')
   return data
 }
@@ -17,7 +18,8 @@ export async function login(username, password) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username, password }),
   })
-  const data = await res.json()
+  let data
+  try { data = await res.json() } catch { data = {} }
   if (!res.ok) throw new Error(data.error || 'auth.loginFailed')
   return data
 }

@@ -9,11 +9,12 @@ import (
 	"github.com/livekit/protocol/logger"
 )
 
-// RoomEvent is pushed to all connected HomeView clients.
+// RoomEvent is pushed to all connected WS clients.
 type RoomEvent struct {
-	Type  string `json:"type"`  // "participant_joined" | "participant_left"
-	Room  string `json:"room"`
-	Count int    `json:"count"`
+	Type     string `json:"type"` // "participant_joined" | "participant_left" | "lobby_request" | "lobby_approved" | "lobby_rejected"
+	Room     string `json:"room"`
+	Count    int    `json:"count,omitempty"`
+	Username string `json:"username,omitempty"`
 }
 
 // RoomEventHub manages WebSocket clients listening for room participant changes.

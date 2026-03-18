@@ -4,7 +4,7 @@ import { RoomEvent } from 'livekit-client'
 import { sendChatMessage, getChatHistory, uploadFile } from '../services/room'
 import { getProfile } from '../services/auth'
 import { useNotifications } from './useNotifications'
-import { parseParticipantMeta, getAvatarStyle } from './useParticipantMeta'
+import { parseParticipantMeta } from './useParticipantMeta'
 
 export function useChatMessages(props) {
   const { t } = useI18n()

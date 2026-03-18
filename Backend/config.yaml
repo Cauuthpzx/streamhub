@@ -45,8 +45,6 @@ rtc:
   packet_buffer_size_video: 3000
   packet_buffer_size_audio: 400
 
-  # Phase 3 preview: giải phóng bandwidth layer cao nhanh hơn
-  dynacast_pause_delay: 3s
 
 logging:
   level: info

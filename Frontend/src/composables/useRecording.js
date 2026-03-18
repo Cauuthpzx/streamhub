@@ -262,6 +262,7 @@ export function useRecording(room, roomName, t) {
         await startRecording()
       }
     } catch (e) {
+      stopRecording()
       recording.value = false
       stopTimer()
       recordingError.value = t('error.egressStartFailed')

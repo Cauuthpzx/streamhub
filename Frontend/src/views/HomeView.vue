@@ -92,7 +92,7 @@ let _wsMounted = true
 
 function connectEventWS() {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  ws = new WebSocket(`${proto}://${window.location.hostname}:7880/auth/ws/events`)
+  ws = new WebSocket(`${proto}://${window.location.host}/auth/ws/events`)
   ws.onmessage = (e) => {
     try {
       const evt = JSON.parse(e.data)

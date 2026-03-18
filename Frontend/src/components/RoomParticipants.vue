@@ -29,19 +29,29 @@ const moveDestination = ref('')
 const availableRooms = ref([])
 const lobbyPending = ref([])
 
-let lobbyPollTimer = null
-function startLobbyPoll() {
-  stopLobbyPoll()
-  pollLobby()
-  lobbyPollTimer = setInterval(pollLobby, 3000)
+let lobbyWs = null
+function startLobbyListen() {
+  stopLobbyListen()
+  // Initial fetch
+  getLobbyPending(props.roomName).then(list => { lobbyPending.value = list }).catch(() => {})
+  // WS listen for realtime updates
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  lobbyWs = new WebSocket(`${proto}://${window.location.host}/auth/ws/events`)
+  lobbyWs.onmessage = (e) => {
+    try {
+      const evt = JSON.parse(e.data)
+      if (evt.room !== props.roomName) return
+      if (evt.type === 'lobby_request') {
+        if (!lobbyPending.value.includes(evt.username)) {
+          lobbyPending.value = [...lobbyPending.value, evt.username]
+        }
+      }
+    } catch (_) {}
+  }
+  lobbyWs.onclose = () => { lobbyWs = null }
 }
-function stopLobbyPoll() {
-  if (lobbyPollTimer) { clearInterval(lobbyPollTimer); lobbyPollTimer = null }
-}
-async function pollLobby() {
-  try {
-    lobbyPending.value = await getLobbyPending(props.roomName)
-  } catch (_) { /* ignore */ }
+function stopLobbyListen() {
+  if (lobbyWs) { lobbyWs.close(); lobbyWs = null }
 }
 async function handleApprove(username) {
   try {
@@ -160,8 +170,8 @@ async function handleLeaveRoom() {
   }
 }
 
-onMounted(startLobbyPoll)
-onUnmounted(stopLobbyPoll)
+onMounted(startLobbyListen)
+onUnmounted(stopLobbyListen)
 </script>
 
 <template>

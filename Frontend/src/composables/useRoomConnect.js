@@ -31,7 +31,7 @@ export function useRoomConnect(roomName, SESSION_KEY, deps, state, events, updat
     preJoinSettings, router, roomNotif,
   } = state
 
-  let _lobbyPollInterval = null
+  let _lobbyWs = null
 
   function getLivekitUrl() {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -56,28 +56,31 @@ export function useRoomConnect(roomName, SESSION_KEY, deps, state, events, updat
       const tokenResp = await getLivekitToken(roomName, roomPassword)
       const { access_token } = tokenResp
 
-      // lobby (waiting room) — poll until approved
+      // lobby (waiting room) — listen via WS for approval/rejection
       if (tokenResp.lobby_pending) {
         lobbyWaiting.value = true
         connecting.value = false
-        const { getLobbyStatus } = await import('../services/room')
-        _lobbyPollInterval = setInterval(async () => {
+        const { getUsername } = await import('../services/auth')
+        const currentUser = getUsername()
+        const wsProto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+        _lobbyWs = new WebSocket(`${wsProto}://${window.location.host}/auth/ws/events`)
+        _lobbyWs.onmessage = (e) => {
           try {
-            const status = await getLobbyStatus(roomName)
-            if (status === 'approved') {
-              clearInterval(_lobbyPollInterval)
-              _lobbyPollInterval = null
+            const evt = JSON.parse(e.data)
+            if (evt.room !== roomName || evt.username !== currentUser) return
+            if (evt.type === 'lobby_approved') {
+              cleanupLobbyWs()
               lobbyWaiting.value = false
               connectRoom()
-            } else if (status === 'rejected') {
-              clearInterval(_lobbyPollInterval)
-              _lobbyPollInterval = null
+            } else if (evt.type === 'lobby_rejected') {
+              cleanupLobbyWs()
               lobbyWaiting.value = false
               lobbyRejected.value = true
               error.value = t('error.lobbyRejected')
             }
-          } catch (_) { /* keep polling */ }
-        }, 2000)
+          } catch (_) {}
+        }
+        _lobbyWs.onclose = () => { _lobbyWs = null }
         return
       }
 
@@ -156,23 +159,21 @@ export function useRoomConnect(roomName, SESSION_KEY, deps, state, events, updat
       micEnabled.value = localTracksResult.some(t => t.kind === 'audio') ? pj.micOn : false
       camEnabled.value = localTracksResult.some(t => t.kind === 'video') ? pj.camOn : false
 
-      // set metadata non-blocking
-      ;(async () => {
-        try {
-          const { getProfile, fetchProfile } = await import('../services/auth')
-          let profile = getProfile()
-          if (!profile) profile = await fetchProfile()
-          if (profile && (profile.avatar || profile.display_name)) {
-            await r.localParticipant.setMetadata(JSON.stringify({
-              avatar: profile.avatar || '',
-              avatar_x: profile.avatar_x || 0.5,
-              avatar_y: profile.avatar_y || 0.5,
-              avatar_scale: profile.avatar_scale || 1,
-              display_name: profile.display_name || '',
-            }))
-          }
-        } catch (_) { /* non-critical */ }
-      })()
+      // set local metadata before first render
+      try {
+        const { getProfile, fetchProfile } = await import('../services/auth')
+        let profile = getProfile()
+        if (!profile) profile = await fetchProfile()
+        if (profile && (profile.avatar || profile.display_name)) {
+          await r.localParticipant.setMetadata(JSON.stringify({
+            avatar: profile.avatar || '',
+            avatar_x: profile.avatar_x || 0.5,
+            avatar_y: profile.avatar_y || 0.5,
+            avatar_scale: profile.avatar_scale || 1,
+            display_name: profile.display_name || '',
+          }))
+        }
+      } catch (_) { /* non-critical */ }
 
       room.value = r
       connected.value = true
@@ -187,8 +188,12 @@ export function useRoomConnect(roomName, SESSION_KEY, deps, state, events, updat
     }
   }
 
+  function cleanupLobbyWs() {
+    if (_lobbyWs) { _lobbyWs.close(); _lobbyWs = null }
+  }
+
   function cleanup() {
-    if (_lobbyPollInterval) { clearInterval(_lobbyPollInterval); _lobbyPollInterval = null }
+    cleanupLobbyWs()
   }
 
   return { connectRoom, cleanup }

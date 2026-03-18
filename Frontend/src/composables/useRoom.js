@@ -62,6 +62,7 @@ export function useRoom(roomName, username, deps) {
       isMicOn: p.isMicrophoneEnabled,
       isCamOn: p.isCameraEnabled,
       isScreenOn: p.isScreenShareEnabled,
+      metadata: p.metadata || '',
     }
   }
 

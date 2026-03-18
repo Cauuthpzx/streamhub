@@ -88,12 +88,14 @@ export function useRoomEvents(room, roomName, username, deps, state, roomNotif, 
     }
   }
 
+  let _screenRetryRaf = null
   function attachScreenShareWithRetry(track, participant, retries) {
     deps.tracks.reattachAll()
-    // Verify container actually has video attached
     const container = document.getElementById(`screen-share-${participant.sid}`)
     if (container && container.children.length === 0 && retries > 0) {
-      requestAnimationFrame(() => attachScreenShareWithRetry(track, participant, retries - 1))
+      _screenRetryRaf = requestAnimationFrame(() => attachScreenShareWithRetry(track, participant, retries - 1))
+    } else {
+      _screenRetryRaf = null
     }
   }
 

@@ -44,7 +44,7 @@ const tileStyle = computed(() => ({
     <template v-if="focusedSid">
       <div class="flex-1 min-h-0 p-4 pb-2 flex flex-col gap-3">
         <div
-          v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid === focusedSid)"
+          v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn, metadata } in participants.filter(p => p.participant.sid === focusedSid)"
           :key="'focused-' + participant.sid"
           :id="`tile-${participant.sid}`"
           class="relative bg-white dark:bg-gray-800 rounded-sm flex-1 min-h-0 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card cursor-pointer"
@@ -60,7 +60,7 @@ const tileStyle = computed(() => ({
               : 'absolute inset-0 rounded-sm overflow-hidden'"
           ></div>
           <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0 rounded-sm overflow-hidden">
-            <ParticipantAvatar :participant="participant" size="xl" />
+            <ParticipantAvatar :participant="participant" :metadata="metadata" size="xl" />
           </div>
           <TileNameBar
             :participant="participant" :is-local="isLocal"
@@ -87,7 +87,7 @@ const tileStyle = computed(() => ({
       <!-- Row nhỏ bên dưới -->
       <div class="flex gap-2 shrink-0 px-4 pb-4 overflow-x-auto">
         <div
-          v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid !== focusedSid)"
+          v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn, metadata } in participants.filter(p => p.participant.sid !== focusedSid)"
           :key="'row-' + participant.sid"
           :id="`tile-${participant.sid}`"
           class="relative w-pip-w h-pip-h shrink-0 bg-white dark:bg-gray-800 rounded-sm border border-gray-200/80 dark:border-white/[0.06] cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all"
@@ -103,7 +103,7 @@ const tileStyle = computed(() => ({
               : 'absolute inset-0 rounded-sm overflow-hidden'"
           ></div>
           <div class="absolute inset-0 flex items-center justify-center z-0 rounded-sm overflow-hidden">
-            <ParticipantAvatar :participant="participant" size="sm" />
+            <ParticipantAvatar :participant="participant" :metadata="metadata" size="sm" />
           </div>
           <TileNameBar
             :participant="participant" :is-local="isLocal"
@@ -118,7 +118,7 @@ const tileStyle = computed(() => ({
     <!-- PIN layout: main tile + strip dọc bên phải -->
     <div v-else-if="pinnedSid" class="flex gap-3 flex-1 p-4">
       <div
-        v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid === pinnedSid)"
+        v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn, metadata } in participants.filter(p => p.participant.sid === pinnedSid)"
         :key="'pinned-' + participant.sid"
         :id="`tile-${participant.sid}`"
         class="relative bg-white dark:bg-gray-800 rounded-sm flex-1 transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
@@ -133,7 +133,7 @@ const tileStyle = computed(() => ({
             : 'absolute inset-0 rounded-sm overflow-hidden'"
         ></div>
         <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0 rounded-sm overflow-hidden">
-          <ParticipantAvatar :participant="participant" size="xl" />
+          <ParticipantAvatar :participant="participant" :metadata="metadata" size="xl" />
         </div>
         <TileNameBar
           :participant="participant" :is-local="isLocal"
@@ -159,7 +159,7 @@ const tileStyle = computed(() => ({
       <!-- Strip dọc bên phải -->
       <div class="flex flex-col gap-2 w-strip-w shrink-0 overflow-y-auto">
         <div
-          v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid !== pinnedSid)"
+          v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn, metadata } in participants.filter(p => p.participant.sid !== pinnedSid)"
           :key="'side-' + participant.sid"
           :id="`tile-${participant.sid}`"
           class="relative bg-white dark:bg-gray-800 rounded-sm h-strip-thumb shrink-0 transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
@@ -174,7 +174,7 @@ const tileStyle = computed(() => ({
               : 'absolute inset-0 rounded-sm overflow-hidden'"
           ></div>
           <div class="absolute inset-0 flex items-center justify-center z-0 rounded-sm overflow-hidden">
-            <ParticipantAvatar :participant="participant" size="sm" />
+            <ParticipantAvatar :participant="participant" :metadata="metadata" size="sm" />
           </div>
           <TileNameBar
             :participant="participant" :is-local="isLocal"
@@ -200,7 +200,7 @@ const tileStyle = computed(() => ({
       class="flex-1 p-4 flex flex-wrap content-center justify-center gap-3"
     >
       <div
-        v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants"
+        v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn, metadata } in participants"
         :key="participant.sid"
         :id="`tile-${participant.sid}`"
         :style="tileStyle"
@@ -220,7 +220,7 @@ const tileStyle = computed(() => ({
         ></div>
         <!-- Avatar fallback -->
         <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0 rounded-sm overflow-hidden">
-          <ParticipantAvatar :participant="participant" size="lg" />
+          <ParticipantAvatar :participant="participant" :metadata="metadata" size="lg" />
         </div>
         <!-- Controls hover -->
         <div class="absolute top-2 right-2 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">

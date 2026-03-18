@@ -2,6 +2,10 @@ import { authHeaders } from './apiClient'
 
 const BASE = '/auth/ingress'
 
+async function safeJson(res) {
+  try { return await res.json() } catch { return {} }
+}
+
 export async function createIngress(name, room, inputType = 'rtmp', identity = '') {
   const res = await fetch(`${BASE}/create`, {
     method: 'POST',
@@ -13,7 +17,7 @@ export async function createIngress(name, room, inputType = 'rtmp', identity = '
       identity: identity || undefined,
     }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.ingressCreateFailed')
   return data
 }
@@ -24,7 +28,7 @@ export async function listIngress(room = '') {
     headers: authHeaders(),
     body: JSON.stringify({ room: room || undefined }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.ingressListFailed')
   return data.items || []
 }
@@ -35,7 +39,7 @@ export async function deleteIngress(ingressId) {
     headers: authHeaders(),
     body: JSON.stringify({ ingress_id: ingressId }),
   })
-  const data = await res.json()
+  const data = await safeJson(res)
   if (!res.ok) throw new Error(data.error || 'error.ingressDeleteFailed')
   return data
 }

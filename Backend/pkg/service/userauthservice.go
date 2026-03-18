@@ -391,6 +391,7 @@ func (s *UserAuthService) handleToken(w http.ResponseWriter, r *http.Request) {
 				// not yet decided — add to pending
 				_ = s.userStore.AddLobbyPending(r.Context(), req.Room, username)
 				lobbyPending = true
+				BroadcastRoomEvent(RoomEvent{Type: "lobby_request", Room: req.Room, Username: username})
 			}
 		}
 	}
@@ -853,6 +854,7 @@ func (s *UserAuthService) handleLobbyApprove(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	logger.Infow("log.lobbyApproved", "room", req.Room, "username", req.Username)
+	BroadcastRoomEvent(RoomEvent{Type: "lobby_approved", Room: req.Room, Username: req.Username})
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 
@@ -875,6 +877,7 @@ func (s *UserAuthService) handleLobbyReject(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	logger.Infow("log.lobbyRejected", "room", req.Room, "username", req.Username)
+	BroadcastRoomEvent(RoomEvent{Type: "lobby_rejected", Room: req.Room, Username: req.Username})
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
 }
 

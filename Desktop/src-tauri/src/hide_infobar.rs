@@ -1,89 +1,117 @@
-/// Hide the WebView2 "sharing your screen" infobar.
+/// Hide the WebView2 screen-share infobar via WebView2 COM API.
 ///
-/// From debug dump, the infobar is a TOP-LEVEL window:
-///   class: "Chrome_WidgetWin_1"
-///   title: "localhost:3000 is sharing your screen."
+/// `install_infobar_hider` is called once at app startup via `with_webview`.
+/// It uses `AddScriptToExecuteOnDocumentCreated` to permanently inject a
+/// MutationObserver that removes the infobar <div> the instant it appears.
 ///
-/// We EnumWindows every 100ms and SW_HIDE + WM_CLOSE any visible
-/// Chrome_WidgetWin_1 whose title ends with "is sharing your screen."
+/// `set_screen_share_active` is a Tauri command also triggering `ExecuteScript`
+/// to run the hider immediately on demand.
 
-use std::sync::atomic::{AtomicBool, Ordering};
+use tauri::{AppHandle, Manager};
 
-#[cfg(target_os = "windows")]
-use windows::Win32::Foundation::{BOOL, HWND, LPARAM};
-#[cfg(target_os = "windows")]
-use windows::Win32::UI::WindowsAndMessaging::{
-    EnumWindows, GetClassNameW, GetWindowTextLengthW, GetWindowTextW,
-    IsWindowVisible, PostMessageW, ShowWindow, SW_HIDE, WM_CLOSE,
-};
+const HIDE_SCRIPT: &str = r#"
+(function() {
+  'use strict';
+  function killNode(node) {
+    if (!node || node.nodeType !== 1) return;
+    var style = node.getAttribute ? (node.getAttribute('style') || '') : '';
+    var text  = (node.innerText || node.textContent || '').toLowerCase();
+    if ((text.includes('sharing') || text.includes('stop sharing')) &&
+        (style.includes('fixed') || style.includes('absolute') ||
+         style.includes('z-index') || style.includes('position'))) {
+      node.remove();
+      return;
+    }
+    try {
+      var cs = window.getComputedStyle(node);
+      if (cs.position === 'fixed' && parseInt(cs.top) === 0 &&
+          parseInt(cs.height) < 64 && text.includes('shar')) {
+        node.remove();
+      }
+    } catch(_) {}
+  }
+  // Kill any existing infobar nodes
+  if (document.body) {
+    Array.from(document.body.children).forEach(killNode);
+  }
+  // Watch for future insertions
+  var ob = new MutationObserver(function(mutations) {
+    mutations.forEach(function(m) {
+      m.addedNodes.forEach(killNode);
+    });
+  });
+  function observe() {
+    ob.observe(document.body, { childList: true });
+  }
+  if (document.body) observe();
+  else document.addEventListener('DOMContentLoaded', observe);
+})();
+"#;
 
-static HIDING_ACTIVE: AtomicBool = AtomicBool::new(false);
+/// Called once during app setup. Installs the MutationObserver on every page load.
+pub fn install_infobar_hider(app: &AppHandle) {
+    if let Some(wv_window) = app.get_webview_window("main") {
+        let _ = wv_window.with_webview(|wv| {
+            #[cfg(windows)]
+            {
+                use webview2_com::{
+                    AddScriptToExecuteOnDocumentCreatedCompletedHandler,
+                    CoTaskMemPWSTR,
+                    Microsoft::Web::WebView2::Win32::ICoreWebView2,
+                };
+                use windows::core::Interface;
 
-pub fn start_hide_infobar() {
-    if HIDING_ACTIVE.swap(true, Ordering::SeqCst) {
+                let controller = wv.controller();
+                let webview: ICoreWebView2 = unsafe {
+                    controller.CoreWebView2().expect("CoreWebView2")
+                };
+                let js = HIDE_SCRIPT.to_string();
+                let _ = AddScriptToExecuteOnDocumentCreatedCompletedHandler::wait_for_async_operation(
+                    Box::new(move |handler| unsafe {
+                        let js_pwstr = CoTaskMemPWSTR::from(js.as_str());
+                        webview
+                            .AddScriptToExecuteOnDocumentCreated(*js_pwstr.as_ref().as_pcwstr(), &handler)
+                            .map_err(webview2_com::Error::WindowsError)
+                    }),
+                    Box::new(|err, _id| err),
+                );
+            }
+        });
+    }
+}
+
+/// Tauri command — execute the hider script immediately when screen share starts.
+#[tauri::command]
+pub fn set_screen_share_active(app: AppHandle, active: bool) {
+    if !active {
         return;
     }
-    std::thread::spawn(|| {
-        while HIDING_ACTIVE.load(Ordering::SeqCst) {
-            #[cfg(target_os = "windows")]
-            hide_sharing_bar();
-            std::thread::sleep(std::time::Duration::from_millis(100));
-        }
-    });
-}
+    if let Some(wv_window) = app.get_webview_window("main") {
+        let _ = wv_window.with_webview(|wv| {
+            #[cfg(windows)]
+            {
+                use webview2_com::{
+                    ExecuteScriptCompletedHandler,
+                    CoTaskMemPWSTR,
+                    Microsoft::Web::WebView2::Win32::ICoreWebView2,
+                };
+                use windows::core::Interface;
 
-pub fn stop_hide_infobar() {
-    HIDING_ACTIVE.store(false, Ordering::SeqCst);
-}
-
-#[cfg(target_os = "windows")]
-fn hide_sharing_bar() {
-    unsafe {
-        extern "system" fn enum_cb(hwnd: HWND, _: LPARAM) -> BOOL {
-            unsafe {
-                if !IsWindowVisible(hwnd).as_bool() {
-                    return BOOL(1);
-                }
-
-                // Must be Chrome_WidgetWin_1
-                let mut cbuf = [0u16; 64];
-                GetClassNameW(hwnd, &mut cbuf);
-                let class = String::from_utf16_lossy(&cbuf);
-                if !class.starts_with("Chrome_WidgetWin") {
-                    return BOOL(1);
-                }
-
-                // Title must mention "sharing your screen"
-                let tlen = GetWindowTextLengthW(hwnd);
-                if tlen == 0 {
-                    return BOOL(1);
-                }
-                let mut tbuf = vec![0u16; (tlen + 1) as usize];
-                let n = GetWindowTextW(hwnd, &mut tbuf);
-                if n == 0 {
-                    return BOOL(1);
-                }
-                let title = String::from_utf16_lossy(&tbuf[..n as usize]).to_lowercase();
-                if title.contains("sharing your screen")
-                    || title.contains("is sharing")
-                    || title.contains("screen sharing")
-                {
-                    let _ = ShowWindow(hwnd, SW_HIDE);
-                    let _ = PostMessageW(hwnd, WM_CLOSE, None, None);
-                }
-
-                BOOL(1)
+                let controller = wv.controller();
+                let webview: ICoreWebView2 = unsafe {
+                    controller.CoreWebView2().expect("CoreWebView2")
+                };
+                let js = HIDE_SCRIPT.to_string();
+                let _ = ExecuteScriptCompletedHandler::wait_for_async_operation(
+                    Box::new(move |handler| unsafe {
+                        let js_pwstr = CoTaskMemPWSTR::from(js.as_str());
+                        webview
+                            .ExecuteScript(*js_pwstr.as_ref().as_pcwstr(), &handler)
+                            .map_err(webview2_com::Error::WindowsError)
+                    }),
+                    Box::new(|err, _result| err),
+                );
             }
-        }
-        let _ = EnumWindows(Some(enum_cb), LPARAM(0));
-    }
-}
-
-#[tauri::command]
-pub fn set_screen_share_active(active: bool) {
-    if active {
-        start_hide_infobar();
-    } else {
-        stop_hide_infobar();
+        });
     }
 }

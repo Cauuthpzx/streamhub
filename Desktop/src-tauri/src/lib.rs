@@ -4,7 +4,7 @@ mod screen_capture;
 mod hide_infobar;
 mod dump_windows;
 use screen_capture::get_screen_sources;
-use hide_infobar::set_screen_share_active;
+use hide_infobar::{install_infobar_hider, set_screen_share_active};
 use dump_windows::dump_windows;
 
 #[tauri::command]
@@ -31,6 +31,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::default().build())
         .setup(|app| {
+            install_infobar_hider(app.handle());
             #[cfg(debug_assertions)]
             {
                 if let Some(window) = app.get_webview_window("main") {

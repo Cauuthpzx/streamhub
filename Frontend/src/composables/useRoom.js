@@ -59,6 +59,8 @@ export function useRoom(roomName, username, deps) {
   const showReactionPicker = ref(false)
   const showDeviceSettings = ref(false)
 
+  let _lobbyPollInterval = null
+
   // helpers
   function getLivekitUrl() {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
@@ -126,13 +128,16 @@ export function useRoom(roomName, username, deps) {
 
   function handleTrackSubscribed(track, publication, participant) {
     updateParticipants()
+    const name = displayName(participant)
     if (track.source === Track.Source.ScreenShare) {
       screenShares.value = [...screenShares.value, { track, identity: participant.identity, sid: publication.trackSid }]
-      roomNotif.info(t('notification.screenShareStarted', { name: displayName(participant) }))
+      roomNotif.info(t('notification.screenShareStarted', { name }), null, 'screenShare')
       nextTick(() => {
-        deps.tracks.attachScreenShare(track, participant.identity)
         deps.tracks.reattachAll()
       })
+    } else if (track.source === Track.Source.Camera) {
+      roomNotif.info(t('notification.camEnabled', { name }), null, 'cam')
+      nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
     } else {
       nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
     }
@@ -140,12 +145,15 @@ export function useRoom(roomName, username, deps) {
 
   function handleTrackUnsubscribed(track, publication, participant) {
     updateParticipants()
+    const name = displayName(participant)
     if (track.source === Track.Source.ScreenShare) {
       screenShares.value = screenShares.value.filter(s => s.identity !== participant.identity)
-      roomNotif.info(t('notification.screenShareStopped', { name: displayName(participant) }))
+      roomNotif.info(t('notification.screenShareStopped', { name }), null, 'screenShare')
       const container = document.getElementById(`screen-share-${participant.sid}`)
       if (container) container.innerHTML = ''
       nextTick(() => deps.tracks.reattachAll())
+    } else if (track.source === Track.Source.Camera) {
+      roomNotif.info(t('notification.camDisabled', { name }), null, 'cam')
     }
     const el = document.getElementById(`track-${track.sid}`)
     if (el) el.remove()
@@ -154,32 +162,64 @@ export function useRoom(roomName, username, deps) {
   function handleTrackMuted(publication, participant) {
     if (participant.identity === username) return
     const name = displayName(participant)
-    if (publication.source === Track.Source.Camera) {
-      roomNotif.info(t('notification.camDisabled', { name }))
-    } else if (publication.source === Track.Source.Microphone) {
-      roomNotif.info(t('notification.micDisabled', { name }))
+    if (publication.source === Track.Source.Microphone) {
+      roomNotif.info(t('notification.micDisabled', { name }), null, 'mic')
     }
+    // cam muted = handled by TrackUnsubscribed (camera track removed)
   }
 
   function handleTrackUnmuted(publication, participant) {
     if (participant.identity === username) return
     const name = displayName(participant)
-    if (publication.source === Track.Source.Camera) {
-      roomNotif.info(t('notification.camEnabled', { name }))
-    } else if (publication.source === Track.Source.Microphone) {
-      roomNotif.info(t('notification.micEnabled', { name }))
+    if (publication.source === Track.Source.Microphone) {
+      roomNotif.info(t('notification.micEnabled', { name }), null, 'mic')
     }
+    // cam unmuted = handled by TrackSubscribed (camera track added)
   }
 
   function handleLocalTrackPublished(publication) {
     if (publication.source === Track.Source.ScreenShare) {
-      roomNotif.info(t('notification.youScreenShareStarted'))
+      roomNotif.info(t('notification.youScreenShareStarted'), null, 'screenShare')
+    } else if (publication.source === Track.Source.Camera) {
+      roomNotif.info(t('notification.youCamEnabled'), null, 'cam')
+    } else if (publication.source === Track.Source.Microphone) {
+      roomNotif.info(t('notification.youMicEnabled'), null, 'mic')
     }
   }
 
   function handleLocalTrackUnpublished(publication) {
     if (publication.source === Track.Source.ScreenShare) {
-      roomNotif.info(t('notification.youScreenShareStopped'))
+      roomNotif.info(t('notification.youScreenShareStopped'), null, 'screenShare')
+    } else if (publication.source === Track.Source.Camera) {
+      roomNotif.info(t('notification.youCamDisabled'), null, 'cam')
+    } else if (publication.source === Track.Source.Microphone) {
+      roomNotif.info(t('notification.youMicDisabled'), null, 'mic')
+    }
+  }
+
+  function notifyParticipantDisconnected(name, reason) {
+    switch (reason) {
+      case DisconnectReason.CLIENT_INITIATED:
+        roomNotif.info(t('notification.participantLeft', { name }), null, 'participantLeave')
+        break
+      case DisconnectReason.PARTICIPANT_REMOVED:
+        roomNotif.warning(t('notification.participantKicked', { name }), null, 'participantKick')
+        break
+      case DisconnectReason.DUPLICATE_IDENTITY:
+        roomNotif.warning(t('notification.participantDuplicate', { name }), null, 'participantLeave')
+        break
+      case DisconnectReason.SIGNAL_CLOSE:
+      case DisconnectReason.CONNECTION_TIMEOUT:
+      case DisconnectReason.MEDIA_FAILURE:
+        roomNotif.warning(t('notification.participantDisconnected', { name }), null, 'participantDisconnect')
+        break
+      case DisconnectReason.SERVER_SHUTDOWN:
+      case DisconnectReason.ROOM_DELETED:
+      case DisconnectReason.ROOM_CLOSED:
+        roomNotif.warning(t('notification.participantLeft', { name }), null, 'participantLeave')
+        break
+      default:
+        roomNotif.info(t('notification.participantLeft', { name }), null, 'participantLeave')
     }
   }
 
@@ -209,15 +249,17 @@ export function useRoom(roomName, username, deps) {
         lobbyWaiting.value = true
         connecting.value = false
         const { getLobbyStatus } = await import('../services/room')
-        const pollInterval = setInterval(async () => {
+        _lobbyPollInterval = setInterval(async () => {
           try {
             const status = await getLobbyStatus(roomName)
             if (status === 'approved') {
-              clearInterval(pollInterval)
+              clearInterval(_lobbyPollInterval)
+              _lobbyPollInterval = null
               lobbyWaiting.value = false
               connectRoom() // retry with approved status
             } else if (status === 'rejected') {
-              clearInterval(pollInterval)
+              clearInterval(_lobbyPollInterval)
+              _lobbyPollInterval = null
               lobbyWaiting.value = false
               lobbyRejected.value = true
               error.value = t('error.lobbyRejected')
@@ -248,19 +290,13 @@ export function useRoom(roomName, username, deps) {
       r.on(RoomEvent.ParticipantConnected, (participant) => {
         handleParticipantUpdate()
         deps.sounds.playJoinSound()
-        roomNotif.success(t('notification.participantJoined', { name: displayName(participant) }))
+        roomNotif.success(t('notification.participantJoined', { name: displayName(participant) }), null, 'participantJoin')
       })
       r.on(RoomEvent.ParticipantDisconnected, (participant, reason) => {
+        const name = displayName(participant)
         handleParticipantDisconnected(participant)
         deps.sounds.playLeaveSound()
-        const name = displayName(participant)
-        if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
-          roomNotif.warning(t('notification.participantKicked', { name }))
-        } else if (reason === DisconnectReason.SIGNAL_CLOSE || reason === DisconnectReason.TRANSPORT_FAILURE) {
-          roomNotif.warning(t('notification.participantDisconnected', { name }))
-        } else {
-          roomNotif.info(t('notification.participantLeft', { name }))
-        }
+        notifyParticipantDisconnected(name, reason)
       })
       r.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
       r.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)

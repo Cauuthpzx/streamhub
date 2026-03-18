@@ -65,11 +65,6 @@ export function useTracks(room) {
     }
   }
 
-  // kept for backward compat (useRoom calls this for local screen share)
-  function attachScreenShare(track, identity) {
-    // identity-based lookup not used anymore — noop, reattachAll handles it
-  }
-
   function reattachAll() {
     const r = toRaw(room.value)
     if (!r) return
@@ -84,5 +79,5 @@ export function useTracks(room) {
     })
   }
 
-  return { attachLocalVideo, attachRemoteTrack, attachScreenShare, reattachAll }
+  return { attachLocalVideo, attachRemoteTrack, reattachAll }
 }

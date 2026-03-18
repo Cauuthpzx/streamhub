@@ -1,20 +1,39 @@
 import { ref, computed } from 'vue'
 
 // ── Singleton — module-level, shared toàn app ──
-const notifications = ref([
-  { id: 0, type: 'success',  source: 'room',   roomName: 'dev-team',  message: 'alice đã tham gia phòng',           action: null, read: false, time: new Date(Date.now() - 30000) },
-  { id: -1, type: 'info',    source: 'room',   roomName: 'dev-team',  message: 'bob bắt đầu chia sẻ màn hình',      action: null, read: false, time: new Date(Date.now() - 90000) },
-  { id: -2, type: 'warning', source: 'room',   roomName: 'dev-team',  message: 'charlie mất kết nối',               action: null, read: false, time: new Date(Date.now() - 3 * 60000) },
-  { id: -3, type: 'warning', source: 'room',   roomName: 'design',    message: 'eve đã bị kích khỏi phòng',         action: null, read: true,  time: new Date(Date.now() - 8 * 60000) },
-  { id: -4, type: 'info',    source: 'room',   roomName: 'dev-team',  message: 'dave đã tắt camera',                action: null, read: true,  time: new Date(Date.now() - 15 * 60000) },
-  { id: -5, type: 'success', source: 'system', roomName: null,        message: 'Đã tạo phòng "sprint-planning"',    action: null, read: true,  time: new Date(Date.now() - 30 * 60000) },
-  { id: -6, type: 'error',   source: 'system', roomName: null,        message: 'Không thể xóa phòng "old-room"',   action: null, read: true,  time: new Date(Date.now() - 60 * 60000) },
-])
+const notifications = ref([])
 let _nextId = 1
+
+// ── Room filter: settingKey → settings ref (set by useRoom after connect) ──
+let _roomFilterName = null
+let _roomFilterSettings = null
+
+export function setRoomFilter(roomName, settingsRef) {
+  _roomFilterName = roomName
+  _roomFilterSettings = settingsRef
+}
+
+// Map notification context keys to settings keys
+const CONTEXT_TO_SETTING = {
+  participantJoin:       'participantJoin',
+  participantLeave:      'participantLeave',
+  participantKick:       'participantKick',
+  participantDisconnect: 'participantDisconnect',
+  screenShare:           'screenShare',
+  cam:                   'cam',
+  mic:                   'mic',
+}
 
 // source: 'system' | 'room'
 // type:   'success' | 'error' | 'warning' | 'info'
-function add({ type = 'info', source = 'system', roomName = null, message, action = null }) {
+// settingKey: optional — one of CONTEXT_TO_SETTING keys
+function add({ type = 'info', source = 'system', roomName = null, message, action = null, settingKey = null }) {
+  // Filter: if this is a room notification with a settingKey, check settings
+  if (source === 'room' && settingKey && _roomFilterSettings && roomName === _roomFilterName) {
+    const key = CONTEXT_TO_SETTING[settingKey]
+    if (key && _roomFilterSettings.value[key] === false) return
+  }
+
   notifications.value.unshift({
     id: _nextId++,
     type,
@@ -49,10 +68,10 @@ function clearAll() {
 
 function makeScope(source, roomName = null) {
   return {
-    success: (message, opts) => add({ type: 'success', source, roomName, message, ...opts }),
-    error:   (message, opts) => add({ type: 'error',   source, roomName, message, ...opts }),
-    warning: (message, opts) => add({ type: 'warning', source, roomName, message, ...opts }),
-    info:    (message, opts) => add({ type: 'info',    source, roomName, message, ...opts }),
+    success:  (message, opts, settingKey) => add({ type: 'success', source, roomName, message, settingKey: settingKey || null, ...(opts || {}) }),
+    error:    (message, opts, settingKey) => add({ type: 'error',   source, roomName, message, settingKey: settingKey || null, ...(opts || {}) }),
+    warning:  (message, opts, settingKey) => add({ type: 'warning', source, roomName, message, settingKey: settingKey || null, ...(opts || {}) }),
+    info:     (message, opts, settingKey) => add({ type: 'info',    source, roomName, message, settingKey: settingKey || null, ...(opts || {}) }),
   }
 }
 

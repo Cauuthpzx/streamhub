@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Users, MessageSquare } from 'lucide-vue-next'
@@ -26,6 +26,7 @@ import { useScreenshot } from '../composables/useScreenshot'
 import { useRoom } from '../composables/useRoom'
 import { useNotifications, setRoomFilter } from '../composables/useNotifications'
 import { useNotificationSettings } from '../composables/useNotificationSettings'
+import { useTauri } from '../composables/useTauri'
 
 const showShareModal = ref(false)
 
@@ -68,6 +69,9 @@ const roomNotif = notif.room(roomName)
 const { settings: notifSettings } = useNotificationSettings(roomName)
 setRoomFilter(roomName, notifSettings)
 
+// Tauri desktop integration
+const { isTauri, requestWakeLock, releaseWakeLock, setWindowTitle, sendNotification, saveWindowState } = useTauri()
+
 const isCreator = ref(false)
 onMounted(async () => {
   try {
@@ -75,6 +79,22 @@ onMounted(async () => {
     const found = rooms.find(r => r.name === roomName)
     if (found) isCreator.value = found.creator === username
   } catch (_) { /* non-critical */ }
+})
+
+// Wake lock while in call (prevent screen sleep)
+watch(connected, (val) => {
+  if (val) {
+    requestWakeLock()
+    setWindowTitle(`${roomName} — Stream HUB`)
+  } else {
+    releaseWakeLock()
+    setWindowTitle('Stream HUB')
+  }
+})
+
+onUnmounted(() => {
+  releaseWakeLock()
+  if (isTauri) saveWindowState()
 })
 
 watch(recordingCtx.recordingError, (err) => {

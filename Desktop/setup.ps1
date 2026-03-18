@@ -51,6 +51,22 @@ if (-not (Test-Path $frontendModules)) {
 }
 Write-Host "Frontend deps — OK" -ForegroundColor Green
 
+# 5. Kiểm tra Visual C++ Build Tools (cần thiết cho cargo build)
+Write-Host "`n[5/5] Kiểm tra C++ Build Tools..." -ForegroundColor Yellow
+$vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+$hasCpp = $false
+if (Test-Path $vswhere) {
+    $vsInfo = & $vswhere -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -format json 2>$null
+    if ($vsInfo -and $vsInfo -ne "[]") { $hasCpp = $true }
+}
+if ($hasCpp) {
+    Write-Host "C++ Build Tools — OK" -ForegroundColor Green
+} else {
+    Write-Host "CẢNH BÁO: C++ Build Tools chưa cài." -ForegroundColor Red
+    Write-Host "  Tải về: https://visualstudio.microsoft.com/downloads/#build-tools-for-visual-studio-2022" -ForegroundColor Yellow
+    Write-Host "  Chọn workload: 'Desktop development with C++'" -ForegroundColor Yellow
+}
+
 Write-Host "`n=== Setup hoàn tất! ===" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Để chạy dev:   cd Desktop && npm run dev"   -ForegroundColor White

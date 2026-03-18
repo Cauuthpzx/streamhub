@@ -21,6 +21,10 @@ export default defineConfig({
       },
     },
     rollupOptions: {
+      external: [
+        // Tauri plugin packages — only available in Tauri context (dynamic imports)
+        /^@tauri-apps\//,
+      ],
       output: {
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router', 'vue-i18n'],

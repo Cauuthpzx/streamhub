@@ -4,10 +4,10 @@
   "version": "0.1.0",
   "identifier": "com.streamhub.desktop",
   "build": {
-    "beforeDevCommand": "cd .. && npm run dev",
+    "beforeDevCommand": "npm --prefix ../Frontend run dev",
     "devUrl": "http://localhost:3000",
-    "beforeBuildCommand": "cd .. && npm run build",
-    "frontendDist": "../dist"
+    "beforeBuildCommand": "npm --prefix ../Frontend run build",
+    "frontendDist": "../Frontend/dist"
   },
   "app": {
     "windows": [
@@ -37,12 +37,12 @@
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/128x128@2x.png",
-      "icons/icon.icns",
+      "icons/icon.png",
       "icons/icon.ico"
     ],
     "resources": [],
     "externalBin": [],
-    "copyright": "",
+    "copyright": "© 2026 Stream HUB",
     "category": "SocialNetworking",
     "shortDescription": "Stream HUB — Real-time video conferencing",
     "longDescription": "Stream HUB desktop client with WebRTC video conferencing powered by LiveKit.",

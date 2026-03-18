@@ -7,17 +7,40 @@ vi.mock('vue', async () => {
   return { ...actual, onUnmounted: vi.fn() }
 })
 
+// mock livekit-client
+vi.mock('livekit-client', () => ({
+  Track: { Source: { Camera: 'camera', ScreenShare: 'screen_share', ScreenShareAudio: 'screen_share_audio' } },
+}))
+
 describe('useRecording composable', () => {
   let useRecording, mockRoom, mockT
-  let mockMediaRecorder, mockCaptureStream
+  let mockMediaRecorder
 
   beforeEach(async () => {
     vi.resetModules()
 
     mockT = vi.fn((key) => key)
-    mockRoom = ref({ name: 'test-room' })
 
-    // Mock MediaRecorder instance
+    // Build mock room with participants and tracks
+    const mockVideoTrack = {
+      source: 'camera',
+      mediaStreamTrack: { id: 'v1', kind: 'video', enabled: true },
+      attachedElements: [{ videoWidth: 640, videoHeight: 480 }],
+    }
+    const mockAudioTrack = {
+      source: 'microphone',
+      mediaStreamTrack: { id: 'a1', kind: 'audio', enabled: true },
+    }
+
+    mockRoom = ref({
+      localParticipant: {
+        videoTrackPublications: new Map([['v1', { track: mockVideoTrack }]]),
+        audioTrackPublications: new Map([['a1', { track: mockAudioTrack }]]),
+      },
+      remoteParticipants: new Map(),
+    })
+
+    // Mock MediaRecorder
     mockMediaRecorder = {
       start: vi.fn(),
       stop: vi.fn(),
@@ -25,34 +48,53 @@ describe('useRecording composable', () => {
       ondataavailable: null,
       onstop: null,
     }
-
-    // Use proper function (not arrow) for constructor mock
     global.MediaRecorder = function () { return mockMediaRecorder }
     global.MediaRecorder.isTypeSupported = vi.fn(() => true)
 
-    // Mock getDisplayMedia stream
-    mockCaptureStream = {
-      getTracks: vi.fn(() => [{ stop: vi.fn() }]),
-      getVideoTracks: vi.fn(() => [{
-        addEventListener: vi.fn(),
-        removeEventListener: vi.fn(),
-      }]),
+    // Mock canvas + captureStream
+    const mockCanvasStream = {
+      getVideoTracks: vi.fn(() => [{ id: 'canvas-v' }]),
     }
-    global.navigator = {
-      mediaDevices: {
-        getDisplayMedia: vi.fn().mockResolvedValue(mockCaptureStream),
-      },
+    const mockCtx = {
+      fillStyle: '',
+      fillRect: vi.fn(),
+      drawImage: vi.fn(),
+    }
+    vi.spyOn(document, 'createElement').mockImplementation((tag) => {
+      if (tag === 'canvas') {
+        return { width: 0, height: 0, getContext: vi.fn(() => mockCtx), captureStream: vi.fn(() => mockCanvasStream) }
+      }
+      return { href: '', download: '', click: vi.fn() }
+    })
+
+    // Mock AudioContext
+    const mockAudioDest = {
+      stream: { getAudioTracks: vi.fn(() => [{ id: 'audio-mixed' }]) },
+    }
+    global.AudioContext = function () {
+      return {
+        createMediaStreamSource: vi.fn(() => ({ connect: vi.fn(), disconnect: vi.fn() })),
+        createMediaStreamDestination: vi.fn(() => mockAudioDest),
+        close: vi.fn(() => Promise.resolve()),
+      }
     }
 
-    // Mock URL
+    // Mock MediaStream
+    global.MediaStream = function (tracks) {
+      this._tracks = tracks || []
+      this.addTrack = vi.fn((t) => this._tracks.push(t))
+      this.getVideoTracks = vi.fn(() => this._tracks.filter((t) => t.kind === 'video'))
+      this.getAudioTracks = vi.fn(() => this._tracks.filter((t) => t.kind === 'audio'))
+    }
+
+    // Mock URL + Blob
     global.URL.createObjectURL = vi.fn(() => 'blob:mock-url')
     global.URL.revokeObjectURL = vi.fn()
+    global.Blob = function (chunks, opts) { this.chunks = chunks; this.type = opts?.type }
 
-    // Mock Blob
-    global.Blob = function (chunks, opts) {
-      this.chunks = chunks
-      this.type = opts?.type
-    }
+    // Mock requestAnimationFrame / cancelAnimationFrame
+    global.requestAnimationFrame = vi.fn(() => 1)
+    global.cancelAnimationFrame = vi.fn()
 
     const mod = await import('../composables/useRecording')
     useRecording = mod.useRecording
@@ -60,6 +102,7 @@ describe('useRecording composable', () => {
 
   afterEach(() => {
     vi.useRealTimers()
+    vi.restoreAllMocks()
   })
 
   describe('initial state', () => {
@@ -84,9 +127,7 @@ describe('useRecording composable', () => {
       vi.useFakeTimers()
       const result = useRecording(mockRoom, 'test-room', mockT)
 
-      await vi.advanceTimersByTimeAsync(0) // flush getDisplayMedia promise
       await result.toggleRecording()
-
       vi.advanceTimersByTime(3661000) // 1h 1m 1s
 
       expect(result.formattedTime.value).toBe('01:01:01')
@@ -94,18 +135,15 @@ describe('useRecording composable', () => {
   })
 
   describe('toggleRecording', () => {
-    it('starts recording via getDisplayMedia', async () => {
+    it('starts recording from room tracks (no picker)', async () => {
       const result = useRecording(mockRoom, 'test-room', mockT)
 
       await result.toggleRecording()
 
-      expect(navigator.mediaDevices.getDisplayMedia).toHaveBeenCalledWith({
-        video: true,
-        audio: true,
-        preferCurrentTab: true,
-      })
       expect(result.recording.value).toBe(true)
       expect(mockMediaRecorder.start).toHaveBeenCalledWith(1000)
+      // No getDisplayMedia call — canvas-based recording
+      expect(global.requestAnimationFrame).toHaveBeenCalled()
     })
 
     it('stops recording on second toggle', async () => {
@@ -116,7 +154,7 @@ describe('useRecording composable', () => {
 
       expect(result.recording.value).toBe(false)
       expect(mockMediaRecorder.stop).toHaveBeenCalled()
-      expect(mockCaptureStream.getTracks).toHaveBeenCalled()
+      expect(global.cancelAnimationFrame).toHaveBeenCalled()
     })
 
     it('prevents double-click during loading', async () => {
@@ -127,39 +165,28 @@ describe('useRecording composable', () => {
       await p1
       await p2
 
-      expect(navigator.mediaDevices.getDisplayMedia).toHaveBeenCalledTimes(1)
+      // Only one start
+      expect(mockMediaRecorder.start).toHaveBeenCalledTimes(1)
     })
 
-    it('handles NotAllowedError silently (user cancelled)', async () => {
-      navigator.mediaDevices.getDisplayMedia.mockRejectedValueOnce(
-        Object.assign(new Error('Permission denied'), { name: 'NotAllowedError' }),
-      )
-
-      const result = useRecording(mockRoom, 'test-room', mockT)
-      await result.toggleRecording()
-
-      expect(result.recording.value).toBe(false)
-      expect(result.recordingError.value).toBe('')
-    })
-
-    it('shows error for non-NotAllowedError', async () => {
-      navigator.mediaDevices.getDisplayMedia.mockRejectedValueOnce(
-        new Error('Not supported'),
-      )
+    it('shows error on failure', async () => {
+      // Make canvas creation throw
+      vi.spyOn(document, 'createElement').mockImplementation(() => {
+        throw new Error('Canvas not supported')
+      })
 
       const result = useRecording(mockRoom, 'test-room', mockT)
       await result.toggleRecording()
 
       expect(result.recording.value).toBe(false)
       expect(result.recordingError.value).toBe('error.egressStartFailed')
-      expect(mockT).toHaveBeenCalledWith('error.egressStartFailed')
     })
 
     it('clears error after 5 seconds', async () => {
       vi.useFakeTimers()
-      navigator.mediaDevices.getDisplayMedia.mockRejectedValueOnce(
-        new Error('Not supported'),
-      )
+      vi.spyOn(document, 'createElement').mockImplementation(() => {
+        throw new Error('Canvas not supported')
+      })
 
       const result = useRecording(mockRoom, 'test-room', mockT)
       await result.toggleRecording()
@@ -187,13 +214,11 @@ describe('useRecording composable', () => {
       const result = useRecording(mockRoom, 'test-room', mockT)
 
       await result.toggleRecording()
-
       vi.advanceTimersByTime(3000)
 
       await result.toggleRecording() // stop
       vi.advanceTimersByTime(5000)
 
-      // Timer should have stopped at 3 seconds
       expect(result.formattedTime.value).toBe('00:03')
     })
   })
@@ -203,8 +228,6 @@ describe('useRecording composable', () => {
       const result = useRecording(mockRoom, 'test-room', mockT)
 
       await result.toggleRecording()
-
-      // The composable assigns onstop to the mock instance
       expect(typeof mockMediaRecorder.onstop).toBe('function')
       mockMediaRecorder.onstop()
 
@@ -219,8 +242,7 @@ describe('useRecording composable', () => {
       mockMediaRecorder.onstop()
 
       const mockClick = vi.fn()
-      const mockAnchor = { href: '', download: '', click: mockClick }
-      vi.spyOn(document, 'createElement').mockReturnValueOnce(mockAnchor)
+      vi.spyOn(document, 'createElement').mockReturnValueOnce({ href: '', download: '', click: mockClick })
 
       result.triggerDownload()
       expect(mockClick).toHaveBeenCalled()
@@ -228,7 +250,6 @@ describe('useRecording composable', () => {
 
     it('triggerDownload does nothing without URL', () => {
       const result = useRecording(mockRoom, 'test-room', mockT)
-      // Should not throw
       result.triggerDownload()
     })
   })
@@ -256,29 +277,7 @@ describe('useRecording composable', () => {
       await result.toggleRecording()
       result.cleanup()
 
-      expect(mockCaptureStream.getTracks).toHaveBeenCalled()
-    })
-  })
-
-  describe('browser stop sharing', () => {
-    it('stops recording when video track ends', async () => {
-      let trackEndHandler
-      mockCaptureStream.getVideoTracks.mockReturnValue([{
-        addEventListener: vi.fn((event, handler) => {
-          if (event === 'ended') trackEndHandler = handler
-        }),
-        removeEventListener: vi.fn(),
-      }])
-
-      const result = useRecording(mockRoom, 'test-room', mockT)
-      await result.toggleRecording()
-
-      expect(result.recording.value).toBe(true)
-
-      // Simulate browser "Stop sharing" click
-      trackEndHandler()
-
-      expect(result.recording.value).toBe(false)
+      expect(global.cancelAnimationFrame).toHaveBeenCalled()
     })
   })
 })

@@ -36,7 +36,7 @@ function pick(avt) {
     >
       <img :src="avt.src" class="w-full h-full object-cover" loading="lazy" :alt="avt.id" />
       <div v-if="selected === avt.id" class="absolute inset-0 bg-indigo-500/20 flex items-center justify-center">
-        <SvgIcon name="check" :size="24" themed />
+        <SvgIcon class="text-white drop-shadow" name="check" :size="16" :stroke-width="2.5" />
       </div>
     </button>
   </div>

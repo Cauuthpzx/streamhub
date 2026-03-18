@@ -106,7 +106,7 @@ function highlightName(msg) {
       class="relative flex items-center justify-center w-8 h-8 rounded-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
       :class="open ? 'bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-200' : ''"
     >
-      <SvgIcon name="bell" :size="28" themed />
+      <SvgIcon class="w-[18px] h-[18px]" name="bell" :size="24" :stroke-width="1.7" />
       <span
         v-if="unreadCount > 0"
         class="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center px-0.5 leading-none"
@@ -131,12 +131,12 @@ function highlightName(msg) {
                 @click="markAllRead"
                 class="p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                 :title="t('notification.markAllRead')"
-              ><SvgIcon name="check-check" :size="22" themed /></button>
+              ><SvgIcon name="check-check" :size="14" :stroke-width="2" /></button>
               <button
                 @click="clearAll"
                 class="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
                 :title="t('notification.clearAll')"
-              ><SvgIcon name="trash-2" :size="22" themed /></button>
+              ><SvgIcon name="trash-2" :size="14" :stroke-width="2" /></button>
             </template>
             <!-- Settings button — creator only -->
             <button
@@ -147,7 +147,7 @@ function highlightName(msg) {
                 ? 'text-indigo-500 dark:text-indigo-400 bg-gray-100 dark:bg-white/[0.06]'
                 : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'"
               :title="t('notification.settings')"
-            ><SvgIcon name="settings" :size="22" themed /></button>
+            ><SvgIcon name="settings" :size="14" :stroke-width="2" /></button>
           </div>
         </div>
 
@@ -163,7 +163,7 @@ function highlightName(msg) {
         <div class="overflow-y-auto max-h-[440px] notif-scroll">
           <!-- Empty -->
           <div v-if="notifications.length === 0" class="flex flex-col items-center justify-center py-12 gap-2">
-            <SvgIcon name="bell" :size="40" themed />
+            <SvgIcon class="w-7 h-7 text-gray-200 dark:text-gray-700" name="bell" :size="24" :stroke-width="1.5" />
             <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('notification.empty') }}</p>
           </div>
 
@@ -183,7 +183,7 @@ function highlightName(msg) {
               />
 
               <!-- type icon -->
-              <SvgIcon :name="TYPE_ICON[n.type]" :size="28" class="shrink-0" themed />
+              <SvgIcon :name="TYPE_ICON[n.type]" :size="18" class="shrink-0" :class="TYPE_COLOR[n.type]" :stroke-width="2" />
 
               <!-- content -->
               <div class="flex-1 min-w-0">
@@ -219,7 +219,7 @@ function highlightName(msg) {
               <button
                 @click="remove(n.id)"
                 class="shrink-0 opacity-0 group-hover:opacity-100 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-all cursor-pointer mt-0.5"
-              ><SvgIcon name="x" :size="18" themed /></button>
+              ><SvgIcon name="x" :size="12" :stroke-width="2" /></button>
             </div>
           </TransitionGroup>
         </div>

@@ -57,11 +57,11 @@ onMounted(() => {
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
           <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <SvgIcon name="link" :size="28" themed />
+            <SvgIcon class="w-4.5 h-4.5 text-indigo-500" name="link" :size="24" :stroke-width="2" />
             {{ t('share.title') }}
           </h3>
           <button @click="emit('close')" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
-            <SvgIcon name="x" :size="24" themed />
+            <SvgIcon name="x" :size="20" :stroke-width="2" />
           </button>
         </div>
 
@@ -87,8 +87,8 @@ onMounted(() => {
                 @click="copyLink"
                 class="shrink-0 w-9 h-9 rounded-sm bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center transition-colors cursor-pointer"
               >
-                <SvgIcon v-if="copied" name="check" :size="28" themed />
-                <SvgIcon v-else name="copy" :size="28" themed />
+                <SvgIcon v-if="copied" class="text-white" name="check" :size="16" :stroke-width="2" />
+                <SvgIcon v-else class="text-white" name="copy" :size="16" :stroke-width="2" />
               </button>
             </div>
 

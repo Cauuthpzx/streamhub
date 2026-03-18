@@ -63,7 +63,7 @@ function onLeave() {
         <path fill="#ff0" d="M13.26 15.535L13.298 14.707 12.78 15.354 12.005 15.062 12.46 15.754 11.942 16.402 12.742 16.182 13.198 16.875 13.236 16.047 14.036 15.827 13.26 15.535z"/>
       </svg>
       <span class="text-sm text-gray-600 dark:text-gray-300 font-medium">{{ currentLocale().name }}</span>
-      <SvgIcon name="chevron-down" :size="20" themed />
+      <SvgIcon class="text-gray-400 dark:text-gray-500 transition-transform" name="chevron-down" :size="14" :stroke-width="2" />
     </button>
 
     <!-- Dropdown -->

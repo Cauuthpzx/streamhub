@@ -71,13 +71,13 @@ const tileStyle = computed(() => ({
           <div class="absolute top-2 right-2 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
             <AppTooltip :content="t('chat.pin')" position="bottom">
               <button @click.stop="emit('pin', participant.sid)" class="bg-black/60 hover:bg-black/80 rounded-sm p-1.5 cursor-pointer transition-colors">
-                <SvgIcon name="pin" :size="24" themed />
+                <SvgIcon class="text-white" name="pin" :size="16" :stroke-width="2" />
               </button>
             </AppTooltip>
             <AppTooltip :content="fullscreenSid === participant.sid ? t('chat.exitFullscreen') : t('chat.fullscreen')" position="bottom">
               <button @click.stop="emit('fullscreen', participant.sid)" class="bg-black/60 hover:bg-black/80 rounded-sm p-1.5 cursor-pointer transition-colors">
-                <SvgIcon v-if="fullscreenSid === participant.sid" name="minimize" :size="24" themed />
-                <SvgIcon v-else name="maximize" :size="24" themed />
+                <SvgIcon v-if="fullscreenSid === participant.sid" class="text-white" name="minimize" :size="16" :stroke-width="2" />
+                <SvgIcon v-else class="text-white" name="maximize" :size="16" :stroke-width="2" />
               </button>
             </AppTooltip>
           </div>
@@ -144,13 +144,13 @@ const tileStyle = computed(() => ({
         <div class="absolute top-2 right-2 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
           <AppTooltip :content="t('chat.unpin')" position="bottom">
             <button @click="emit('pin', participant.sid)" class="bg-black/60 hover:bg-black/80 rounded-sm p-1.5 cursor-pointer transition-colors">
-              <SvgIcon name="pin" :size="24" themed />
+              <SvgIcon class="text-amber-400" name="pin" :size="16" :stroke-width="2" />
             </button>
           </AppTooltip>
           <AppTooltip :content="fullscreenSid === participant.sid ? t('chat.exitFullscreen') : t('chat.fullscreen')" position="bottom">
             <button @click="emit('fullscreen', participant.sid)" class="bg-black/60 hover:bg-black/80 rounded-sm p-1.5 cursor-pointer transition-colors">
-              <SvgIcon v-if="fullscreenSid === participant.sid" name="minimize" :size="24" themed />
-              <SvgIcon v-else name="maximize" :size="24" themed />
+              <SvgIcon v-if="fullscreenSid === participant.sid" class="text-white" name="minimize" :size="16" :stroke-width="2" />
+              <SvgIcon v-else class="text-white" name="maximize" :size="16" :stroke-width="2" />
             </button>
           </AppTooltip>
         </div>
@@ -185,7 +185,7 @@ const tileStyle = computed(() => ({
           <div class="absolute top-1 right-1 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
             <AppTooltip :content="t('chat.pin')" position="bottom">
               <button @click="emit('pin', participant.sid)" class="bg-black/50 hover:bg-black/70 rounded-sm p-0.5 cursor-pointer">
-                <SvgIcon name="pin" :size="20" themed />
+                <SvgIcon class="text-white" name="pin" :size="12" :stroke-width="2" />
               </button>
             </AppTooltip>
           </div>
@@ -226,13 +226,13 @@ const tileStyle = computed(() => ({
         <div class="absolute top-2 right-2 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
           <AppTooltip :content="t('chat.pin')" position="bottom">
             <button @click.stop="emit('pin', participant.sid)" class="bg-black/50 hover:bg-black/70 rounded-sm p-1 cursor-pointer">
-              <SvgIcon name="pin" :size="22" themed />
+              <SvgIcon class="text-white" name="pin" :size="14" :stroke-width="2" />
             </button>
           </AppTooltip>
           <AppTooltip :content="fullscreenSid === participant.sid ? t('chat.exitFullscreen') : t('chat.fullscreen')" position="bottom">
             <button @click.stop="emit('fullscreen', participant.sid)" class="bg-black/50 hover:bg-black/70 rounded-sm p-1 cursor-pointer">
-              <SvgIcon v-if="fullscreenSid === participant.sid" name="minimize" :size="22" themed />
-              <SvgIcon v-else name="maximize" :size="22" themed />
+              <SvgIcon v-if="fullscreenSid === participant.sid" class="text-white" name="minimize" :size="14" :stroke-width="2" />
+              <SvgIcon v-else class="text-white" name="maximize" :size="14" :stroke-width="2" />
             </button>
           </AppTooltip>
         </div>

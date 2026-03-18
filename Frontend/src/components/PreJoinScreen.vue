@@ -118,15 +118,23 @@ onUnmounted(stopPreview)
       <!-- Controls -->
       <div class="flex items-center justify-center gap-3 mb-5">
         <AppTooltip :content="micOn ? t('chat.muteMic') : t('chat.unmuteMic')" position="top">
-          <button @click="toggleMic" class="cursor-pointer transition-transform hover:scale-110 active:scale-95">
-            <SvgIcon v-if="micOn" name="mic" :size="44" themed />
-            <SvgIcon v-else name="mic-off" :size="44" themed />
+          <button
+            @click="toggleMic"
+            class="w-12 h-12 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            :class="micOn ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
+          >
+            <SvgIcon v-if="micOn" name="mic" :size="20" :stroke-width="1.8" />
+            <SvgIcon v-else name="mic-off" :size="20" :stroke-width="1.8" />
           </button>
         </AppTooltip>
         <AppTooltip :content="camOn ? t('chat.camOff') : t('chat.camOn')" position="top">
-          <button @click="toggleCam" class="cursor-pointer transition-transform hover:scale-110 active:scale-95">
-            <SvgIcon v-if="camOn" name="video" :size="44" themed />
-            <SvgIcon v-else name="video-off" :size="44" themed />
+          <button
+            @click="toggleCam"
+            class="w-12 h-12 rounded-full flex items-center justify-center transition-colors cursor-pointer"
+            :class="camOn ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
+          >
+            <SvgIcon v-if="camOn" name="video" :size="20" :stroke-width="1.8" />
+            <SvgIcon v-else name="video-off" :size="20" :stroke-width="1.8" />
           </button>
         </AppTooltip>
       </div>
@@ -157,7 +165,7 @@ onUnmounted(stopPreview)
           @click="handleJoin"
           class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
         >
-          <SvgIcon name="log-in" :size="24" themed />
+          <SvgIcon name="log-in" :size="16" :stroke-width="2" />
           {{ t('prejoin.joinNow') }}
         </button>
       </div>

@@ -32,7 +32,7 @@ const ROWS = [
         class="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors cursor-pointer"
         :title="t('notification.settingsReset')"
       >
-        <SvgIcon name="rotate-ccw" :size="18" themed />
+        <SvgIcon name="rotate-ccw" :size="12" :stroke-width="2" />
         {{ t('notification.settingsReset') }}
       </button>
     </div>

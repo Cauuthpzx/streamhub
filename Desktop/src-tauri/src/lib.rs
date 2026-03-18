@@ -31,7 +31,7 @@ pub fn run() {
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_updater::Builder::default().build())
         .setup(|app| {
-            install_infobar_hider(app.handle());
+            install_infobar_hider();
             #[cfg(debug_assertions)]
             {
                 if let Some(window) = app.get_webview_window("main") {

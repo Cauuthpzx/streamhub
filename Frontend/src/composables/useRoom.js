@@ -6,9 +6,25 @@ import {
   RoomEvent,
   Track,
   VideoPresets,
+  ScreenSharePresets,
   ConnectionQuality,
   createLocalTracks,
 } from 'livekit-client'
+
+// Detect preferred video codec: AV1 > H264 > VP9 > VP8
+function detectPreferredCodec() {
+  try {
+    const caps = RTCRtpSender.getCapabilities?.('video')
+    if (!caps) return 'h264'
+    const priority = ['av1', 'h264', 'vp9', 'vp8']
+    const supported = caps.codecs.map(c => c.mimeType.split('/')[1].toLowerCase())
+    return priority.find(c => supported.includes(c)) || 'h264'
+  } catch (_) {
+    return 'h264'
+  }
+}
+
+const preferredCodec = detectPreferredCodec()
 
 export function useRoom(roomName, username, deps) {
   const router = useRouter()
@@ -160,7 +176,19 @@ export function useRoom(roomName, username, deps) {
       const r = new Room({
         adaptiveStream: true,
         dynacast: true,
-        videoCaptureDefaults: { resolution: VideoPresets.h720.resolution },
+        // Capture max resolution — browser scale down cho simulcast layers
+        videoCaptureDefaults: {
+          resolution: VideoPresets.h1080.resolution,
+        },
+        // Simulcast 3 layers + codec preference
+        publishDefaults: {
+          simulcast: true,
+          videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360, VideoPresets.h720],
+          videoCodec: preferredCodec,
+          backupCodec: true,
+          // Screen share dùng VP9/AV1 tốt hơn cho content-based (text, UI)
+          screenShareEncoding: ScreenSharePresets.h1080fps15.encoding,
+        },
       })
 
       r.on(RoomEvent.ParticipantConnected, handleParticipantUpdate)
@@ -257,7 +285,13 @@ export function useRoom(roomName, username, deps) {
     if (!room.value) return
     try {
       const r = toRaw(room.value)
-      await r.localParticipant.setScreenShareEnabled(!screenEnabled.value)
+      await r.localParticipant.setScreenShareEnabled(!screenEnabled.value, {
+        resolution: ScreenSharePresets.h1080fps15.resolution,
+        contentHint: 'detail',
+        // screen share không cần simulcast — 1 layer SFU tự scale
+        simulcast: false,
+        videoCodec: preferredCodec === 'av1' ? 'av1' : 'vp9',
+      })
       screenEnabled.value = !screenEnabled.value
 
       if (screenEnabled.value) {

@@ -25,6 +25,27 @@ postgres:
 
 development: true
 
+rtc:
+  # Phase 1: Send-Side BWE — SFU track departure time chính xác, giảm freeze dưới mạng yếu
+  congestion_control:
+    enabled: true
+    allow_pause: true
+    use_send_side_bwe: true
+    use_send_side_bwe_interceptor: true
+    send_side_bwe_pacer: leaky-bucket
+
+  # Phase 1: PLI Throttle — tránh flood encoder khi mạng kém
+  pli_throttle:
+    low_quality: 3s
+    mid_quality: 2s
+    high_quality: 1500ms
+
+  # Phase 1: Packet buffer — đủ cho 720p@30fps + jitter buffer audio 4s
+  packet_buffer_size_video: 1000
+  packet_buffer_size_audio: 200
+
+  # Phase 3 preview: giải phóng bandwidth layer cao nhanh hơn
+  dynacast_pause_delay: 3s
 
 logging:
   level: info

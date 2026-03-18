@@ -76,12 +76,24 @@ export function useRoomEvents(room, roomName, username, deps, state, roomNotif, 
     if (track.source === Track.Source.ScreenShare) {
       screenShares.value = [...screenShares.value, { track, identity: participant.identity, sid: publication.trackSid }]
       roomNotif.info(t('notification.screenShareStarted', { name }), null, 'screenShare')
-      nextTick(() => deps.tracks.reattachAll())
+      // Double nextTick: parent updates screenShares ref → child VideoGrid re-renders DOM
+      nextTick(() => nextTick(() => {
+        attachScreenShareWithRetry(track, participant, 5)
+      }))
     } else if (track.source === Track.Source.Camera) {
       roomNotif.info(t('notification.camEnabled', { name }), null, 'cam')
-      nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
+      nextTick(() => nextTick(() => deps.tracks.attachRemoteTrack(track, participant)))
     } else {
-      nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
+      nextTick(() => nextTick(() => deps.tracks.attachRemoteTrack(track, participant)))
+    }
+  }
+
+  function attachScreenShareWithRetry(track, participant, retries) {
+    deps.tracks.reattachAll()
+    // Verify container actually has video attached
+    const container = document.getElementById(`screen-share-${participant.sid}`)
+    if (container && container.children.length === 0 && retries > 0) {
+      requestAnimationFrame(() => attachScreenShareWithRetry(track, participant, retries - 1))
     }
   }
 

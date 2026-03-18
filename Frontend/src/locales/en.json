@@ -170,7 +170,15 @@
     "unknownDevice": "Unknown device",
     "noMicrophone": "No microphone detected",
     "noCamera": "No camera detected",
-    "noSpeaker": "No speaker detected"
+    "noSpeaker": "No speaker detected",
+    "audioEnhance": "Audio Enhancement",
+    "noiseSuppression": "AI Noise Suppression",
+    "noiseSuppressionDesc": "Remove background noise (keyboard, fan, traffic)",
+    "autoGain": "Auto Volume & Compressor",
+    "autoGainDesc": "Balance loud/quiet speakers automatically",
+    "background": "Virtual Background",
+    "bgNone": "None",
+    "bgBlur": "Blur"
   },
   "error": {
     "methodNotAllowed": "Method not allowed",

@@ -42,6 +42,8 @@ export default defineConfig({
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router', 'vue-i18n'],
           'livekit': ['livekit-client'],
+          'track-processors': ['@livekit/track-processors'],
+          'krisp': ['@livekit/krisp-noise-filter'],
         },
       },
     },

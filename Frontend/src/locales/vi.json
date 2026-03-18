@@ -170,7 +170,15 @@
     "unknownDevice": "Thiết bị không xác định",
     "noMicrophone": "Không tìm thấy micro",
     "noCamera": "Không tìm thấy camera",
-    "noSpeaker": "Không tìm thấy loa"
+    "noSpeaker": "Không tìm thấy loa",
+    "audioEnhance": "Cải thiện âm thanh",
+    "noiseSuppression": "Lọc tiếng ồn AI",
+    "noiseSuppressionDesc": "Loại bỏ tiếng ồn nền (bàn phím, quạt, xe cộ)",
+    "autoGain": "Tự động cân bằng âm lượng",
+    "autoGainDesc": "Cân bằng người nói to/nhỏ tự động",
+    "background": "Nền ảo",
+    "bgNone": "Không",
+    "bgBlur": "Làm mờ"
   },
   "error": {
     "methodNotAllowed": "Phương thức không được phép",

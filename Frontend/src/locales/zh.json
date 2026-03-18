@@ -170,7 +170,15 @@
     "unknownDevice": "未知设备",
     "noMicrophone": "未检测到麦克风",
     "noCamera": "未检测到摄像头",
-    "noSpeaker": "未检测到扬声器"
+    "noSpeaker": "未检测到扬声器",
+    "audioEnhance": "音频增强",
+    "noiseSuppression": "AI 降噪",
+    "noiseSuppressionDesc": "消除背景噪音（键盘、风扇、交通）",
+    "autoGain": "自动音量与压缩",
+    "autoGainDesc": "自动平衡大声/小声的说话者",
+    "background": "虚拟背景",
+    "bgNone": "无",
+    "bgBlur": "模糊"
   },
   "error": {
     "methodNotAllowed": "方法不允许",

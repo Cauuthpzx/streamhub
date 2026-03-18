@@ -48,19 +48,19 @@ const tileStyle = computed(() => ({
           v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid === focusedSid)"
           :key="'focused-' + participant.sid"
           :id="`tile-${participant.sid}`"
-          class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden flex-1 min-h-0 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card cursor-pointer"
+          class="relative bg-white dark:bg-gray-800 rounded-sm flex-1 min-h-0 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card cursor-pointer"
           :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
           @click="emit('focus', participant.sid)"
         >
-          <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10"></div>
+          <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10 rounded-sm overflow-hidden"></div>
           <div
             :id="`video-${participant.sid}`"
             class="z-20"
             :class="screenShares.some(s => s.identity === participant.identity)
               ? 'absolute bottom-0 left-0 w-pip-w h-pip-h overflow-hidden shadow-xl border border-gray-700/50'
-              : 'absolute inset-0'"
+              : 'absolute inset-0 rounded-sm overflow-hidden'"
           ></div>
-          <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
+          <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0 rounded-sm overflow-hidden">
             <ParticipantAvatar :participant="participant" size="xl" />
           </div>
           <TileNameBar
@@ -91,19 +91,19 @@ const tileStyle = computed(() => ({
           v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid !== focusedSid)"
           :key="'row-' + participant.sid"
           :id="`tile-${participant.sid}`"
-          class="relative w-pip-w h-pip-h shrink-0 bg-white dark:bg-gray-800 rounded-sm overflow-hidden border border-gray-200/80 dark:border-white/[0.06] cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all"
+          class="relative w-pip-w h-pip-h shrink-0 bg-white dark:bg-gray-800 rounded-sm border border-gray-200/80 dark:border-white/[0.06] cursor-pointer hover:ring-2 hover:ring-indigo-400 transition-all"
           :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
           @click="emit('focus', participant.sid)"
         >
-          <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10"></div>
+          <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10 rounded-sm overflow-hidden"></div>
           <div
             :id="`video-${participant.sid}`"
             class="z-20"
             :class="screenShares.some(s => s.identity === participant.identity)
               ? 'absolute bottom-0 left-0 w-10 h-8 overflow-hidden border border-gray-700/50'
-              : 'absolute inset-0'"
+              : 'absolute inset-0 rounded-sm overflow-hidden'"
           ></div>
-          <div class="absolute inset-0 flex items-center justify-center z-0">
+          <div class="absolute inset-0 flex items-center justify-center z-0 rounded-sm overflow-hidden">
             <ParticipantAvatar :participant="participant" size="sm" />
           </div>
           <TileNameBar
@@ -122,18 +122,18 @@ const tileStyle = computed(() => ({
         v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid === pinnedSid)"
         :key="'pinned-' + participant.sid"
         :id="`tile-${participant.sid}`"
-        class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden flex-1 transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
+        class="relative bg-white dark:bg-gray-800 rounded-sm flex-1 transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
         :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
       >
-        <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10"></div>
+        <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10 rounded-sm overflow-hidden"></div>
         <div
           :id="`video-${participant.sid}`"
           class="z-20"
           :class="screenShares.some(s => s.identity === participant.identity)
             ? 'absolute bottom-0 left-0 w-pip-w h-pip-h overflow-hidden shadow-xl border border-gray-700/50'
-            : 'absolute inset-0'"
+            : 'absolute inset-0 rounded-sm overflow-hidden'"
         ></div>
-        <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
+        <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0 rounded-sm overflow-hidden">
           <ParticipantAvatar :participant="participant" size="xl" />
         </div>
         <TileNameBar
@@ -163,18 +163,18 @@ const tileStyle = computed(() => ({
           v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid !== pinnedSid)"
           :key="'side-' + participant.sid"
           :id="`tile-${participant.sid}`"
-          class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden h-strip-thumb shrink-0 transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
+          class="relative bg-white dark:bg-gray-800 rounded-sm h-strip-thumb shrink-0 transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
           :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
         >
-          <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10"></div>
+          <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10 rounded-sm overflow-hidden"></div>
           <div
             :id="`video-${participant.sid}`"
             class="z-20"
             :class="screenShares.some(s => s.identity === participant.identity)
               ? 'absolute bottom-0 left-0 w-10 h-8 overflow-hidden border border-gray-700/50'
-              : 'absolute inset-0'"
+              : 'absolute inset-0 rounded-sm overflow-hidden'"
           ></div>
-          <div class="absolute inset-0 flex items-center justify-center z-0">
+          <div class="absolute inset-0 flex items-center justify-center z-0 rounded-sm overflow-hidden">
             <ParticipantAvatar :participant="participant" size="sm" />
           </div>
           <TileNameBar
@@ -205,22 +205,22 @@ const tileStyle = computed(() => ({
         :key="participant.sid"
         :id="`tile-${participant.sid}`"
         :style="tileStyle"
-        class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card cursor-pointer"
+        class="relative bg-white dark:bg-gray-800 rounded-sm transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card cursor-pointer"
         :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
         @click="emit('focus', participant.sid)"
       >
         <!-- Screen share full card -->
-        <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10"></div>
+        <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10 rounded-sm overflow-hidden"></div>
         <!-- Camera: PiP nếu có screen share, full card nếu không -->
         <div
           :id="`video-${participant.sid}`"
           class="z-20"
           :class="screenShares.some(s => s.identity === participant.identity)
             ? 'absolute bottom-0 left-0 w-pip-w h-pip-h overflow-hidden shadow-xl border border-gray-700/50'
-            : 'absolute inset-0'"
+            : 'absolute inset-0 rounded-sm overflow-hidden'"
         ></div>
         <!-- Avatar fallback -->
-        <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0">
+        <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 z-0 rounded-sm overflow-hidden">
           <ParticipantAvatar :participant="participant" size="lg" />
         </div>
         <!-- Controls hover -->

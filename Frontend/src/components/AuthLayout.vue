@@ -125,15 +125,42 @@ const { t } = useI18n()
 
 .auth-card {
   width: 100%;
+  position: relative;
+  padding: 36px 32px;
+  border-radius: 24px;
+  background: rgba(12, 12, 30, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.055);
+  backdrop-filter: blur(48px) saturate(1.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 24px 80px rgba(0, 0, 0, 0.4),
+    0 0 120px rgba(99, 102, 241, 0.04);
+  overflow: hidden;
 }
 
-/* Light mode: card nổi lên trên nền xám */
+/* Top gradient line */
+.auth-card::before {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent 0%, #818cf8 25%, #a78bfa 50%, #e879f9 75%, transparent 100%);
+  opacity: 0.8;
+  border-radius: 1px;
+}
+
+/* Light mode: card nổi lên trên nền trắng */
 .auth-page:not(:where(.dark, .dark *)) .auth-card {
   background: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.08);
-  border-radius: 20px;
-  padding: 32px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07), 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+.auth-page:not(:where(.dark, .dark *)) .auth-card::before {
+  background: linear-gradient(90deg, transparent 0%, #6366f1 25%, #818cf8 50%, #6366f1 75%, transparent 100%);
+  opacity: 0.5;
 }
 
 /* ══════════════════════════════════════

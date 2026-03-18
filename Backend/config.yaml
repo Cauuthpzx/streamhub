@@ -25,5 +25,6 @@ postgres:
 
 development: true
 
+
 logging:
-  level: debug
+  level: info

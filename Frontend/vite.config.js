@@ -1,9 +1,10 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
+import basicSsl from '@vitejs/plugin-basic-ssl'
 
 export default defineConfig({
-  plugins: [vue(), tailwindcss()],
+  plugins: [vue(), tailwindcss(), basicSsl()],
   test: {
     environment: 'happy-dom',
     globals: true,
@@ -33,6 +34,16 @@ export default defineConfig({
       '/twirp': {
         target: 'http://localhost:7880',
         changeOrigin: true,
+      },
+      '/rtc': {
+        target: 'ws://localhost:7880',
+        changeOrigin: true,
+        ws: true,
+      },
+      '/signal': {
+        target: 'ws://localhost:7880',
+        changeOrigin: true,
+        ws: true,
       },
     },
   },

@@ -5,63 +5,69 @@ export function useTracks(room) {
   function attachLocalVideo() {
     const r = toRaw(room.value)
     if (!r) return
-    const container = document.getElementById(`video-${r.localParticipant.sid}`)
-    if (!container) return
+    const p = r.localParticipant
 
-    container.innerHTML = ''
-    r.localParticipant.videoTrackPublications.forEach((pub) => {
+    // screen share
+    const ssContainer = document.getElementById(`screen-share-${p.sid}`)
+    if (ssContainer) {
+      ssContainer.innerHTML = ''
+      p.videoTrackPublications.forEach((pub) => {
+        if (pub.track && pub.track.source === Track.Source.ScreenShare) {
+          const el = pub.track.attach()
+          el.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:0.5rem;'
+          ssContainer.appendChild(el)
+        }
+      })
+    }
+
+    // camera (pip or full)
+    const camContainer = document.getElementById(`video-${p.sid}`)
+    if (!camContainer) return
+    camContainer.innerHTML = ''
+    p.videoTrackPublications.forEach((pub) => {
       if (pub.track && pub.track.source === Track.Source.Camera) {
         const el = pub.track.attach()
-        el.style.width = '100%'
-        el.style.height = '100%'
-        el.style.objectFit = 'cover'
-        el.style.borderRadius = '0.5rem'
-        el.style.transform = 'scaleX(-1)'
-        container.appendChild(el)
+        el.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:0.5rem;transform:scaleX(-1);'
+        camContainer.appendChild(el)
       }
     })
   }
 
   function attachRemoteTrack(track, participant) {
     if (track.source === Track.Source.ScreenShareAudio) return
+
     if (track.source === Track.Source.ScreenShare) {
-      attachScreenShare(track, participant.identity)
+      const container = document.getElementById(`screen-share-${participant.sid}`)
+      if (!container) return
+      container.innerHTML = ''
+      const el = track.attach()
+      el.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:0.5rem;'
+      container.appendChild(el)
       return
     }
 
-    if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) {
+    if (track.kind === Track.Kind.Video) {
       const container = document.getElementById(`video-${participant.sid}`)
       if (!container) return
-
-      if (track.kind === Track.Kind.Video) {
-        const existing = document.getElementById(`track-${track.sid}`)
-        if (existing) existing.remove()
-        const el = track.attach()
-        el.id = `track-${track.sid}`
-        el.style.width = '100%'
-        el.style.height = '100%'
-        el.style.objectFit = 'cover'
-        el.style.borderRadius = '0.5rem'
-        container.appendChild(el)
-      } else {
-        const el = track.attach()
-        el.id = `track-${track.sid}`
-        el.style.display = 'none'
-        container.appendChild(el)
-      }
+      const existing = document.getElementById(`track-${track.sid}`)
+      if (existing) existing.remove()
+      const el = track.attach()
+      el.id = `track-${track.sid}`
+      el.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:0.5rem;'
+      container.appendChild(el)
+    } else if (track.kind === Track.Kind.Audio) {
+      const container = document.getElementById(`video-${participant.sid}`)
+      if (!container) return
+      const el = track.attach()
+      el.id = `track-${track.sid}`
+      el.style.display = 'none'
+      container.appendChild(el)
     }
   }
 
+  // kept for backward compat (useRoom calls this for local screen share)
   function attachScreenShare(track, identity) {
-    const container = document.getElementById(`screen-share-${identity}`)
-    if (!container) return
-    container.innerHTML = ''
-    const el = track.attach()
-    el.style.width = '100%'
-    el.style.height = '100%'
-    el.style.objectFit = 'contain'
-    el.style.borderRadius = '0.5rem'
-    container.appendChild(el)
+    // identity-based lookup not used anymore — noop, reattachAll handles it
   }
 
   function reattachAll() {
@@ -70,9 +76,10 @@ export function useTracks(room) {
     attachLocalVideo()
     r.remoteParticipants.forEach((p) => {
       p.videoTrackPublications.forEach((pub) => {
-        if (pub.track && pub.source === Track.Source.Camera) {
-          attachRemoteTrack(pub.track, p)
-        }
+        if (pub.track) attachRemoteTrack(pub.track, p)
+      })
+      p.audioTrackPublications.forEach((pub) => {
+        if (pub.track) attachRemoteTrack(pub.track, p)
       })
     })
   }

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, ShieldCheck, Crown } from 'lucide-vue-next'
@@ -98,7 +98,31 @@ function confirmJoin() {
   router.push(`/room/${joinTarget.value.name}`)
 }
 
-onMounted(fetchRooms)
+let ws = null
+
+function connectEventWS() {
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  ws = new WebSocket(`${proto}://${window.location.hostname}:7880/auth/ws/events`)
+  ws.onmessage = (e) => {
+    try {
+      const evt = JSON.parse(e.data)
+      const room = rooms.value.find(r => r.name === evt.room)
+      if (room) room.num_participants = evt.count
+    } catch (_) {}
+  }
+  ws.onclose = () => {
+    ws = null
+  }
+}
+
+onMounted(() => {
+  fetchRooms()
+  connectEventWS()
+})
+
+onUnmounted(() => {
+  if (ws) { ws.close(); ws = null }
+})
 </script>
 
 <template>

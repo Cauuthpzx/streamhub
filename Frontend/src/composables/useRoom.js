@@ -33,6 +33,7 @@ export function useRoom(roomName, username, deps) {
   const screenShares = ref([]) // [{ track, identity, sid }]
   const activeSpeakers = ref(new Set())
   const pinnedSid = ref(null)
+  const focusedSid = ref(null)
   const fullscreenSid = ref(null)
   const connectionQualities = ref({})
   const showReactionPicker = ref(false)
@@ -41,7 +42,7 @@ export function useRoom(roomName, username, deps) {
   // helpers
   function getLivekitUrl() {
     const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-    return `${proto}://${window.location.hostname}:7880`
+    return `${proto}://${window.location.host}`
   }
 
   function updateParticipants() {
@@ -56,6 +57,22 @@ export function useRoom(roomName, username, deps) {
 
   // event handlers
   function handleParticipantUpdate() { updateParticipants() }
+
+  function handleParticipantDisconnected(participant) {
+    updateParticipants()
+    // cleanup pinned/fullscreen if that participant left
+    if (pinnedSid.value === participant.sid) pinnedSid.value = null
+    if (focusedSid.value === participant.sid) focusedSid.value = null
+    if (fullscreenSid.value === participant.sid) {
+      fullscreenSid.value = null
+      if (document.fullscreenElement) document.exitFullscreen()
+    }
+    // cleanup screen shares
+    screenShares.value = screenShares.value.filter(s => s.identity !== participant.identity)
+    // cleanup connection quality
+    const { [participant.identity]: _, ...rest } = connectionQualities.value
+    connectionQualities.value = rest
+  }
 
   function handleActiveSpeakers(speakers) {
     activeSpeakers.value = new Set(speakers.map((s) => s.identity))
@@ -75,7 +92,10 @@ export function useRoom(roomName, username, deps) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
       screenShares.value = [...screenShares.value, { track, identity: participant.identity, sid: publication.trackSid }]
-      nextTick(() => deps.tracks.attachScreenShare(track, participant.identity))
+      nextTick(() => {
+        deps.tracks.attachScreenShare(track, participant.identity)
+        deps.tracks.reattachAll()
+      })
     } else {
       nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
     }
@@ -85,8 +105,9 @@ export function useRoom(roomName, username, deps) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
       screenShares.value = screenShares.value.filter(s => s.identity !== participant.identity)
-      const container = document.getElementById(`screen-share-${participant.identity}`)
+      const container = document.getElementById(`screen-share-${participant.sid}`)
       if (container) container.innerHTML = ''
+      nextTick(() => deps.tracks.reattachAll())
     }
     const el = document.getElementById(`track-${track.sid}`)
     if (el) el.remove()
@@ -143,11 +164,13 @@ export function useRoom(roomName, username, deps) {
       })
 
       r.on(RoomEvent.ParticipantConnected, handleParticipantUpdate)
-      r.on(RoomEvent.ParticipantDisconnected, handleParticipantUpdate)
+      r.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
       r.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
       r.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
       r.on(RoomEvent.LocalTrackPublished, handleParticipantUpdate)
       r.on(RoomEvent.LocalTrackUnpublished, handleParticipantUpdate)
+      r.on(RoomEvent.TrackMuted, handleParticipantUpdate)
+      r.on(RoomEvent.TrackUnmuted, handleParticipantUpdate)
       r.on(RoomEvent.Disconnected, handleDisconnect)
       r.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers)
       r.on(RoomEvent.ConnectionQualityChanged, handleConnectionQuality)
@@ -162,49 +185,45 @@ export function useRoom(roomName, username, deps) {
         }
       })
 
-      await r.connect(getLivekitUrl(), access_token)
-
-      // set profile metadata for other participants
-      try {
-        const { getProfile, fetchProfile } = await import('../services/auth')
-        let profile = getProfile()
-        if (!profile) profile = await fetchProfile()
-        if (profile && (profile.avatar || profile.display_name)) {
-          await r.localParticipant.setMetadata(JSON.stringify({
-            avatar: profile.avatar || '',
-            avatar_x: profile.avatar_x || 0.5,
-            avatar_y: profile.avatar_y || 0.5,
-            avatar_scale: profile.avatar_scale || 1,
-            display_name: profile.display_name || '',
-          }))
-        }
-      } catch (_) { /* non-critical */ }
-
       const pj = preJoinSettings.value || { micOn: true, camOn: true }
-      try {
-        const trackOpts = { audio: pj.micOn, video: pj.camOn }
-        if (pj.audioDeviceId && pj.micOn) trackOpts.audio = { deviceId: { exact: pj.audioDeviceId } }
-        if (pj.videoDeviceId && pj.camOn) trackOpts.video = { deviceId: { exact: pj.videoDeviceId } }
-        if (pj.micOn || pj.camOn) {
-          const localTracks = await createLocalTracks(trackOpts)
-          for (const track of localTracks) {
-            await r.localParticipant.publishTrack(track)
-          }
-        }
-        micEnabled.value = pj.micOn
-        camEnabled.value = pj.camOn
-      } catch (_) {
+
+      // prepare local tracks WHILE connecting — parallel
+      const trackOpts = { audio: pj.micOn, video: pj.camOn }
+      if (pj.audioDeviceId && pj.micOn) trackOpts.audio = { deviceId: { exact: pj.audioDeviceId } }
+      if (pj.videoDeviceId && pj.camOn) trackOpts.video = { deviceId: { exact: pj.videoDeviceId } }
+
+      const [, localTracksResult] = await Promise.all([
+        r.connect(getLivekitUrl(), access_token),
+        (pj.micOn || pj.camOn)
+          ? createLocalTracks(trackOpts).catch(() =>
+              createLocalTracks({ audio: true, video: false }).catch(() => [])
+            )
+          : Promise.resolve([]),
+      ])
+
+      // publish all tracks in parallel
+      await Promise.all(localTracksResult.map(track => r.localParticipant.publishTrack(track)))
+
+      micEnabled.value = localTracksResult.some(t => t.kind === 'audio') ? pj.micOn : false
+      camEnabled.value = localTracksResult.some(t => t.kind === 'video') ? pj.camOn : false
+
+      // set metadata non-blocking — does not delay room entry
+      ;(async () => {
         try {
-          const localTracks = await createLocalTracks({ audio: true, video: false })
-          for (const track of localTracks) {
-            await r.localParticipant.publishTrack(track)
+          const { getProfile, fetchProfile } = await import('../services/auth')
+          let profile = getProfile()
+          if (!profile) profile = await fetchProfile()
+          if (profile && (profile.avatar || profile.display_name)) {
+            await r.localParticipant.setMetadata(JSON.stringify({
+              avatar: profile.avatar || '',
+              avatar_x: profile.avatar_x || 0.5,
+              avatar_y: profile.avatar_y || 0.5,
+              avatar_scale: profile.avatar_scale || 1,
+              display_name: profile.display_name || '',
+            }))
           }
-          camEnabled.value = false
-        } catch (__) {
-          camEnabled.value = false
-          micEnabled.value = false
-        }
-      }
+        } catch (_) { /* non-critical */ }
+      })()
 
       room.value = r
       connected.value = true
@@ -246,17 +265,23 @@ export function useRoom(roomName, username, deps) {
         r.localParticipant.videoTrackPublications.forEach((pub) => {
           if (pub.track && pub.track.source === Track.Source.ScreenShare) {
             screenShares.value = [...screenShares.value.filter(s => s.identity !== username), { track: pub.track, identity: username, sid: pub.trackSid }]
-            nextTick(() => deps.tracks.attachScreenShare(pub.track, username))
+            nextTick(() => deps.tracks.reattachAll())
           }
         })
       } else {
         screenShares.value = screenShares.value.filter(s => s.identity !== username)
-        const container = document.getElementById(`screen-share-${username}`)
+        const localSid = r.localParticipant.sid
+        const container = document.getElementById(`screen-share-${localSid}`)
         if (container) container.innerHTML = ''
       }
     } catch (_) {
       // user cancelled
     }
+  }
+
+  function toggleFocus(sid) {
+    focusedSid.value = focusedSid.value === sid ? null : sid
+    nextTick(() => deps.tracks.reattachAll())
   }
 
   function togglePin(sid) {
@@ -372,6 +397,7 @@ export function useRoom(roomName, username, deps) {
     screenShares,
     activeSpeakers,
     pinnedSid,
+    focusedSid,
     fullscreenSid,
     connectionQualities,
     showReactionPicker,
@@ -379,6 +405,7 @@ export function useRoom(roomName, username, deps) {
     toggleMic,
     toggleCam,
     toggleScreen,
+    toggleFocus,
     togglePin,
     toggleFullscreen,
     togglePanel,

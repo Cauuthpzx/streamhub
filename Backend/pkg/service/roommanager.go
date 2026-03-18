@@ -569,6 +569,7 @@ func (r *RoomManager) StartSession(
 
 	clientMeta := &livekit.AnalyticsClientMeta{Region: r.currentNode.Region(), Node: string(r.currentNode.NodeID())}
 	r.telemetry.ParticipantJoined(ctx, protoRoom, participant.ToProto(), pi.Client, clientMeta, true, participant.TelemetryGuard())
+	BroadcastRoomEvent(RoomEvent{Type: "participant_joined", Room: string(room.Name()), Count: int(room.ToProto().NumParticipants)})
 	participant.AddOnClose(types.ParticipantCloseKeyNormal, func(p types.LocalParticipant) {
 		participantServerClosers.Close()
 
@@ -580,6 +581,7 @@ func (r *RoomManager) StartSession(
 		proto := room.ToProto()
 		persistRoomForParticipantCount(proto)
 		r.telemetry.ParticipantLeft(ctx, proto, p.ToProto(), true, participant.TelemetryGuard())
+		BroadcastRoomEvent(RoomEvent{Type: "participant_left", Room: proto.Name, Count: int(proto.NumParticipants)})
 	})
 	participant.OnClaimsChanged(func(participant types.LocalParticipant) {
 		pLogger.Debugw("refreshing client token after claims change")

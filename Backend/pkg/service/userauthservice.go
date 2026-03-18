@@ -124,6 +124,8 @@ func (s *UserAuthService) SetupRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("/auth/room/leave", s.handleRoomLeave)
 	mux.HandleFunc("/auth/room/delete", s.handleRoomDelete)
 	mux.HandleFunc("/auth/room/members", s.handleRoomMembers)
+
+	mux.Handle("/auth/ws/events", globalRoomEventHub)
 }
 
 // request/response types

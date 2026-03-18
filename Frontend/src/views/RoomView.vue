@@ -42,9 +42,9 @@ const {
   room, connected, connecting, lobbyWaiting, lobbyRejected, error,
   participants, micEnabled, camEnabled, screenEnabled,
   panelOpen, panelTab, unreadCount, screenShares,
-  activeSpeakers, pinnedSid, fullscreenSid, connectionQualities,
+  activeSpeakers, pinnedSid, focusedSid, fullscreenSid, connectionQualities,
   showReactionPicker, showDeviceSettings,
-  toggleMic, toggleCam, toggleScreen, togglePin, toggleFullscreen,
+  toggleMic, toggleCam, toggleScreen, toggleFocus, togglePin, toggleFullscreen,
   togglePanel, switchTab, leaveRoom,
 } = useRoom(roomName, username, deps)
 
@@ -164,10 +164,12 @@ deps.recording = recordingCtx
           :raised-hands="reactionCtx.raisedHands.value"
           :connection-qualities="connectionQualities"
           :pinned-sid="pinnedSid"
+          :focused-sid="focusedSid"
           :fullscreen-sid="fullscreenSid"
           :mic-enabled="micEnabled"
           :cam-enabled="camEnabled"
           :username="username"
+          @focus="toggleFocus"
           @pin="togglePin"
           @fullscreen="toggleFullscreen"
         />

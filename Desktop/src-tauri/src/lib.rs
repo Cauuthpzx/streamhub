@@ -1,7 +1,9 @@
 use tauri::Manager;
 
 mod screen_capture;
+mod hide_infobar;
 use screen_capture::get_screen_sources;
+use hide_infobar::set_screen_share_active;
 
 #[tauri::command]
 fn get_app_version(app: tauri::AppHandle) -> String {
@@ -35,7 +37,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_app_version, get_screen_sources])
+        .invoke_handler(tauri::generate_handler![get_app_version, get_screen_sources, set_screen_share_active])
         .run(tauri::generate_context!())
         .expect("error while running Stream HUB desktop");
 }

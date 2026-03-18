@@ -70,6 +70,13 @@ export function useTauri() {
     await saveWindowState(StateFlags.ALL)
   }
 
+  // ── hide WebView2 screen-share infobar ───────────────────────────────────
+  async function setScreenShareActive(active) {
+    if (!_isTauri) return
+    const { invoke } = await import('@tauri-apps/api/core')
+    await invoke('set_screen_share_active', { active })
+  }
+
   return {
     isTauri: _isTauri,
     openExternal,
@@ -79,5 +86,6 @@ export function useTauri() {
     requestWakeLock,
     releaseWakeLock,
     saveWindowState,
+    setScreenShareActive,
   }
 }

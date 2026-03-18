@@ -1,5 +1,8 @@
 import { toRaw, nextTick } from 'vue'
 import { Track, ScreenSharePresets } from 'livekit-client'
+import { useTauri } from './useTauri'
+
+const { isTauri, setScreenShareActive } = useTauri()
 
 /**
  * useRoomControls — media controls, UI toggles and keyboard shortcuts for a room.
@@ -60,6 +63,7 @@ export function useRoomControls(room, username, deps, state, leaveRoom, preferre
         videoCodec: preferredCodec === 'av1' ? 'av1' : 'vp9',
       })
       screenEnabled.value = !screenEnabled.value
+      if (isTauri) setScreenShareActive(screenEnabled.value)
 
       if (screenEnabled.value) {
         await nextTick()

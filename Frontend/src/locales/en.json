@@ -11,7 +11,8 @@
   },
   "theme": {
     "dark": "Dark mode",
-    "light": "Light mode"
+    "light": "Light mode",
+    "language": "Language"
   },
   "features": {
     "lowLatency": "Low Latency",

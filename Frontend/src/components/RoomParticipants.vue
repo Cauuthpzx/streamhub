@@ -160,6 +160,11 @@ watch(() => props.room, (r, oldR) => {
   if (r) events.forEach((e) => toRaw(r).on(e, debouncedBuildList))
 }, { immediate: true })
 
+onUnmounted(() => {
+  if (buildListTimer) clearTimeout(buildListTimer)
+  stopLobbyListen()
+})
+
 async function handleLeaveRoom() {
   actionError.value = ''
   try {

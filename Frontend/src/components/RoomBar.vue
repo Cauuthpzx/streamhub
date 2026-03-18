@@ -30,7 +30,7 @@ const emit = defineEmits([
       <!-- Mic -->
       <AppTooltip :content="micEnabled ? t('chat.muteMic') : t('chat.unmuteMic')" position="top">
         <button
-          @click="emit('toggleMic')"
+          @click="emit('toggleMic')" :aria-label="micEnabled ? t('chat.muteMic') : t('chat.unmuteMic')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="micEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
         >
@@ -42,7 +42,7 @@ const emit = defineEmits([
       <!-- Camera -->
       <AppTooltip :content="camEnabled ? t('chat.camOff') : t('chat.camOn')" position="top">
         <button
-          @click="emit('toggleCam')"
+          @click="emit('toggleCam')" :aria-label="camEnabled ? t('chat.camOff') : t('chat.camOn')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="camEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
         >
@@ -54,7 +54,7 @@ const emit = defineEmits([
       <!-- Screen share -->
       <AppTooltip :content="t('chat.shareScreen')" position="top">
         <button
-          @click="emit('toggleScreen')"
+          @click="emit('toggleScreen')" :aria-label="t('chat.shareScreen')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="screenEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
         >
@@ -66,7 +66,7 @@ const emit = defineEmits([
       <!-- Record -->
       <AppTooltip :content="recording ? t('egress.stop') : t('egress.startRecording')" position="top">
         <button
-          @click="emit('toggleRecording')"
+          @click="emit('toggleRecording')" :aria-label="recording ? t('egress.stop') : t('egress.startRecording')"
           :disabled="recordingLoading"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
           :class="recording ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
@@ -79,7 +79,7 @@ const emit = defineEmits([
       <!-- Screenshot -->
       <AppTooltip :content="t('chat.screenshot')" position="top">
         <button
-          @click="emit('screenshot')"
+          @click="emit('screenshot')" :aria-label="t('chat.screenshot')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
         >
           <SvgIcon name="camera" :size="16" :stroke-width="1.8" class="text-cyan-500" />
@@ -89,7 +89,7 @@ const emit = defineEmits([
       <!-- Raise hand -->
       <AppTooltip :content="t('chat.raiseHand')" position="top">
         <button
-          @click="emit('toggleHand')"
+          @click="emit('toggleHand')" :aria-label="t('chat.raiseHand')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="handRaised ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
         >
@@ -101,7 +101,7 @@ const emit = defineEmits([
       <div class="relative">
         <AppTooltip :content="t('chat.reactions')" position="top">
           <button
-            @click="emit('toggleReactionPicker')"
+            @click="emit('toggleReactionPicker')" :aria-label="t('chat.reactions')"
             class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="showReactionPicker ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
           >
@@ -126,7 +126,7 @@ const emit = defineEmits([
       <!-- Panel toggle -->
       <AppTooltip :content="t('chat.panel')" position="top">
         <button
-          @click="emit('togglePanel')"
+          @click="emit('togglePanel')" :aria-label="t('chat.panel')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer relative"
           :class="panelOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
         >
@@ -141,7 +141,7 @@ const emit = defineEmits([
       <!-- Share -->
       <AppTooltip :content="t('chat.share')" position="top">
         <button
-          @click="emit('openShare')"
+          @click="emit('openShare')" :aria-label="t('chat.share')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
         >
           <SvgIcon name="share-2" :size="16" :stroke-width="1.8" class="text-teal-500" />
@@ -151,7 +151,7 @@ const emit = defineEmits([
       <!-- Device settings -->
       <AppTooltip :content="t('devices.title')" position="top">
         <button
-          @click="emit('openSettings')"
+          @click="emit('openSettings')" :aria-label="t('devices.title')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
         >
           <SvgIcon name="settings" :size="16" :stroke-width="1.8" class="text-gray-500" />
@@ -161,7 +161,7 @@ const emit = defineEmits([
       <!-- Leave -->
       <AppTooltip :content="t('chat.leave')" position="top">
         <button
-          @click="emit('leave')"
+          @click="emit('leave')" :aria-label="t('chat.leave')"
           class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
         >
           <SvgIcon name="log-out" :size="16" :stroke-width="1.8" />

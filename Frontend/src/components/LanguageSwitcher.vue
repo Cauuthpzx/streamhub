@@ -1,11 +1,15 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { setLocale } from '../i18n'
 
 const { locale } = useI18n()
 const open = ref(false)
 let closeTimer = null
+
+onUnmounted(() => {
+  if (closeTimer) clearTimeout(closeTimer)
+})
 
 const locales = [
   { code: 'en', name: 'English' },
@@ -34,6 +38,9 @@ function onLeave() {
   <div class="relative" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Trigger -->
     <button
+      :aria-label="t('theme.language')"
+      aria-haspopup="listbox"
+      :aria-expanded="open"
       class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
     >
       <!-- Current flag -->

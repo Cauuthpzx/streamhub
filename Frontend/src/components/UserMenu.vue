@@ -78,7 +78,7 @@ async function saveEdit() {
 <template>
   <div class="relative" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Trigger button -->
-    <button class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+    <button :aria-label="t('profile.edit')" aria-haspopup="true" :aria-expanded="open" class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
       <div v-if="avatar" class="w-6 h-6 rounded-full overflow-hidden shrink-0">
         <img
           :src="`/avatars/${avatar}.webp`"

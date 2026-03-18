@@ -11,7 +11,8 @@
   },
   "theme": {
     "dark": "深色模式",
-    "light": "浅色模式"
+    "light": "浅色模式",
+    "language": "语言"
   },
   "features": {
     "lowLatency": "低延迟",

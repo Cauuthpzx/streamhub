@@ -11,7 +11,8 @@
   },
   "theme": {
     "dark": "Chế độ tối",
-    "light": "Chế độ sáng"
+    "light": "Chế độ sáng",
+    "language": "Ngôn ngữ"
   },
   "features": {
     "lowLatency": "Độ trễ thấp",

@@ -1470,7 +1470,11 @@ func (s *UserAuthService) handleFileUpload(w http.ResponseWriter, r *http.Reques
 
 	// generate unique file ID
 	idBytes := make([]byte, 16)
-	rand.Read(idBytes)
+	if _, err := rand.Read(idBytes); err != nil {
+		logger.Errorw("log.randReadFailed", err)
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.fileUploadFailed"})
+		return
+	}
 	fileID := hex.EncodeToString(idBytes)
 	ext := filepath.Ext(header.Filename)
 	storedName := fileID + ext
@@ -1560,7 +1564,9 @@ func (s *UserAuthService) handleFileDownload(w http.ResponseWriter, r *http.Requ
 
 	w.Header().Set("Content-Type", meta.MimeType)
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", meta.FileName))
-	io.Copy(w, f)
+	if _, err := io.Copy(w, f); err != nil {
+		logger.Warnw("log.fileCopyFailed", err, "file", fileID)
+	}
 }
 
 func (s *UserAuthService) handleFileList(w http.ResponseWriter, r *http.Request) {
@@ -1596,7 +1602,9 @@ func (s *UserAuthService) handleFileList(w http.ResponseWriter, r *http.Request)
 
 func randomCode(n int) string {
 	b := make([]byte, n)
-	rand.Read(b)
+	if _, err := rand.Read(b); err != nil {
+		logger.Errorw("log.randReadFailed", err)
+	}
 	return hex.EncodeToString(b)
 }
 

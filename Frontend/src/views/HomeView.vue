@@ -89,8 +89,10 @@ function confirmJoin(password) {
 
 let ws = null
 let _wsMounted = true
+let _reconnectTimer = null
 
 function connectEventWS() {
+  if (!_wsMounted || ws) return
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
   ws = new WebSocket(`${proto}://${window.location.host}/auth/ws/events`)
   ws.onmessage = (e) => {
@@ -102,7 +104,12 @@ function connectEventWS() {
   }
   ws.onclose = () => {
     ws = null
-    if (_wsMounted) setTimeout(connectEventWS, 3000)
+    if (_wsMounted && !_reconnectTimer) {
+      _reconnectTimer = setTimeout(() => {
+        _reconnectTimer = null
+        connectEventWS()
+      }, 3000)
+    }
   }
 }
 
@@ -113,6 +120,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   _wsMounted = false
+  if (_reconnectTimer) { clearTimeout(_reconnectTimer); _reconnectTimer = null }
   if (ws) { ws.close(); ws = null }
 })
 </script>

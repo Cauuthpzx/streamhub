@@ -27,35 +27,10 @@ import { useRoom } from '../composables/useRoom'
 import { useNotifications, setRoomFilter } from '../composables/useNotifications'
 import { useNotificationSettings } from '../composables/useNotificationSettings'
 import { useTauri } from '../composables/useTauri'
-import { installTauriScreenShareOverride } from '../composables/useTauriScreenShare'
+import { useScreenPicker } from '../composables/useScreenPicker'
 
 const showShareModal = ref(false)
-
-// Screen picker state (Tauri only — shows when multiple screens detected)
-const showScreenPicker = ref(false)
-const screenPickerSources = ref([])
-let _screenPickerResolve = null
-
-function showScreenPickerFn(sources) {
-  return new Promise((resolve) => {
-    screenPickerSources.value = sources
-    showScreenPicker.value = true
-    _screenPickerResolve = resolve
-  })
-}
-function onPickScreen(src) {
-  showScreenPicker.value = false
-  _screenPickerResolve?.(src)
-  _screenPickerResolve = null
-}
-function onCancelScreenPicker() {
-  showScreenPicker.value = false
-  _screenPickerResolve?.(null)
-  _screenPickerResolve = null
-}
-
-// Reinstall override with picker UI wired in
-installTauriScreenShareOverride(showScreenPickerFn)
+const { showScreenPicker, screenPickerSources, onPick: onPickScreen, onCancel: onCancelScreenPicker } = useScreenPicker()
 
 const route = useRoute()
 const { t } = useI18n()
@@ -108,30 +83,16 @@ onMounted(async () => {
   } catch (_) { /* non-critical */ }
 })
 
-// Wake lock while in call (prevent screen sleep)
 watch(connected, (val) => {
-  if (val) {
-    requestWakeLock()
-    setWindowTitle(`${roomName} — Stream HUB`)
-  } else {
-    releaseWakeLock()
-    setWindowTitle('Stream HUB')
-  }
+  if (val) { requestWakeLock(); setWindowTitle(`${roomName} — Stream HUB`) }
+  else { releaseWakeLock(); setWindowTitle('Stream HUB') }
 })
-
-onUnmounted(() => {
-  releaseWakeLock()
-  if (isTauri) saveWindowState()
-})
-
-watch(recordingCtx.recordingError, (err) => {
-  if (err) roomNotif.error(err)
-})
+watch(recordingCtx.recordingError, (err) => { if (err) roomNotif.error(err) })
 watch(recordingCtx.downloadUrl, (url) => {
-  if (url) roomNotif.success(t('egress.downloadReady'), {
-    action: { label: t('egress.download'), handler: recordingCtx.triggerDownload },
-  })
+  if (url) roomNotif.success(t('egress.downloadReady'), { action: { label: t('egress.download'), handler: recordingCtx.triggerDownload } })
 })
+
+onUnmounted(() => { releaseWakeLock(); if (isTauri) saveWindowState() })
 </script>
 
 <template>

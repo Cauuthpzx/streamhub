@@ -5,7 +5,7 @@
   "identifier": "com.streamhub.desktop",
   "build": {
     "beforeDevCommand": "npm --prefix ../Frontend run dev",
-    "devUrl": "http://localhost:3000",
+    "devUrl": "https://localhost:3000",
     "beforeBuildCommand": "npm --prefix ../Frontend run build",
     "frontendDist": "../Frontend/dist"
   },

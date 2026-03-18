@@ -3,8 +3,21 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import basicSsl from '@vitejs/plugin-basic-ssl'
 
+// In dev/web mode, mock all @tauri-apps/* dynamic imports so they resolve to empty modules
+function tauriExternalPlugin() {
+  return {
+    name: 'tauri-external',
+    resolveId(id) {
+      if (id.startsWith('@tauri-apps/')) return '\0tauri-mock:' + id
+    },
+    load(id) {
+      if (id.startsWith('\0tauri-mock:')) return 'export default {}; export const open = () => {}; export const invoke = () => {}; export const sendNotification = () => {}; export const isPermissionGranted = async () => false; export const requestPermission = async () => "denied"; export const getCurrentWindow = () => ({ setTitle: () => {}, show: () => {}, setFocus: () => {} }); export const saveWindowState = () => {}; export const StateFlags = { ALL: 31 };'
+    },
+  }
+}
+
 export default defineConfig({
-  plugins: [vue(), tailwindcss(), basicSsl()],
+  plugins: [vue(), tailwindcss(), basicSsl(), tauriExternalPlugin()],
   test: {
     environment: 'happy-dom',
     globals: true,

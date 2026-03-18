@@ -1,7 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import { User, Lock, Eye, EyeOff } from 'lucide-vue-next'
-
 const props = defineProps({
   modelValue: { type: String, default: '' },
   label: { type: String, required: true },
@@ -46,8 +44,8 @@ const isPassword = props.type === 'password'
         class="ai-toggle"
         @click="showPassword = !showPassword"
       >
-        <Eye v-if="showPassword" class="w-[18px] h-[18px]" :stroke-width="1.6" />
-        <EyeOff v-else class="w-[18px] h-[18px]" :stroke-width="1.6" />
+        <SvgIcon v-if="showPassword" class="w-[18px] h-[18px]" name="eye" :size="24" :stroke-width="1.6" />
+        <SvgIcon v-else class="w-[18px] h-[18px]" name="eye-off" :size="24" :stroke-width="1.6" />
       </button>
     </div>
     <p v-if="error" class="ai-error">{{ error }}</p>

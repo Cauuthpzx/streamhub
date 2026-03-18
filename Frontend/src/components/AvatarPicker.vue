@@ -1,7 +1,5 @@
 <script setup>
 import { ref } from 'vue'
-import { Check } from 'lucide-vue-next'
-
 const TOTAL = 48
 
 const props = defineProps({
@@ -38,7 +36,7 @@ function pick(avt) {
     >
       <img :src="avt.src" class="w-full h-full object-cover" loading="lazy" :alt="avt.id" />
       <div v-if="selected === avt.id" class="absolute inset-0 bg-indigo-500/20 flex items-center justify-center">
-        <Check class="w-4 h-4 text-white drop-shadow" :stroke-width="2.5" />
+        <SvgIcon class="text-white drop-shadow" name="check" :size="16" :stroke-width="2.5" />
       </div>
     </button>
   </div>

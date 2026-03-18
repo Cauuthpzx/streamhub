@@ -42,7 +42,6 @@ export default defineConfig({
         manualChunks: {
           'vue-vendor': ['vue', 'vue-router', 'vue-i18n'],
           'livekit': ['livekit-client'],
-          'lucide': ['lucide-vue-next'],
         },
       },
     },

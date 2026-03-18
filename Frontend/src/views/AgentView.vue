@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Trash2, Bot, LoaderCircle, ArrowLeft } from 'lucide-vue-next'
 import { createAgentDispatch, listAgentDispatches, deleteAgentDispatch } from '../services/agent'
 import { listRooms } from '../services/room'
 import AppLogo from '../components/AppLogo.vue'
@@ -97,7 +96,7 @@ onMounted(fetchRooms)
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           <router-link to="/home" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <ArrowLeft class="w-5 h-5" :stroke-width="1.8" />
+            <SvgIcon name="arrow-left" :size="20" :stroke-width="1.8" />
           </router-link>
           <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('agent.title') }}</h1>
         </div>
@@ -105,7 +104,7 @@ onMounted(fetchRooms)
           @click="showCreate = !showCreate"
           class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
         >
-          <Plus class="w-4 h-4" :stroke-width="2" />
+          <SvgIcon name="plus" :size="16" :stroke-width="2" />
           {{ t('agent.dispatch') }}
         </button>
       </div>
@@ -153,8 +152,8 @@ onMounted(fetchRooms)
             :disabled="creating || !form.agentName || !form.room"
             class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
           >
-            <LoaderCircle v-if="creating" class="w-4 h-4 animate-spin" />
-            <Bot v-else class="w-4 h-4" :stroke-width="2" />
+            <SvgIcon v-if="creating" class="animate-spin" name="loader-circle" :size="16" :stroke-width="2" />
+            <SvgIcon v-else name="bot" :size="16" :stroke-width="2" />
             {{ t('agent.dispatchBtn') }}
           </button>
         </form>
@@ -177,12 +176,12 @@ onMounted(fetchRooms)
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
-        <LoaderCircle class="w-6 h-6 text-indigo-500 animate-spin" />
+        <SvgIcon class="text-indigo-500 animate-spin" name="loader-circle" :size="24" :stroke-width="2" />
       </div>
 
       <!-- Empty -->
       <div v-else-if="items.length === 0" class="text-center py-16">
-        <Bot class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" :stroke-width="1.2" />
+        <SvgIcon class="text-gray-300 dark:text-gray-600 mx-auto mb-3" name="bot" :size="40" :stroke-width="1.2" />
         <p class="text-gray-500 dark:text-gray-400 text-sm">{{ selectedRoom ? t('agent.empty') : t('agent.selectRoomFirst') }}</p>
       </div>
 
@@ -195,7 +194,7 @@ onMounted(fetchRooms)
         >
           <div>
             <div class="flex items-center gap-2 mb-1">
-              <Bot class="w-4 h-4 text-indigo-500" :stroke-width="1.8" />
+              <SvgIcon class="text-indigo-500" name="bot" :size="16" :stroke-width="1.8" />
               <span class="font-medium text-gray-900 dark:text-white text-sm">{{ item.agent_name }}</span>
             </div>
             <div class="text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
@@ -208,7 +207,7 @@ onMounted(fetchRooms)
             @click="handleDelete(item.id)"
             class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
           >
-            <Trash2 class="w-4 h-4" :stroke-width="1.8" />
+            <SvgIcon name="trash-2" :size="16" :stroke-width="1.8" />
           </button>
         </div>
       </div>

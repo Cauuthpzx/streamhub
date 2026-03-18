@@ -1,6 +1,5 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { Send, Smile, Reply, X, Paperclip, FileIcon, Download } from 'lucide-vue-next'
 import { getFileDownloadURL } from '../services/room'
 import { useChatMessages } from '../composables/useChatMessages'
 
@@ -101,7 +100,7 @@ const {
             <div class="flex items-center gap-1 mt-0.5">
               <span class="text-3xs opacity-50 truncate min-w-0 flex-1">{{ msg.fileName }} · {{ formatFileSize(msg.fileSize) }}</span>
               <a :href="getFileDownloadURL(msg.fileId)" download :title="t('chat.download')" class="shrink-0 opacity-40 hover:opacity-80 transition-opacity" @click.stop>
-                <Download class="w-3 h-3" :stroke-width="2" />
+                <SvgIcon name="download" :size="12" :stroke-width="2" />
               </a>
             </div>
           </div>
@@ -112,10 +111,10 @@ const {
             class="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-sm text-xs cursor-pointer no-underline"
             :class="msg.isLocal ? 'bg-indigo-500/30 text-indigo-100 hover:bg-indigo-500/50' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'"
           >
-            <FileIcon class="w-4 h-4 shrink-0" :stroke-width="1.8" />
+            <SvgIcon class="shrink-0" name="file" :size="16" :stroke-width="1.8" />
             <span class="truncate flex-1">{{ msg.fileName }}</span>
             <span class="text-2xs opacity-60 shrink-0">{{ formatFileSize(msg.fileSize) }}</span>
-            <Download class="w-3.5 h-3.5 shrink-0 opacity-60" :stroke-width="2" />
+            <SvgIcon class="shrink-0 opacity-60" name="download" :size="14" :stroke-width="2" />
           </a>
           <!-- Message body -->
           <p v-if="msg.text" class="text-sm break-words leading-snug chat-markdown"
@@ -132,7 +131,7 @@ const {
               : 'right-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'"
             :title="t('chat.reply')"
           >
-            <Reply class="w-3 h-3" :class="msg.isLocal ? 'text-white' : 'text-gray-500 dark:text-gray-400'" :stroke-width="2" />
+            <SvgIcon name="reply" :size="12" :stroke-width="2" />
           </button>
         </div>
       </div>
@@ -161,13 +160,13 @@ const {
 
       <!-- Reply preview bar -->
       <div v-if="replyTo" class="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 dark:bg-indigo-900/20 border-b border-indigo-200 dark:border-indigo-800/40">
-        <Reply class="w-3.5 h-3.5 text-indigo-400 shrink-0" :stroke-width="2" />
+        <SvgIcon class="text-indigo-400 shrink-0" name="reply" :size="14" :stroke-width="2" />
         <div class="flex-1 min-w-0">
           <span class="text-2xs font-medium text-indigo-500">{{ replyTo.sender }}</span>
           <p class="text-2xs text-gray-500 dark:text-gray-400 truncate">{{ replyTo.text }}</p>
         </div>
         <button type="button" @click="clearReply" class="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
-          <X class="w-3.5 h-3.5" :stroke-width="2" />
+          <SvgIcon name="x" :size="14" :stroke-width="2" />
         </button>
       </div>
 
@@ -183,7 +182,7 @@ const {
               ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-500'
               : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
           >
-            <Smile class="w-[18px] h-[18px]" :stroke-width="1.8" />
+            <SvgIcon class="w-[18px] h-[18px]" name="smile" :size="24" :stroke-width="1.8" />
           </button>
           <button
             type="button"
@@ -192,7 +191,7 @@ const {
             :disabled="uploading"
             class="w-8 h-8 rounded-sm flex items-center justify-center transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
           >
-            <Paperclip class="w-[18px] h-[18px]" :stroke-width="1.8" />
+            <SvgIcon class="w-[18px] h-[18px]" name="paperclip" :size="24" :stroke-width="1.8" />
           </button>
         </div>
         <input ref="fileInputRef" type="file" class="hidden" @change="handleFileSelect" />
@@ -208,7 +207,7 @@ const {
           :disabled="!input.trim()"
           class="w-8 h-8 rounded-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shrink-0"
         >
-          <Send class="w-4 h-4 text-white" :stroke-width="2" />
+          <SvgIcon class="text-white" name="send" :size="16" :stroke-width="2" />
         </button>
       </form>
     </div>
@@ -221,10 +220,10 @@ const {
             <img :src="lightbox.src" :alt="lightbox.name" class="max-w-full max-h-[85vh] object-contain rounded-sm shadow-2xl" />
             <div class="absolute top-2 right-2 flex gap-1.5">
               <a :href="lightbox.src" download class="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors cursor-pointer" :title="t('chat.download')">
-                <Download class="w-4 h-4 text-white" :stroke-width="2" />
+                <SvgIcon class="text-white" name="download" :size="16" :stroke-width="2" />
               </a>
               <button type="button" @click="lightbox = null" class="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors cursor-pointer">
-                <X class="w-4 h-4 text-white" :stroke-width="2" />
+                <SvgIcon class="text-white" name="x" :size="16" :stroke-width="2" />
               </button>
             </div>
             <p class="text-center text-xs text-white/60 mt-2 truncate">{{ lightbox.name }}</p>

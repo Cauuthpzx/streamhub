@@ -1,7 +1,6 @@
 <script setup>
 import { onMounted, toRaw } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Settings, X } from 'lucide-vue-next'
 import BaseDialog from './BaseDialog.vue'
 import { useDeviceEnum } from '../composables/useDeviceEnum'
 
@@ -32,11 +31,11 @@ onMounted(loadDevices)
   <BaseDialog :show="true" max-width="max-w-md" @close="emit('close')">
     <div class="flex items-center justify-between mb-5">
       <div class="flex items-center gap-2">
-        <Settings class="w-5 h-5 text-indigo-500" :stroke-width="2" />
+        <SvgIcon class="text-indigo-500" name="settings" :size="20" :stroke-width="2" />
         <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('devices.title') }}</h3>
       </div>
       <button @click="emit('close')" class="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 cursor-pointer">
-        <X class="w-5 h-5" :stroke-width="2" />
+        <SvgIcon name="x" :size="20" :stroke-width="2" />
       </button>
     </div>
 

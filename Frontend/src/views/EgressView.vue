@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Play, Square, LoaderCircle, ArrowLeft, Circle } from 'lucide-vue-next'
 import { startEgress, listEgress, stopEgress } from '../services/egress'
 import { listRooms } from '../services/room'
 import AppLogo from '../components/AppLogo.vue'
@@ -102,7 +101,7 @@ onMounted(() => {
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           <router-link to="/home" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <ArrowLeft class="w-5 h-5" :stroke-width="1.8" />
+            <SvgIcon name="arrow-left" :size="20" :stroke-width="1.8" />
           </router-link>
           <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('egress.title') }}</h1>
         </div>
@@ -123,8 +122,8 @@ onMounted(() => {
           :disabled="starting || !selectedRoom"
           class="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
         >
-          <LoaderCircle v-if="starting" class="w-4 h-4 animate-spin" />
-          <Circle v-else class="w-4 h-4 fill-current" :stroke-width="0" />
+          <SvgIcon v-if="starting" class="animate-spin" name="loader-circle" :size="16" :stroke-width="2" />
+          <SvgIcon v-else class="fill-current" name="circle" :size="16" :stroke-width="0" />
           {{ t('egress.startRecording') }}
         </button>
       </div>
@@ -134,12 +133,12 @@ onMounted(() => {
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
-        <LoaderCircle class="w-6 h-6 text-indigo-500 animate-spin" />
+        <SvgIcon class="text-indigo-500 animate-spin" name="loader-circle" :size="24" :stroke-width="2" />
       </div>
 
       <!-- Empty -->
       <div v-else-if="items.length === 0" class="text-center py-16">
-        <Circle class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" :stroke-width="1.2" />
+        <SvgIcon class="text-gray-300 dark:text-gray-600 mx-auto mb-3" name="circle" :size="40" :stroke-width="1.2" />
         <p class="text-gray-500 dark:text-gray-400 text-sm">{{ t('egress.empty') }}</p>
       </div>
 
@@ -152,7 +151,7 @@ onMounted(() => {
         >
           <div>
             <div class="flex items-center gap-2 mb-1">
-              <Circle v-if="isStoppable(item.status)" class="w-3 h-3 text-red-500 fill-red-500 animate-pulse" :stroke-width="0" />
+              <SvgIcon v-if="isStoppable(item.status)" class="text-red-500 fill-red-500 animate-pulse" name="circle" :size="12" :stroke-width="0" />
               <span class="font-medium text-gray-900 dark:text-white text-sm">{{ item.room }}</span>
               <span class="px-2 py-0.5 rounded-full text-xs font-medium uppercase" :class="statusClass(item.status)">{{ item.status }}</span>
             </div>
@@ -166,7 +165,7 @@ onMounted(() => {
             @click="handleStop(item.egress_id)"
             class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-xs font-medium rounded-sm transition-colors cursor-pointer"
           >
-            <Square class="w-3.5 h-3.5" :stroke-width="2" />
+            <SvgIcon name="square" :size="14" :stroke-width="2" />
             {{ t('egress.stop') }}
           </button>
         </div>

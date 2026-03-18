@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoIcon, VideoOff, LogIn } from 'lucide-vue-next'
 import { getProfile } from '../services/auth'
 import { getAvatarStyle } from '../composables/useParticipantMeta'
 
@@ -124,8 +123,8 @@ onUnmounted(stopPreview)
             class="w-12 h-12 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="micOn ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
           >
-            <Mic v-if="micOn" class="w-5 h-5" :stroke-width="1.8" />
-            <MicOff v-else class="w-5 h-5" :stroke-width="1.8" />
+            <SvgIcon v-if="micOn" name="mic" :size="20" :stroke-width="1.8" />
+            <SvgIcon v-else name="mic-off" :size="20" :stroke-width="1.8" />
           </button>
         </AppTooltip>
         <AppTooltip :content="camOn ? t('chat.camOff') : t('chat.camOn')" position="top">
@@ -134,8 +133,8 @@ onUnmounted(stopPreview)
             class="w-12 h-12 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="camOn ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
           >
-            <VideoIcon v-if="camOn" class="w-5 h-5" :stroke-width="1.8" />
-            <VideoOff v-else class="w-5 h-5" :stroke-width="1.8" />
+            <SvgIcon v-if="camOn" name="video" :size="20" :stroke-width="1.8" />
+            <SvgIcon v-else name="video-off" :size="20" :stroke-width="1.8" />
           </button>
         </AppTooltip>
       </div>
@@ -166,7 +165,7 @@ onUnmounted(stopPreview)
           @click="handleJoin"
           class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
         >
-          <LogIn class="w-4 h-4" :stroke-width="2" />
+          <SvgIcon name="log-in" :size="16" :stroke-width="2" />
           {{ t('prejoin.joinNow') }}
         </button>
       </div>

@@ -1,6 +1,5 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { RotateCcw } from 'lucide-vue-next'
 import { useNotificationSettings } from '../composables/useNotificationSettings'
 
 const props = defineProps({
@@ -33,7 +32,7 @@ const ROWS = [
         class="flex items-center gap-1 text-[10px] text-gray-400 dark:text-gray-500 hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors cursor-pointer"
         :title="t('notification.settingsReset')"
       >
-        <RotateCcw class="w-3 h-3" :stroke-width="2" />
+        <SvgIcon name="rotate-ccw" :size="12" :stroke-width="2" />
         {{ t('notification.settingsReset') }}
       </button>
     </div>

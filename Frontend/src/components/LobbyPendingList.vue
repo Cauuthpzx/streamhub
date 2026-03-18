@@ -1,6 +1,5 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { UserCheck, UserMinus } from 'lucide-vue-next'
 import AppTooltip from './AppTooltip.vue'
 
 const { t } = useI18n()
@@ -35,7 +34,7 @@ const emit = defineEmits(['approve', 'reject'])
             @click="emit('approve', user)"
             class="w-7 h-7 rounded-sm flex items-center justify-center text-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer transition-colors"
           >
-            <UserCheck class="w-3.5 h-3.5" :stroke-width="1.8" />
+            <SvgIcon name="user-check" :size="14" :stroke-width="1.8" />
           </button>
         </AppTooltip>
         <AppTooltip :content="t('participants.reject')" position="top">
@@ -43,7 +42,7 @@ const emit = defineEmits(['approve', 'reject'])
             @click="emit('reject', user)"
             class="w-7 h-7 rounded-sm flex items-center justify-center text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors"
           >
-            <UserMinus class="w-3.5 h-3.5" :stroke-width="1.8" />
+            <SvgIcon name="user-minus" :size="14" :stroke-width="1.8" />
           </button>
         </AppTooltip>
       </div>

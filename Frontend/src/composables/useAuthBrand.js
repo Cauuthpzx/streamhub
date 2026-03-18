@@ -1,16 +1,15 @@
 import { onMounted, ref } from 'vue'
-import { Zap, Monitor, ShieldCheck, Globe, LayoutGrid, Video } from 'lucide-vue-next'
 
 export function useAuthBrand() {
   const particles = ref([])
 
   const features = [
-    { icon: Zap, color: 'cyan', key: 'lowLatency', descKey: 'lowLatencyDesc' },
-    { icon: Monitor, color: 'blue', key: 'hdQuality', descKey: 'hdQualityDesc' },
-    { icon: ShieldCheck, color: 'purple', key: 'secure', descKey: 'secureDesc' },
-    { icon: Globe, color: 'cyan', key: 'webrtc', descKey: 'webrtcDesc' },
-    { icon: LayoutGrid, color: 'blue', key: 'multiRoom', descKey: 'multiRoomDesc' },
-    { icon: Video, color: 'purple', key: 'recording', descKey: 'recordingDesc' },
+    { icon: 'zap', color: 'cyan', key: 'lowLatency', descKey: 'lowLatencyDesc' },
+    { icon: 'monitor', color: 'blue', key: 'hdQuality', descKey: 'hdQualityDesc' },
+    { icon: 'shield-check', color: 'purple', key: 'secure', descKey: 'secureDesc' },
+    { icon: 'globe', color: 'cyan', key: 'webrtc', descKey: 'webrtcDesc' },
+    { icon: 'layout-grid', color: 'blue', key: 'multiRoom', descKey: 'multiRoomDesc' },
+    { icon: 'video', color: 'purple', key: 'recording', descKey: 'recordingDesc' },
   ]
 
   onMounted(() => {

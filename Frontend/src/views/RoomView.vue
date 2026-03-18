@@ -2,7 +2,6 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Users, MessageSquare } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms } from '../services/room'
 
@@ -144,7 +143,7 @@ watch(recordingCtx.downloadUrl, (url) => {
             <AppLogo :height="40" />
             <span class="font-semibold text-gray-900 dark:text-white text-sm">{{ roomName }}</span>
             <span class="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
-              <Users class="w-3 h-3" :stroke-width="2" />
+              <SvgIcon name="users" :size="12" :stroke-width="2" />
               {{ participants.length }}
             </span>
           </div>
@@ -264,7 +263,7 @@ watch(recordingCtx.downloadUrl, (url) => {
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
               >
-                <MessageSquare class="w-3.5 h-3.5" :stroke-width="1.8" />
+                <SvgIcon name="message-square" :size="14" :stroke-width="1.8" />
                 {{ t('chat.title') }}
                 <span
                   v-if="unreadCount > 0 && panelTab !== 'chat'"
@@ -279,7 +278,7 @@ watch(recordingCtx.downloadUrl, (url) => {
                   ? 'text-indigo-600 dark:text-indigo-400'
                   : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'"
               >
-                <Users class="w-3.5 h-3.5" :stroke-width="1.8" />
+                <SvgIcon name="users" :size="14" :stroke-width="1.8" />
                 {{ t('participants.title') }}
                 <span class="text-2xs text-gray-400 dark:text-gray-500">({{ participants.length }})</span>
                 <div v-if="panelTab === 'participants'" class="absolute bottom-0 left-2 right-2 h-0.5 bg-indigo-600 dark:bg-indigo-400 rounded-full"></div>

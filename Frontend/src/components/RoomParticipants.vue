@@ -1,7 +1,6 @@
 <script setup>
 import { ref, toRaw, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft, LogOut, Trash2 } from 'lucide-vue-next'
 import { Track } from 'livekit-client'
 import { removeParticipant, muteTrack, moveParticipant, listRooms, getLobbyPending, approveLobbyUser, rejectLobbyUser, leaveRoom } from '../services/room'
 import AppTooltip from './AppTooltip.vue'
@@ -222,19 +221,19 @@ onUnmounted(stopLobbyPoll)
               class="w-7 h-7 rounded-sm flex items-center justify-center cursor-pointer transition-colors"
               :class="p.audioMuted ? 'text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30' : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'"
             >
-              <MicOff v-if="p.audioMuted" class="w-3.5 h-3.5" :stroke-width="1.8" />
-              <Mic v-else class="w-3.5 h-3.5" :stroke-width="1.8" />
+              <SvgIcon v-if="p.audioMuted" name="mic-off" :size="14" :stroke-width="1.8" />
+              <SvgIcon v-else name="mic" :size="14" :stroke-width="1.8" />
             </button>
             <span v-else class="w-7 h-7 flex items-center justify-center" :class="p.audioMuted ? 'text-red-400' : 'text-green-400'">
-              <MicOff v-if="p.audioMuted" class="w-3.5 h-3.5" :stroke-width="1.8" />
-              <Mic v-else class="w-3.5 h-3.5" :stroke-width="1.8" />
+              <SvgIcon v-if="p.audioMuted" name="mic-off" :size="14" :stroke-width="1.8" />
+              <SvgIcon v-else name="mic" :size="14" :stroke-width="1.8" />
             </span>
           </AppTooltip>
 
           <!-- Video status -->
           <span class="w-7 h-7 flex items-center justify-center" :class="p.videoMuted ? 'text-red-400' : 'text-green-400'">
-            <VideoOff v-if="p.videoMuted" class="w-3.5 h-3.5" :stroke-width="1.8" />
-            <VideoIcon v-else class="w-3.5 h-3.5" :stroke-width="1.8" />
+            <SvgIcon v-if="p.videoMuted" name="video-off" :size="14" :stroke-width="1.8" />
+            <SvgIcon v-else name="video" :size="14" :stroke-width="1.8" />
           </span>
 
           <!-- Move to another room -->
@@ -243,7 +242,7 @@ onUnmounted(stopLobbyPoll)
               @click="openMoveDialog(p.identity)"
               class="w-7 h-7 rounded-sm flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 cursor-pointer transition-colors"
             >
-              <ArrowRightLeft class="w-3.5 h-3.5" :stroke-width="1.8" />
+              <SvgIcon name="arrow-right-left" :size="14" :stroke-width="1.8" />
             </button>
           </AppTooltip>
 
@@ -253,7 +252,7 @@ onUnmounted(stopLobbyPoll)
               @click="handleKick(p.identity)"
               class="w-7 h-7 rounded-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors"
             >
-              <UserX class="w-3.5 h-3.5" :stroke-width="1.8" />
+              <SvgIcon name="user-x" :size="14" :stroke-width="1.8" />
             </button>
           </AppTooltip>
         </div>
@@ -271,7 +270,7 @@ onUnmounted(stopLobbyPoll)
         @click="showDeleteDialog = true"
         class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm transition-colors cursor-pointer"
       >
-        <Trash2 class="w-4 h-4" :stroke-width="1.8" />
+        <SvgIcon name="trash-2" :size="16" :stroke-width="1.8" />
         {{ t('room.deleteRoom') }}
       </button>
       <button
@@ -279,7 +278,7 @@ onUnmounted(stopLobbyPoll)
         @click="handleLeaveRoom"
         class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm transition-colors cursor-pointer"
       >
-        <LogOut class="w-4 h-4" :stroke-width="1.8" />
+        <SvgIcon name="log-out" :size="16" :stroke-width="1.8" />
         {{ t('room.leaveRoom') }}
       </button>
     </div>

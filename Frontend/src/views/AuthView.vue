@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { CircleAlert, LoaderCircle } from 'lucide-vue-next'
 import AuthLayout from '../components/AuthLayout.vue'
 import AuthInput from '../components/AuthInput.vue'
 import { login, register, saveToken } from '../services/auth'
@@ -74,7 +73,7 @@ async function handleSubmit() {
 
     <Transition name="fade">
       <div v-if="error" class="auth-error-box">
-        <CircleAlert class="w-4 h-4 shrink-0" :stroke-width="2" />
+        <SvgIcon class="shrink-0" name="circle-alert" :size="16" :stroke-width="2" />
         <span>{{ error }}</span>
       </div>
     </Transition>
@@ -123,7 +122,7 @@ async function handleSubmit() {
 
       <button type="submit" :disabled="loading" class="auth-btn">
         <span class="auth-btn-inner">
-          <LoaderCircle v-if="loading" class="w-4 h-4 animate-spin" />
+          <SvgIcon v-if="loading" class="animate-spin" name="loader-circle" :size="16" :stroke-width="2" />
           <template v-if="isLogin">
             {{ loading ? t('auth.signingIn') : t('auth.signIn') }}
           </template>

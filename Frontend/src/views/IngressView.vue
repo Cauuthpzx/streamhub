@@ -1,7 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Trash2, Radio, LoaderCircle, Copy, Check, ArrowLeft } from 'lucide-vue-next'
 import { createIngress, listIngress, deleteIngress } from '../services/ingress'
 import { listRooms } from '../services/room'
 import AppLogo from '../components/AppLogo.vue'
@@ -111,7 +110,7 @@ onMounted(() => {
       <div class="flex items-center justify-between mb-6">
         <div class="flex items-center gap-3">
           <router-link to="/home" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors">
-            <ArrowLeft class="w-5 h-5" :stroke-width="1.8" />
+            <SvgIcon name="arrow-left" :size="20" :stroke-width="1.8" />
           </router-link>
           <h1 class="text-xl font-bold text-gray-900 dark:text-white">{{ t('ingress.title') }}</h1>
         </div>
@@ -119,7 +118,7 @@ onMounted(() => {
           @click="showCreate = !showCreate"
           class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
         >
-          <Plus class="w-4 h-4" :stroke-width="2" />
+          <SvgIcon name="plus" :size="16" :stroke-width="2" />
           {{ t('ingress.create') }}
         </button>
       </div>
@@ -172,8 +171,8 @@ onMounted(() => {
             :disabled="creating || !form.name || !form.room"
             class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
           >
-            <LoaderCircle v-if="creating" class="w-4 h-4 animate-spin" />
-            <Radio v-else class="w-4 h-4" :stroke-width="2" />
+            <SvgIcon v-if="creating" class="animate-spin" name="loader-circle" :size="16" :stroke-width="2" />
+            <SvgIcon v-else name="radio" :size="16" :stroke-width="2" />
             {{ t('ingress.createBtn') }}
           </button>
         </form>
@@ -184,12 +183,12 @@ onMounted(() => {
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
-        <LoaderCircle class="w-6 h-6 text-indigo-500 animate-spin" />
+        <SvgIcon class="text-indigo-500 animate-spin" name="loader-circle" :size="24" :stroke-width="2" />
       </div>
 
       <!-- List -->
       <div v-else-if="items.length === 0" class="text-center py-16">
-        <Radio class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto mb-3" :stroke-width="1.2" />
+        <SvgIcon class="text-gray-300 dark:text-gray-600 mx-auto mb-3" name="radio" :size="40" :stroke-width="1.2" />
         <p class="text-gray-500 dark:text-gray-400 text-sm">{{ t('ingress.empty') }}</p>
       </div>
 
@@ -209,7 +208,7 @@ onMounted(() => {
               @click="handleDelete(item.ingress_id)"
               class="text-gray-400 hover:text-red-500 transition-colors cursor-pointer"
             >
-              <Trash2 class="w-4 h-4" :stroke-width="1.8" />
+              <SvgIcon name="trash-2" :size="16" :stroke-width="1.8" />
             </button>
           </div>
           <div class="text-xs text-gray-500 dark:text-gray-400 space-y-1">
@@ -221,16 +220,16 @@ onMounted(() => {
               <span class="font-medium">URL:</span>
               <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-sm text-xs break-all">{{ item.url }}</code>
               <button @click="copyToClipboard(item.url, 'url-' + item.ingress_id)" class="shrink-0 cursor-pointer">
-                <Check v-if="copiedId === 'url-' + item.ingress_id" class="w-3.5 h-3.5 text-green-500" />
-                <Copy v-else class="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                <SvgIcon v-if="copiedId === 'url-' + item.ingress_id" class="text-green-500" name="check" :size="14" :stroke-width="2" />
+                <SvgIcon v-else class="text-gray-400 hover:text-gray-600" name="copy" :size="14" :stroke-width="2" />
               </button>
             </div>
             <div v-if="item.stream_key" class="flex items-center gap-2">
               <span class="font-medium">{{ t('ingress.streamKey') }}:</span>
               <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-sm text-xs">{{ item.stream_key }}</code>
               <button @click="copyToClipboard(item.stream_key, 'sk-' + item.ingress_id)" class="shrink-0 cursor-pointer">
-                <Check v-if="copiedId === 'sk-' + item.ingress_id" class="w-3.5 h-3.5 text-green-500" />
-                <Copy v-else class="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
+                <SvgIcon v-if="copiedId === 'sk-' + item.ingress_id" class="text-green-500" name="check" :size="14" :stroke-width="2" />
+                <SvgIcon v-else class="text-gray-400 hover:text-gray-600" name="copy" :size="14" :stroke-width="2" />
               </button>
             </div>
           </div>

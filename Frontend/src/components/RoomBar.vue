@@ -1,10 +1,5 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import {
-  Mic, MicOff, VideoIcon, VideoOff, LogOut, MonitorUp, MonitorOff,
-  MessageSquare, Hand, Smile, Settings, Circle, Square, Camera, Share2,
-} from 'lucide-vue-next'
-import AppTooltip from './AppTooltip.vue'
 
 const { t } = useI18n()
 
@@ -39,8 +34,8 @@ const emit = defineEmits([
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="micEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
         >
-          <Mic v-if="micEnabled" class="w-4 h-4" :stroke-width="1.8" />
-          <MicOff v-else class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon v-if="micEnabled" name="mic" :size="16" :stroke-width="1.8" />
+          <SvgIcon v-else name="mic-off" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -51,8 +46,8 @@ const emit = defineEmits([
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="camEnabled ? 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white' : 'bg-red-500 hover:bg-red-600 text-white'"
         >
-          <VideoIcon v-if="camEnabled" class="w-4 h-4" :stroke-width="1.8" />
-          <VideoOff v-else class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon v-if="camEnabled" name="video" :size="16" :stroke-width="1.8" />
+          <SvgIcon v-else name="video-off" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -63,8 +58,8 @@ const emit = defineEmits([
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="screenEnabled ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
         >
-          <MonitorUp v-if="!screenEnabled" class="w-4 h-4" :stroke-width="1.8" />
-          <MonitorOff v-else class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon v-if="!screenEnabled" name="monitor-up" :size="16" :stroke-width="1.8" />
+          <SvgIcon v-else name="monitor-off" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -76,8 +71,8 @@ const emit = defineEmits([
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50"
           :class="recording ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
         >
-          <Square v-if="recording" class="w-3.5 h-3.5" :stroke-width="2" />
-          <Circle v-else class="w-3.5 h-3.5 fill-red-500 text-red-500" :stroke-width="0" />
+          <SvgIcon v-if="recording" name="square" :size="14" :stroke-width="2" />
+          <SvgIcon v-else name="circle" :size="14" class="fill-red-500 text-red-500" :stroke-width="0" />
         </button>
       </AppTooltip>
 
@@ -87,7 +82,7 @@ const emit = defineEmits([
           @click="emit('screenshot')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
         >
-          <Camera class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon name="camera" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -98,7 +93,7 @@ const emit = defineEmits([
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           :class="handRaised ? 'bg-amber-500 hover:bg-amber-600 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
         >
-          <Hand class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon name="hand" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -110,7 +105,7 @@ const emit = defineEmits([
             class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer"
             :class="showReactionPicker ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
           >
-            <Smile class="w-4 h-4" :stroke-width="1.8" />
+            <SvgIcon name="smile" :size="16" :stroke-width="1.8" />
           </button>
         </AppTooltip>
         <Transition name="fade">
@@ -135,7 +130,7 @@ const emit = defineEmits([
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer relative"
           :class="panelOpen ? 'bg-indigo-600 hover:bg-indigo-700 text-white' : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white'"
         >
-          <MessageSquare class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon name="message-square" :size="16" :stroke-width="1.8" />
           <span
             v-if="unreadCount > 0 && !panelOpen"
             class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-3xs font-bold text-white flex items-center justify-center"
@@ -149,7 +144,7 @@ const emit = defineEmits([
           @click="emit('openShare')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
         >
-          <Share2 class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon name="share-2" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -159,7 +154,7 @@ const emit = defineEmits([
           @click="emit('openSettings')"
           class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
         >
-          <Settings class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon name="settings" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -169,7 +164,7 @@ const emit = defineEmits([
           @click="emit('leave')"
           class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
         >
-          <LogOut class="w-4 h-4" :stroke-width="1.8" />
+          <SvgIcon name="log-out" :size="16" :stroke-width="1.8" />
         </button>
       </AppTooltip>
     </div>

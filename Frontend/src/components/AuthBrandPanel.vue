@@ -50,7 +50,7 @@ const { particles, features } = useAuthBrand()
           :style="{ animationDelay: (0.5 + i * 0.07) + 's' }"
         >
           <div class="auth-fcard-icon" :class="'auth-fcard-icon--' + f.color">
-            <component :is="f.icon" class="w-3.5 h-3.5" :stroke-width="1.8" />
+            <SvgIcon :name="f.icon" :size="14" :stroke-width="1.8" />
           </div>
           <div class="auth-fcard-text">
             <span class="auth-fcard-title">{{ t('features.' + f.key) }}</span>

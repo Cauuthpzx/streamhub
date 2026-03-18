@@ -2,7 +2,6 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, Plus, Trash2, Users, LoaderCircle, RefreshCw, DoorOpen, LogIn, Lock, ShieldCheck, Crown } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom } from '../services/room'
 import { useNotifications } from '../composables/useNotifications'
@@ -144,14 +143,14 @@ onUnmounted(() => {
             :disabled="loading"
             class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50"
           >
-            <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" :stroke-width="2" />
+            <SvgIcon name="refresh-cw" :size="14" :stroke-width="2" />
             {{ t('room.refresh') }}
           </button>
           <button
             @click="showCreate = !showCreate"
             class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
           >
-            <Plus class="w-3.5 h-3.5" :stroke-width="2.5" />
+            <SvgIcon name="plus" :size="14" :stroke-width="2.5" />
             {{ t('room.newRoom') }}
           </button>
         </div>
@@ -173,13 +172,13 @@ onUnmounted(() => {
 
       <!-- Loading -->
       <div v-if="loading && rooms.length === 0" class="text-center py-16">
-        <LoaderCircle class="w-6 h-6 text-indigo-500 animate-spin mx-auto" />
+        <SvgIcon class="text-indigo-500 animate-spin mx-auto" name="loader-circle" :size="24" :stroke-width="2" />
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">{{ t('room.loading') }}</p>
       </div>
 
       <!-- Empty state -->
       <div v-else-if="rooms.length === 0" class="text-center py-16">
-        <DoorOpen class="w-10 h-10 text-gray-300 dark:text-gray-600 mx-auto" :stroke-width="1.5" />
+        <SvgIcon class="text-gray-300 dark:text-gray-600 mx-auto" name="door-open" :size="40" :stroke-width="1.5" />
         <p class="text-gray-500 dark:text-gray-400 mt-3">{{ t('room.empty') }}</p>
         <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">{{ t('room.emptyHint') }}</p>
       </div>
@@ -195,25 +194,25 @@ onUnmounted(() => {
             <div class="w-9 h-9 rounded-sm flex items-center justify-center shrink-0"
               :class="room.num_participants > 0 ? 'bg-green-50 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700/50'"
             >
-              <Video class="w-4 h-4" :class="room.num_participants > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'" :stroke-width="1.8" />
+              <SvgIcon name="video" :size="16" :stroke-width="1.8" />
             </div>
             <div class="min-w-0">
               <div class="flex items-center gap-1.5">
                 <p class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ room.name }}</p>
                 <AppTooltip v-if="room.creator === username" :content="t('room.youAreCreator')" position="top">
-                  <Crown class="w-3 h-3 text-amber-500 shrink-0" :stroke-width="2" />
+                  <SvgIcon class="text-amber-500 shrink-0" name="crown" :size="12" :stroke-width="2" />
                 </AppTooltip>
                 <AppTooltip v-if="room.has_password" :content="t('room.passwordProtected')" position="top">
-                  <Lock class="w-3 h-3 text-amber-500 shrink-0" :stroke-width="2.5" />
+                  <SvgIcon class="text-amber-500 shrink-0" name="lock" :size="12" :stroke-width="2.5" />
                 </AppTooltip>
                 <AppTooltip v-if="room.has_lobby" :content="t('room.lobbyBadge')" position="top">
-                  <ShieldCheck class="w-3 h-3 text-indigo-400 shrink-0" :stroke-width="2" />
+                  <SvgIcon class="text-indigo-400 shrink-0" name="shield-check" :size="12" :stroke-width="2" />
                 </AppTooltip>
               </div>
               <div class="flex items-center gap-3 mt-0.5">
                 <span class="flex items-center gap-1 text-xs" :class="room.num_participants > 0 ? 'text-green-500' : 'text-gray-400 dark:text-gray-500'">
                   <span v-if="room.num_participants > 0" class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                  <Users class="w-3 h-3" :stroke-width="2" />
+                  <SvgIcon name="users" :size="12" :stroke-width="2" />
                   {{ room.num_participants || 0 }} {{ t('room.online') }}
                 </span>
               </div>
@@ -224,7 +223,7 @@ onUnmounted(() => {
               @click="handleJoin(room)"
               class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
             >
-              <LogIn class="w-3.5 h-3.5" :stroke-width="2" />
+              <SvgIcon name="log-in" :size="14" :stroke-width="2" />
               {{ t('room.join') }}
             </button>
             <AppTooltip v-if="room.creator === username" :content="t('room.delete')" position="top">
@@ -232,7 +231,7 @@ onUnmounted(() => {
                 @click="handleDelete(room.name)"
                 class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm transition-colors cursor-pointer"
               >
-                <Trash2 class="w-4 h-4" :stroke-width="1.8" />
+                <SvgIcon name="trash-2" :size="16" :stroke-width="1.8" />
               </button>
             </AppTooltip>
           </div>

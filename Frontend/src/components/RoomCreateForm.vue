@@ -1,7 +1,5 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { LoaderCircle } from 'lucide-vue-next'
-
 const { t } = useI18n()
 
 const props = defineProps({
@@ -82,7 +80,7 @@ defineExpose({ reset })
           :disabled="creating || !newRoomName.trim()"
           class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
         >
-          <LoaderCircle v-if="creating" class="w-4 h-4 animate-spin" />
+          <SvgIcon v-if="creating" class="animate-spin" name="loader-circle" :size="16" :stroke-width="2" />
           <span v-else>{{ t('room.create') }}</span>
         </button>
         <button

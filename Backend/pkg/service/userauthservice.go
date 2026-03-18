@@ -1475,7 +1475,7 @@ func (s *UserAuthService) handleFileUpload(w http.ResponseWriter, r *http.Reques
 	// ensure upload dir exists
 	if err := os.MkdirAll(UploadDir, 0o755); err != nil {
 		logger.Errorw("log.createUploadDirFailed", err, "dir", UploadDir)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: mkdir %s: %v", UploadDir, err)})
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.fileUploadFailed"})
 		return
 	}
 
@@ -1483,7 +1483,7 @@ func (s *UserAuthService) handleFileUpload(w http.ResponseWriter, r *http.Reques
 	dst, err := os.Create(dstPath)
 	if err != nil {
 		logger.Errorw("log.createFileFailed", err, "path", dstPath)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: create %s: %v", dstPath, err)})
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.fileUploadFailed"})
 		return
 	}
 	defer dst.Close()
@@ -1491,7 +1491,7 @@ func (s *UserAuthService) handleFileUpload(w http.ResponseWriter, r *http.Reques
 	written, err := io.Copy(dst, file)
 	if err != nil {
 		logger.Errorw("log.writeFileFailed", err, "path", dstPath)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: write: %v", err)})
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.fileUploadFailed"})
 		return
 	}
 
@@ -1507,7 +1507,7 @@ func (s *UserAuthService) handleFileUpload(w http.ResponseWriter, r *http.Reques
 
 	if err := s.userStore.StoreFileMetadata(r.Context(), meta); err != nil {
 		logger.Errorw("log.storeFileMetaFailed", err, "fileID", fileID)
-		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: fmt.Sprintf("error.internal: store: %v", err)})
+		writeJSON(w, http.StatusInternalServerError, errorResponse{Error: "error.fileUploadFailed"})
 		return
 	}
 

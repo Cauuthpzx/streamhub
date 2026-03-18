@@ -13,6 +13,7 @@ user_auth:
 
 redis:
   address: localhost:6379
+  # dial_timeout/read_timeout/write_timeout: not supported by current config struct
 
 postgres:
   host: localhost
@@ -21,7 +22,7 @@ postgres:
   password: streamhub
   database: streamhub
   ssl_mode: disable
-  max_conns: 10
+  max_conns: 50
 
 development: true
 
@@ -41,8 +42,8 @@ rtc:
     high_quality: 1500ms
 
   # Phase 1: Packet buffer — đủ cho 720p@30fps + jitter buffer audio 4s
-  packet_buffer_size_video: 1000
-  packet_buffer_size_audio: 200
+  packet_buffer_size_video: 2000
+  packet_buffer_size_audio: 400
 
   # Phase 3 preview: giải phóng bandwidth layer cao nhanh hơn
   dynacast_pause_delay: 3s

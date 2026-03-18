@@ -24,6 +24,7 @@ import (
 
 	"github.com/livekit/protocol/auth"
 	"github.com/livekit/protocol/livekit"
+	"github.com/livekit/protocol/logger"
 )
 
 const (
@@ -92,13 +93,15 @@ func (m *APIKeyAuthMiddleware) ServeHTTP(w http.ResponseWriter, r *http.Request,
 
 		secret := m.provider.GetSecret(v.APIKey())
 		if secret == "" {
-			HandleError(w, r, http.StatusUnauthorized, errors.New("invalid API key: "+v.APIKey()))
+			logger.Warnw("log.invalidAPIKey", nil, "apiKeyPrefix", v.APIKey()[:min(8, len(v.APIKey()))])
+			HandleError(w, r, http.StatusUnauthorized, ErrInvalidAuthorizationToken)
 			return
 		}
 
 		_, grants, err := v.Verify(secret)
 		if err != nil {
-			HandleError(w, r, http.StatusUnauthorized, errors.New("invalid token: "+authToken+", error: "+err.Error()))
+			logger.Warnw("log.invalidToken", err)
+			HandleError(w, r, http.StatusUnauthorized, ErrInvalidAuthorizationToken)
 			return
 		}
 

@@ -31,7 +31,7 @@ const emit = defineEmits(['focus', 'pin', 'fullscreen'])
         v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid === focusedSid)"
         :key="'focused-' + participant.sid"
         :id="`tile-${participant.sid}`"
-        class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden flex-1 min-h-0 border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card cursor-pointer"
+        class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden flex-1 min-h-0 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card cursor-pointer"
         :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
         @click="emit('focus', participant.sid)"
       >
@@ -52,7 +52,7 @@ const emit = defineEmits(['focus', 'pin', 'fullscreen'])
           :raised-hand="raisedHands.has(participant.identity)"
           :quality="connectionQualities[participant.identity]"
         />
-        <div class="absolute top-2 right-2 flex gap-1 z-30">
+        <div class="absolute top-2 right-2 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
           <AppTooltip :content="t('chat.pin')" position="bottom">
             <button @click.stop="emit('pin', participant.sid)" class="bg-black/60 hover:bg-black/80 rounded-sm p-1.5 cursor-pointer transition-colors">
               <Pin class="w-4 h-4 text-white" :stroke-width="2" />
@@ -104,7 +104,7 @@ const emit = defineEmits(['focus', 'pin', 'fullscreen'])
         v-for="{ participant, isLocal, isMicOn, isCamOn, isScreenOn } in participants.filter(p => p.participant.sid === pinnedSid)"
         :key="'pinned-' + participant.sid"
         :id="`tile-${participant.sid}`"
-        class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden flex-1 transition-all duration-300 border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
+        class="relative bg-white dark:bg-gray-800 rounded-sm overflow-hidden flex-1 transition-all duration-300 group border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card"
         :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : ''"
       >
         <div :id="`screen-share-${participant.sid}`" class="absolute inset-0 z-10"></div>
@@ -124,7 +124,7 @@ const emit = defineEmits(['focus', 'pin', 'fullscreen'])
           :raised-hand="raisedHands.has(participant.identity)"
           :quality="connectionQualities[participant.identity]"
         />
-        <div class="absolute top-2 right-2 flex gap-1 z-30">
+        <div class="absolute top-2 right-2 flex gap-1 z-30 opacity-0 group-hover:opacity-100 transition-opacity">
           <AppTooltip :content="t('chat.unpin')" position="bottom">
             <button @click="emit('pin', participant.sid)" class="bg-black/60 hover:bg-black/80 rounded-sm p-1.5 cursor-pointer transition-colors">
               <Pin class="w-4 h-4 text-amber-400" :stroke-width="2" />

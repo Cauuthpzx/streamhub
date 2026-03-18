@@ -217,19 +217,18 @@ const { particles, features } = useAuthBrand()
   animation: auth-card-in 0.9s cubic-bezier(.16,1,.3,1) 0.4s both;
 }
 
-/* ── Feature cards — 3 cols, 2 rows ── */
+/* ── Feature cards — 2 cols × 3 rows ── */
 .auth-features-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 9px;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
   width: 100%;
 }
 .auth-fcard {
   display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 10px;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 13px;
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.055);
   border-radius: 14px;
@@ -239,8 +238,8 @@ const { particles, features } = useAuthBrand()
   animation: auth-fcard-in 0.6s cubic-bezier(.34,1.56,.64,1) both;
 }
 .auth-fcard:hover {
-  border-color: rgba(129, 140, 248, 0.2);
-  background: rgba(129, 140, 248, 0.04);
+  border-color: rgba(129, 140, 248, 0.22);
+  background: rgba(129, 140, 248, 0.05);
   transform: translateY(-2px);
 }
 @keyframes auth-fcard-in {
@@ -248,34 +247,35 @@ const { particles, features } = useAuthBrand()
   to   { opacity: 1; transform: scale(1) translateY(0); }
 }
 .auth-fcard-icon {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  margin-top: 1px;
 }
-.auth-fcard-icon--cyan   { background: rgba(56, 189, 248, 0.1);  color: #38bdf8; }
-.auth-fcard-icon--blue   { background: rgba(96, 165, 250, 0.1);  color: #60a5fa; }
-.auth-fcard-icon--purple { background: rgba(129, 140, 248, 0.1); color: #818cf8; }
+.auth-fcard-icon--cyan   { background: rgba(56, 189, 248, 0.12);  color: #38bdf8; }
+.auth-fcard-icon--blue   { background: rgba(96, 165, 250, 0.12);  color: #60a5fa; }
+.auth-fcard-icon--purple { background: rgba(129, 140, 248, 0.12); color: #818cf8; }
 .auth-fcard-text {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;
   min-width: 0;
 }
 .auth-fcard-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   color: #eef0ff;
-  letter-spacing: 0.1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
+  line-height: 1.2;
 }
 .auth-fcard-desc {
-  display: none;
+  font-size: 11px;
+  color: #4a5070;
+  line-height: 1.4;
 }
 /* RESPONSIVE */
 @media (max-width: 1024px) {

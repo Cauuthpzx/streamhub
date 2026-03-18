@@ -168,71 +168,80 @@ const { t } = useI18n()
    (managed here as .auth-page is the scoped root)
    ══════════════════════════════════════ */
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-brand) {
-  background: linear-gradient(160deg, #1e1b4b 0%, #1e3a5f 50%, #0f2744 100%);
-  border-right-color: rgba(0, 0, 0, 0.18);
+  background: linear-gradient(160deg, #eef2ff 0%, #f0f4ff 50%, #ede9fe 100%);
+  border-right-color: rgba(99, 102, 241, 0.12);
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-grid) {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(99, 102, 241, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.06) 1px, transparent 1px);
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-orbital--1) {
-  border-color: rgba(129, 140, 248, 0.25);
+  border-color: rgba(99, 102, 241, 0.18);
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-orbital--2) {
-  border-color: rgba(56, 189, 248, 0.2);
+  border-color: rgba(139, 92, 246, 0.14);
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-orbital--1::before) {
+  background: #6366f1;
+  box-shadow: 0 0 10px #6366f1;
+}
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-orbital--2::before) {
+  background: #8b5cf6;
+  box-shadow: 0 0 8px #8b5cf6;
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-glow--1) {
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.25) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-glow--2) {
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.2) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, transparent 70%);
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-glow--3) {
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.16) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%);
 }
-.auth-page:not(:where(.dark, .dark *)) :deep(.auth-tagline) {
-  color: #cbd5e1;
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-desc) {
+  color: #4f566b;
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard) {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.7);
+  border-color: rgba(99, 102, 241, 0.14);
+  backdrop-filter: blur(8px);
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard:hover) {
-  border-color: rgba(129, 140, 248, 0.35);
-  background: rgba(129, 140, 248, 0.1);
+  border-color: rgba(99, 102, 241, 0.3);
+  background: rgba(255, 255, 255, 0.9);
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard-title) {
-  color: #e2e8f0;
+  color: #1e1b4b;
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-fcard-desc) {
-  color: #94a3b8;
+  color: #64748b;
 }
-.auth-page:not(:where(.dark, .dark *)) :deep(.auth-logo-wrap) {
-  filter: drop-shadow(0 4px 24px rgba(99, 102, 241, 0.35));
+.auth-page:not(:where(.dark, .dark *)) :deep(.auth-logo-block) {
+  filter: drop-shadow(0 2px 12px rgba(99, 102, 241, 0.2));
 }
 .auth-page:not(:where(.dark, .dark *)) :deep(.auth-particle) {
-  opacity: 0.5;
+  opacity: 0.3;
 }
 
 /* ══════════════════════════════════════
    LIGHT MODE OVERRIDES — form panel
    ══════════════════════════════════════ */
 
-/* Form panel light — nền trắng xám nhẹ, card nổi rõ */
+/* Form panel light — đồng bộ với brand panel */
 .auth-page:not(:where(.dark, .dark *)) .auth-form-panel {
-  background: #f1f5f9;
+  background: #f5f3ff;
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-form-gridbg {
   background-image:
-    linear-gradient(rgba(0, 0, 0, 0.035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.035) 1px, transparent 1px);
+    linear-gradient(rgba(99, 102, 241, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.045) 1px, transparent 1px);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-form-glow-tr {
-  background: radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.1), transparent 60%);
+  background: radial-gradient(ellipse at top right, rgba(99, 102, 241, 0.08), transparent 60%);
 }
 .auth-page:not(:where(.dark, .dark *)) .auth-form-glow-bl {
-  background: radial-gradient(ellipse at bottom left, rgba(56, 189, 248, 0.08), transparent 60%);
+  background: radial-gradient(ellipse at bottom left, rgba(139, 92, 246, 0.06), transparent 60%);
 }
 
 /* ── RESPONSIVE ── */

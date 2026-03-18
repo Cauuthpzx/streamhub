@@ -32,19 +32,9 @@ const { particles, features } = useAuthBrand()
     </div>
 
     <div class="auth-brand-inner">
-      <!-- Logo block: icon + name + slogan badge -->
+      <!-- Logo: icon + STREAM-HUB + LIVE·SHARE·CONNECT -->
       <div class="auth-logo-block">
-        <div class="auth-logo-icon">
-          <AppLogo :height="52" :show-tagline="false" />
-        </div>
-        <div class="auth-logo-text">
-          <div class="auth-logo-name">
-            <span class="auth-name-main">STREAM</span>
-            <span class="auth-name-sep">—</span>
-            <span class="auth-name-accent">HUB</span>
-          </div>
-          <p class="auth-slogan">LIVE · SHARE · CONNECT</p>
-        </div>
+        <AppLogo :height="52" :show-tagline="true" />
       </div>
 
       <!-- Description -->
@@ -199,55 +189,8 @@ const { particles, features } = useAuthBrand()
 
 /* ── Logo block ── */
 .auth-logo-block {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+  filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.25));
   animation: auth-card-in 0.9s cubic-bezier(.16,1,.3,1) 0.2s both;
-}
-.auth-logo-icon {
-  filter: drop-shadow(0 0 20px rgba(129, 140, 248, 0.28));
-  flex-shrink: 0;
-}
-.auth-logo-text {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-.auth-logo-name {
-  display: flex;
-  align-items: baseline;
-  gap: 7px;
-}
-.auth-name-main {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  color: #eef0ff;
-  line-height: 1;
-}
-.auth-name-sep {
-  font-size: 24px;
-  font-weight: 300;
-  color: rgba(255,255,255,0.25);
-  line-height: 1;
-}
-.auth-name-accent {
-  font-size: 28px;
-  font-weight: 800;
-  letter-spacing: 3px;
-  line-height: 1;
-  background: linear-gradient(135deg, #818cf8 0%, #e879f9 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.auth-slogan {
-  font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 4px;
-  color: #818cf8;
-  opacity: 0.65;
 }
 
 /* ── Description ── */

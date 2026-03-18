@@ -8,8 +8,10 @@ import {
   VideoPresets,
   ScreenSharePresets,
   ConnectionQuality,
+  DisconnectReason,
   createLocalTracks,
 } from 'livekit-client'
+import { useNotifications } from './useNotifications'
 
 // Detect preferred video codec: AV1 > H264 > VP9 > VP8
 function detectPreferredCodec() {
@@ -29,6 +31,8 @@ const preferredCodec = detectPreferredCodec()
 export function useRoom(roomName, username, deps) {
   const router = useRouter()
   const { t } = useI18n()
+  const notif = useNotifications()
+  const roomNotif = notif.room(roomName)
 
   // state
   const room = ref(null)
@@ -113,10 +117,18 @@ export function useRoom(roomName, username, deps) {
     connectionQualities.value = { ...connectionQualities.value, [participant.identity]: map[quality] || 'unknown' }
   }
 
+  function displayName(participant) {
+    try {
+      const meta = participant.metadata ? JSON.parse(participant.metadata) : null
+      return meta?.display_name || participant.identity
+    } catch (_) { return participant.identity }
+  }
+
   function handleTrackSubscribed(track, publication, participant) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
       screenShares.value = [...screenShares.value, { track, identity: participant.identity, sid: publication.trackSid }]
+      roomNotif.info(t('notification.screenShareStarted', { name: displayName(participant) }))
       nextTick(() => {
         deps.tracks.attachScreenShare(track, participant.identity)
         deps.tracks.reattachAll()
@@ -130,12 +142,45 @@ export function useRoom(roomName, username, deps) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
       screenShares.value = screenShares.value.filter(s => s.identity !== participant.identity)
+      roomNotif.info(t('notification.screenShareStopped', { name: displayName(participant) }))
       const container = document.getElementById(`screen-share-${participant.sid}`)
       if (container) container.innerHTML = ''
       nextTick(() => deps.tracks.reattachAll())
     }
     const el = document.getElementById(`track-${track.sid}`)
     if (el) el.remove()
+  }
+
+  function handleTrackMuted(publication, participant) {
+    if (participant.identity === username) return
+    const name = displayName(participant)
+    if (publication.source === Track.Source.Camera) {
+      roomNotif.info(t('notification.camDisabled', { name }))
+    } else if (publication.source === Track.Source.Microphone) {
+      roomNotif.info(t('notification.micDisabled', { name }))
+    }
+  }
+
+  function handleTrackUnmuted(publication, participant) {
+    if (participant.identity === username) return
+    const name = displayName(participant)
+    if (publication.source === Track.Source.Camera) {
+      roomNotif.info(t('notification.camEnabled', { name }))
+    } else if (publication.source === Track.Source.Microphone) {
+      roomNotif.info(t('notification.micEnabled', { name }))
+    }
+  }
+
+  function handleLocalTrackPublished(publication) {
+    if (publication.source === Track.Source.ScreenShare) {
+      roomNotif.info(t('notification.youScreenShareStarted'))
+    }
+  }
+
+  function handleLocalTrackUnpublished(publication) {
+    if (publication.source === Track.Source.ScreenShare) {
+      roomNotif.info(t('notification.youScreenShareStopped'))
+    }
   }
 
   // sessionStorage key for this room — survives reload within same tab
@@ -200,21 +245,46 @@ export function useRoom(roomName, username, deps) {
         },
       })
 
-      r.on(RoomEvent.ParticipantConnected, handleParticipantUpdate)
-      r.on(RoomEvent.ParticipantDisconnected, handleParticipantDisconnected)
+      r.on(RoomEvent.ParticipantConnected, (participant) => {
+        handleParticipantUpdate()
+        deps.sounds.playJoinSound()
+        roomNotif.success(t('notification.participantJoined', { name: displayName(participant) }))
+      })
+      r.on(RoomEvent.ParticipantDisconnected, (participant, reason) => {
+        handleParticipantDisconnected(participant)
+        deps.sounds.playLeaveSound()
+        const name = displayName(participant)
+        if (reason === DisconnectReason.PARTICIPANT_REMOVED) {
+          roomNotif.warning(t('notification.participantKicked', { name }))
+        } else if (reason === DisconnectReason.SIGNAL_CLOSE || reason === DisconnectReason.TRANSPORT_FAILURE) {
+          roomNotif.warning(t('notification.participantDisconnected', { name }))
+        } else {
+          roomNotif.info(t('notification.participantLeft', { name }))
+        }
+      })
       r.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
       r.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-      r.on(RoomEvent.LocalTrackPublished, handleParticipantUpdate)
-      r.on(RoomEvent.LocalTrackUnpublished, handleParticipantUpdate)
-      r.on(RoomEvent.TrackMuted, handleParticipantUpdate)
-      r.on(RoomEvent.TrackUnmuted, handleParticipantUpdate)
+      r.on(RoomEvent.LocalTrackPublished, (publication) => {
+        handleParticipantUpdate()
+        handleLocalTrackPublished(publication)
+      })
+      r.on(RoomEvent.LocalTrackUnpublished, (publication) => {
+        handleParticipantUpdate()
+        handleLocalTrackUnpublished(publication)
+      })
+      r.on(RoomEvent.TrackMuted, (publication, participant) => {
+        handleParticipantUpdate()
+        handleTrackMuted(publication, participant)
+      })
+      r.on(RoomEvent.TrackUnmuted, (publication, participant) => {
+        handleParticipantUpdate()
+        handleTrackUnmuted(publication, participant)
+      })
       r.on(RoomEvent.Disconnected, handleDisconnect)
       r.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers)
       r.on(RoomEvent.ConnectionQualityChanged, handleConnectionQuality)
       r.on(RoomEvent.ParticipantMetadataChanged, handleParticipantUpdate)
 
-      r.on(RoomEvent.ParticipantConnected, () => deps.sounds.playJoinSound())
-      r.on(RoomEvent.ParticipantDisconnected, () => deps.sounds.playLeaveSound())
       r.on(RoomEvent.DataReceived, () => {
         if (!panelOpen.value || panelTab.value !== 'chat') {
           unreadCount.value++

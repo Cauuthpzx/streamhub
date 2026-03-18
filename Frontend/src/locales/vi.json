@@ -347,6 +347,19 @@
     "minutesAgo": "{n} phút trước",
     "hoursAgo": "{n} giờ trước",
     "roomCreated": "Đã tạo phòng \"{name}\"",
-    "roomDeleted": "Đã xóa phòng \"{name}\""
+    "roomDeleted": "Đã xóa phòng \"{name}\"",
+    "participantJoined": "{name} đã tham gia phòng",
+    "participantLeft": "{name} đã rời phòng",
+    "participantDisconnected": "{name} mất kết nối",
+    "participantKicked": "{name} đã bị kích khỏi phòng",
+    "screenShareStarted": "{name} bắt đầu chia sẻ màn hình",
+    "screenShareStopped": "{name} đã dừng chia sẻ màn hình",
+    "youScreenShareStarted": "Bạn đang chia sẻ màn hình",
+    "youScreenShareStopped": "Bạn đã dừng chia sẻ màn hình",
+    "camEnabled": "{name} đã bật camera",
+    "camDisabled": "{name} đã tắt camera",
+    "micEnabled": "{name} đã bật mic",
+    "micDisabled": "{name} đã tắt mic",
+    "more": "xem thêm"
   }
 }

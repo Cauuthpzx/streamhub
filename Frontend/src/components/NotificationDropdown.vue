@@ -1,19 +1,26 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Bell, CheckCircle, XCircle, AlertTriangle, Info, X, CheckCheck, Trash2 } from 'lucide-vue-next'
+import { Bell, CheckCheck, Trash2, X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-vue-next'
 import { useNotifications } from '../composables/useNotifications'
 
 const { t } = useI18n()
-const { notifications, unreadCount, markRead, markAllRead, remove, clearAll } = useNotifications()
+const { notifications, unreadCount, markAllRead, remove, clearAll } = useNotifications()
 
 const open = ref(false)
+const expanded = ref(new Set())
 const triggerRef = ref(null)
 const dropdownRef = ref(null)
 
 function toggle() {
   open.value = !open.value
   if (open.value) markAllRead()
+}
+
+function toggleExpand(id) {
+  if (expanded.value.has(id)) expanded.value.delete(id)
+  else expanded.value.add(id)
+  expanded.value = new Set(expanded.value)
 }
 
 function handleOutsideClick(e) {
@@ -29,35 +36,35 @@ function handleOutsideClick(e) {
 onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
 onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 
-// ── Helpers ──
 const TYPE_ICON = {
   success: CheckCircle,
   error:   XCircle,
   warning: AlertTriangle,
   info:    Info,
 }
-const TYPE_ICON_CLASS = {
-  success: 'text-green-400',
-  error:   'text-red-400',
-  warning: 'text-amber-400',
+const TYPE_COLOR = {
+  success: 'text-emerald-500',
+  error:   'text-red-500',
+  warning: 'text-amber-500',
   info:    'text-blue-400',
 }
-const SOURCE_BADGE_CLASS = {
-  system: 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400',
-  room:   'bg-indigo-50 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400',
+const TYPE_DOT = {
+  success: 'bg-emerald-500',
+  error:   'bg-red-500',
+  warning: 'bg-amber-500',
+  info:    'bg-blue-400',
 }
 
 function sourceLabel(n) {
-  if (n.source === 'room' && n.roomName) return `${t('notification.room')} ${n.roomName}`
-  return t('notification.system')
+  if (n.source === 'room' && n.roomName) return n.roomName.toUpperCase()
+  return t('notification.system').toUpperCase()
 }
 
 function formatTime(date) {
-  const now = new Date()
-  const diff = Math.floor((now - date) / 1000)
-  if (diff < 60) return t('notification.justNow')
-  if (diff < 3600) return t('notification.minutesAgo', { n: Math.floor(diff / 60) })
-  if (diff < 86400) return t('notification.hoursAgo', { n: Math.floor(diff / 3600) })
+  const diff = Math.floor((Date.now() - date) / 1000)
+  if (diff < 60)    return t('notification.justNow')
+  if (diff < 3600)  return t('notification.minutesAgo', { n: Math.floor(diff / 60) })
+  if (diff < 86400) return t('notification.hoursAgo',   { n: Math.floor(diff / 3600) })
   return date.toLocaleDateString()
 }
 
@@ -65,22 +72,36 @@ function handleAction(n) {
   if (n.action?.handler) n.action.handler()
   remove(n.id)
 }
+
+const MSG_LIMIT = 72
+function isLong(msg) { return msg.length > MSG_LIMIT }
+function short(msg)  { return msg.slice(0, MSG_LIMIT) + '…' }
+
+// Bold + black tên người: từ đầu tiên trước động từ (pattern: "name verb...")
+function highlightName(msg) {
+  const escaped = msg.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+  // Match từ đầu tiên nếu không phải "Bạn"/"You"/"您"
+  return escaped.replace(/^(\S+)(\s)/, (_, name, space) => {
+    const lower = name.toLowerCase()
+    if (lower === 'bạn' || lower === 'you' || lower === '您') return name + space
+    return `<strong class="name">${name}</strong>${space}`
+  })
+}
 </script>
 
 <template>
   <div class="relative">
-    <!-- Bell button -->
+    <!-- Bell -->
     <button
       ref="triggerRef"
       @click="toggle"
       class="relative flex items-center justify-center w-8 h-8 rounded-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700/60 transition-colors cursor-pointer"
       :class="open ? 'bg-gray-100 dark:bg-gray-700/60 text-gray-700 dark:text-gray-200' : ''"
     >
-      <Bell class="w-4 h-4" :stroke-width="1.8" />
-      <!-- Unread badge -->
+      <Bell class="w-[18px] h-[18px]" :stroke-width="1.7" />
       <span
         v-if="unreadCount > 0"
-        class="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 bg-red-500 rounded-full text-3xs font-bold text-white flex items-center justify-center px-0.5 leading-none"
+        class="absolute -top-0.5 -right-0.5 min-w-[15px] h-[15px] bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center px-0.5 leading-none"
       >{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
     </button>
 
@@ -89,37 +110,33 @@ function handleAction(n) {
       <div
         v-if="open"
         ref="dropdownRef"
-        class="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-sm shadow-popup border border-gray-200/80 dark:border-white/[0.06] overflow-hidden z-50"
+        class="absolute right-0 top-full mt-2 w-[380px] bg-white dark:bg-gray-900 rounded-sm shadow-popup border border-gray-200/70 dark:border-white/[0.07] z-50 flex flex-col"
       >
         <!-- Header -->
-        <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
-          <span class="text-sm font-semibold text-gray-800 dark:text-white">{{ t('notification.title') }}</span>
-          <div class="flex items-center gap-1">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 dark:border-white/[0.06] shrink-0">
+          <span class="text-xs font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
+            {{ t('notification.title') }}
+          </span>
+          <div v-if="notifications.length > 0" class="flex items-center gap-0.5">
             <button
-              v-if="notifications.length > 0"
               @click="markAllRead"
-              class="p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              class="p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
               :title="t('notification.markAllRead')"
-            >
-              <CheckCheck class="w-3.5 h-3.5" :stroke-width="2" />
-            </button>
+            ><CheckCheck class="w-3.5 h-3.5" :stroke-width="2" /></button>
             <button
-              v-if="notifications.length > 0"
               @click="clearAll"
-              class="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              class="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
               :title="t('notification.clearAll')"
-            >
-              <Trash2 class="w-3.5 h-3.5" :stroke-width="2" />
-            </button>
+            ><Trash2 class="w-3.5 h-3.5" :stroke-width="2" /></button>
           </div>
         </div>
 
         <!-- List -->
-        <div class="max-h-96 overflow-y-auto">
-          <!-- Empty state -->
-          <div v-if="notifications.length === 0" class="flex flex-col items-center justify-center py-10 gap-2">
-            <Bell class="w-8 h-8 text-gray-200 dark:text-gray-700" :stroke-width="1.5" />
-            <p class="text-sm text-gray-400 dark:text-gray-500">{{ t('notification.empty') }}</p>
+        <div class="overflow-y-auto max-h-[440px] notif-scroll">
+          <!-- Empty -->
+          <div v-if="notifications.length === 0" class="flex flex-col items-center justify-center py-12 gap-2">
+            <Bell class="w-7 h-7 text-gray-200 dark:text-gray-700" :stroke-width="1.5" />
+            <p class="text-xs text-gray-400 dark:text-gray-500">{{ t('notification.empty') }}</p>
           </div>
 
           <!-- Items -->
@@ -127,43 +144,54 @@ function handleAction(n) {
             <div
               v-for="n in notifications"
               :key="n.id"
-              class="flex items-start gap-3 px-4 py-3 border-b border-gray-50 dark:border-gray-700/50 last:border-0 transition-colors"
-              :class="n.read ? 'bg-transparent' : 'bg-indigo-50/40 dark:bg-indigo-900/10'"
+              class="group relative flex items-start gap-2.5 px-4 py-2 border-b border-dashed border-gray-200 dark:border-white/[0.08] last:border-0"
+              :class="n.read ? '' : 'bg-indigo-50/25 dark:bg-indigo-500/[0.05]'"
             >
-              <!-- Type icon -->
-              <component
-                :is="TYPE_ICON[n.type]"
-                class="w-4 h-4 shrink-0 mt-0.5"
-                :class="TYPE_ICON_CLASS[n.type]"
-                :stroke-width="2"
+              <!-- unread dot -->
+              <span
+                v-if="!n.read"
+                class="absolute left-1 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full"
+                :class="TYPE_DOT[n.type]"
               />
 
-              <!-- Content -->
+              <!-- type icon -->
+              <component :is="TYPE_ICON[n.type]" class="w-3.5 h-3.5 shrink-0 mt-[3px]" :class="TYPE_COLOR[n.type]" :stroke-width="2.2" />
+
+              <!-- content -->
               <div class="flex-1 min-w-0">
-                <!-- Source badge -->
-                <span
-                  class="inline-flex items-center rounded-sm px-1.5 py-0.5 text-2xs font-semibold mb-1"
-                  :class="SOURCE_BADGE_CLASS[n.source]"
-                >{{ sourceLabel(n) }}</span>
-                <!-- Message -->
-                <p class="text-xs text-gray-700 dark:text-gray-200 leading-snug">{{ n.message }}</p>
-                <!-- Action -->
+                <!-- row 1: [SOURCE] · time -->
+                <div class="flex items-center gap-1.5 leading-none mb-[3px]">
+                  <span class="text-[10px] font-bold tracking-wider px-1 py-0.5 rounded-sm"
+                    :class="n.source === 'room'
+                      ? 'text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-500/15'
+                      : 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-white/[0.07]'"
+                  >[{{ sourceLabel(n) }}]</span>
+                  <span class="text-[10px] text-gray-300 dark:text-gray-600">·</span>
+                  <span class="text-[10px] text-gray-400 dark:text-gray-500 tabular-nums">{{ formatTime(n.time) }}</span>
+                </div>
+                <!-- row 2: message -->
+                <p class="text-xs leading-snug text-gray-500 dark:text-gray-400 break-words">
+                  <span v-if="!expanded.has(n.id) && isLong(n.message)" v-html="highlightName(short(n.message))" />
+                  <span v-else v-html="highlightName(n.message)" />
+                  <button
+                    v-if="isLong(n.message)"
+                    @click.stop="toggleExpand(n.id)"
+                    class="ml-1 text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 hover:underline cursor-pointer whitespace-nowrap"
+                  >{{ expanded.has(n.id) ? '▲' : t('notification.more') }}</button>
+                </p>
+                <!-- action -->
                 <button
                   v-if="n.action"
                   @click="handleAction(n)"
-                  class="mt-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                  class="mt-0.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
                 >{{ n.action.label }}</button>
-                <!-- Time -->
-                <p class="text-2xs text-gray-400 dark:text-gray-500 mt-1">{{ formatTime(n.time) }}</p>
               </div>
 
-              <!-- Remove -->
+              <!-- dismiss -->
               <button
                 @click="remove(n.id)"
-                class="shrink-0 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-colors cursor-pointer mt-0.5"
-              >
-                <X class="w-3 h-3" :stroke-width="2" />
-              </button>
+                class="shrink-0 opacity-0 group-hover:opacity-100 text-gray-300 dark:text-gray-600 hover:text-gray-500 dark:hover:text-gray-400 transition-all cursor-pointer mt-0.5"
+              ><X class="w-3 h-3" :stroke-width="2" /></button>
             </div>
           </TransitionGroup>
         </div>
@@ -178,8 +206,20 @@ function handleAction(n) {
 .dropdown-enter-from  { opacity: 0; transform: translateY(-6px) scale(0.97); }
 .dropdown-leave-to    { opacity: 0; transform: translateY(-4px) scale(0.97); }
 
-.notif-item-enter-active { transition: all 0.2s ease; }
-.notif-item-leave-active { transition: all 0.15s ease; }
-.notif-item-enter-from   { opacity: 0; transform: translateX(8px); }
-.notif-item-leave-to     { opacity: 0; transform: translateX(8px); }
+.notif-item-enter-active { transition: all 0.18s ease; }
+.notif-item-leave-active { transition: all 0.14s ease; }
+.notif-item-enter-from   { opacity: 0; transform: translateX(6px); }
+.notif-item-leave-to     { opacity: 0; transform: translateX(6px); }
+
+.notif-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+.notif-scroll::-webkit-scrollbar { display: none; }
+
+p :deep(.name) {
+  font-size: 13px;
+  font-weight: 600;
+  color: #dc2626;
+}
+.dark p :deep(.name) {
+  color: #f87171;
+}
 </style>

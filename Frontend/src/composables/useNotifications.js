@@ -1,7 +1,15 @@
 import { ref, computed } from 'vue'
 
 // ── Singleton — module-level, shared toàn app ──
-const notifications = ref([])
+const notifications = ref([
+  { id: 0, type: 'success',  source: 'room',   roomName: 'dev-team',  message: 'alice đã tham gia phòng',           action: null, read: false, time: new Date(Date.now() - 30000) },
+  { id: -1, type: 'info',    source: 'room',   roomName: 'dev-team',  message: 'bob bắt đầu chia sẻ màn hình',      action: null, read: false, time: new Date(Date.now() - 90000) },
+  { id: -2, type: 'warning', source: 'room',   roomName: 'dev-team',  message: 'charlie mất kết nối',               action: null, read: false, time: new Date(Date.now() - 3 * 60000) },
+  { id: -3, type: 'warning', source: 'room',   roomName: 'design',    message: 'eve đã bị kích khỏi phòng',         action: null, read: true,  time: new Date(Date.now() - 8 * 60000) },
+  { id: -4, type: 'info',    source: 'room',   roomName: 'dev-team',  message: 'dave đã tắt camera',                action: null, read: true,  time: new Date(Date.now() - 15 * 60000) },
+  { id: -5, type: 'success', source: 'system', roomName: null,        message: 'Đã tạo phòng "sprint-planning"',    action: null, read: true,  time: new Date(Date.now() - 30 * 60000) },
+  { id: -6, type: 'error',   source: 'system', roomName: null,        message: 'Không thể xóa phòng "old-room"',   action: null, read: true,  time: new Date(Date.now() - 60 * 60000) },
+])
 let _nextId = 1
 
 // source: 'system' | 'room'

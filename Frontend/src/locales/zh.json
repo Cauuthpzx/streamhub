@@ -347,6 +347,19 @@
     "minutesAgo": "{n}分钟前",
     "hoursAgo": "{n}小时前",
     "roomCreated": "已创建房间 \"{name}\"",
-    "roomDeleted": "已删除房间 \"{name}\""
+    "roomDeleted": "已删除房间 \"{name}\"",
+    "participantJoined": "{name} 加入了房间",
+    "participantLeft": "{name} 离开了房间",
+    "participantDisconnected": "{name} 失去连接",
+    "participantKicked": "{name} 已被移出房间",
+    "screenShareStarted": "{name} 开始共享屏幕",
+    "screenShareStopped": "{name} 停止共享屏幕",
+    "youScreenShareStarted": "您正在共享屏幕",
+    "youScreenShareStopped": "您已停止共享屏幕",
+    "camEnabled": "{name} 开启了摄像头",
+    "camDisabled": "{name} 关闭了摄像头",
+    "micEnabled": "{name} 取消静音",
+    "micDisabled": "{name} 已静音",
+    "more": "展开"
   }
 }

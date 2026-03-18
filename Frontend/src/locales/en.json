@@ -347,6 +347,19 @@
     "minutesAgo": "{n}m ago",
     "hoursAgo": "{n}h ago",
     "roomCreated": "Room \"{name}\" created",
-    "roomDeleted": "Room \"{name}\" deleted"
+    "roomDeleted": "Room \"{name}\" deleted",
+    "participantJoined": "{name} joined the room",
+    "participantLeft": "{name} left the room",
+    "participantDisconnected": "{name} lost connection",
+    "participantKicked": "{name} was removed from the room",
+    "screenShareStarted": "{name} started screen sharing",
+    "screenShareStopped": "{name} stopped screen sharing",
+    "youScreenShareStarted": "You started screen sharing",
+    "youScreenShareStopped": "You stopped screen sharing",
+    "camEnabled": "{name} turned on camera",
+    "camDisabled": "{name} turned off camera",
+    "micEnabled": "{name} unmuted",
+    "micDisabled": "{name} muted",
+    "more": "more"
   }
 }

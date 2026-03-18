@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, ShieldCheck, Crown } from 'lucide-vue-next'
+import { Video, Plus, Trash2, Users, LoaderCircle, RefreshCw, DoorOpen, LogIn, Lock, ShieldCheck, Crown } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom } from '../services/room'
 import { useNotifications } from '../composables/useNotifications'
@@ -173,7 +173,7 @@ onUnmounted(() => {
 
       <!-- Loading -->
       <div v-if="loading && rooms.length === 0" class="text-center py-16">
-        <Loader2 class="w-6 h-6 text-indigo-500 animate-spin mx-auto" />
+        <LoaderCircle class="w-6 h-6 text-indigo-500 animate-spin mx-auto" />
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-3">{{ t('room.loading') }}</p>
       </div>
 

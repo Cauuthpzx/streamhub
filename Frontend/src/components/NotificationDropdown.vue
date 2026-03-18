@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Bell, CheckCheck, Trash2, X, CheckCircle, XCircle, AlertTriangle, Info, Settings } from 'lucide-vue-next'
+import { Bell, CheckCheck, Trash2, X, CircleCheck, CircleX, TriangleAlert, Info, Settings } from 'lucide-vue-next'
 import { useNotifications } from '../composables/useNotifications'
 import NotificationSettingsPanel from './NotificationSettingsPanel.vue'
 
@@ -46,9 +46,9 @@ onMounted(() => document.addEventListener('mousedown', handleOutsideClick))
 onUnmounted(() => document.removeEventListener('mousedown', handleOutsideClick))
 
 const TYPE_ICON = {
-  success: CheckCircle,
-  error:   XCircle,
-  warning: AlertTriangle,
+  success: CircleCheck,
+  error:   CircleX,
+  warning: TriangleAlert,
   info:    Info,
 }
 const TYPE_COLOR = {

@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Plus, Trash2, Radio, Loader2, Copy, Check, ArrowLeft } from 'lucide-vue-next'
+import { Plus, Trash2, Radio, LoaderCircle, Copy, Check, ArrowLeft } from 'lucide-vue-next'
 import { createIngress, listIngress, deleteIngress } from '../services/ingress'
 import { listRooms } from '../services/room'
 import AppLogo from '../components/AppLogo.vue'
@@ -172,7 +172,7 @@ onMounted(() => {
             :disabled="creating || !form.name || !form.room"
             class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
           >
-            <Loader2 v-if="creating" class="w-4 h-4 animate-spin" />
+            <LoaderCircle v-if="creating" class="w-4 h-4 animate-spin" />
             <Radio v-else class="w-4 h-4" :stroke-width="2" />
             {{ t('ingress.createBtn') }}
           </button>
@@ -184,7 +184,7 @@ onMounted(() => {
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
-        <Loader2 class="w-6 h-6 text-indigo-500 animate-spin" />
+        <LoaderCircle class="w-6 h-6 text-indigo-500 animate-spin" />
       </div>
 
       <!-- List -->

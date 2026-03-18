@@ -1,7 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Play, Square, Loader2, ArrowLeft, Circle } from 'lucide-vue-next'
+import { Play, Square, LoaderCircle, ArrowLeft, Circle } from 'lucide-vue-next'
 import { startEgress, listEgress, stopEgress } from '../services/egress'
 import { listRooms } from '../services/room'
 import AppLogo from '../components/AppLogo.vue'
@@ -123,7 +123,7 @@ onMounted(() => {
           :disabled="starting || !selectedRoom"
           class="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
         >
-          <Loader2 v-if="starting" class="w-4 h-4 animate-spin" />
+          <LoaderCircle v-if="starting" class="w-4 h-4 animate-spin" />
           <Circle v-else class="w-4 h-4 fill-current" :stroke-width="0" />
           {{ t('egress.startRecording') }}
         </button>
@@ -134,7 +134,7 @@ onMounted(() => {
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
-        <Loader2 class="w-6 h-6 text-indigo-500 animate-spin" />
+        <LoaderCircle class="w-6 h-6 text-indigo-500 animate-spin" />
       </div>
 
       <!-- Empty -->

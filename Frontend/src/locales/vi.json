@@ -335,5 +335,18 @@
     "grid": "Lưới",
     "tabs": "Tab",
     "spotlight": "Nổi bật"
+  },
+  "notification": {
+    "title": "Thông báo",
+    "system": "Hệ Thống",
+    "room": "Phòng",
+    "empty": "Không có thông báo",
+    "markAllRead": "Đánh dấu tất cả đã đọc",
+    "clearAll": "Xóa tất cả",
+    "justNow": "Vừa xong",
+    "minutesAgo": "{n} phút trước",
+    "hoursAgo": "{n} giờ trước",
+    "roomCreated": "Đã tạo phòng \"{name}\"",
+    "roomDeleted": "Đã xóa phòng \"{name}\""
   }
 }

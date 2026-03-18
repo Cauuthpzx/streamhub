@@ -58,7 +58,7 @@ onMounted(loadDevices)
 
 <template>
   <div class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="emit('close')">
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+    <div class="bg-white dark:bg-gray-800 rounded-sm shadow-xl p-6 w-full max-w-md mx-4">
       <div class="flex items-center justify-between mb-5">
         <div class="flex items-center gap-2">
           <Settings class="w-5 h-5 text-indigo-500" :stroke-width="2" />
@@ -76,7 +76,7 @@ onMounted(loadDevices)
           <select
             v-model="selectedAudioInput"
             @change="switchAudioInput"
-            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option v-for="d in audioInputs" :key="d.deviceId" :value="d.deviceId">{{ d.label || t('devices.unknownDevice') }}</option>
           </select>
@@ -89,7 +89,7 @@ onMounted(loadDevices)
           <select
             v-model="selectedVideoInput"
             @change="switchVideoInput"
-            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option v-for="d in videoInputs" :key="d.deviceId" :value="d.deviceId">{{ d.label || t('devices.unknownDevice') }}</option>
           </select>
@@ -102,7 +102,7 @@ onMounted(loadDevices)
           <select
             v-model="selectedAudioOutput"
             @change="switchAudioOutput"
-            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
             <option v-for="d in audioOutputs" :key="d.deviceId" :value="d.deviceId">{{ d.label || t('devices.unknownDevice') }}</option>
           </select>

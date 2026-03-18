@@ -117,7 +117,7 @@ onMounted(() => {
         </div>
         <button
           @click="showCreate = !showCreate"
-          class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+          class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
         >
           <Plus class="w-4 h-4" :stroke-width="2" />
           {{ t('ingress.create') }}
@@ -133,21 +133,21 @@ onMounted(() => {
         leave-from-class="opacity-100 translate-y-0"
         leave-to-class="opacity-0 -translate-y-2"
       >
-        <form v-if="showCreate" @submit.prevent="handleCreate" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6 space-y-4">
+        <form v-if="showCreate" @submit.prevent="handleCreate" class="bg-white dark:bg-gray-800 rounded-sm border border-gray-200 dark:border-gray-700 p-5 mb-6 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('ingress.name') }}</label>
               <input
                 v-model="form.name"
                 :placeholder="t('ingress.namePlaceholder')"
-                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none"
+                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none"
               />
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('ingress.room') }}</label>
               <select
                 v-model="form.room"
-                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-pointer"
+                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-pointer"
               >
                 <option value="" disabled>{{ t('ingress.selectRoom') }}</option>
                 <option v-for="r in rooms" :key="r.name" :value="r.name">{{ r.name }}</option>
@@ -170,7 +170,7 @@ onMounted(() => {
           <button
             type="submit"
             :disabled="creating || !form.name || !form.room"
-            class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+            class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
           >
             <Loader2 v-if="creating" class="w-4 h-4 animate-spin" />
             <Radio v-else class="w-4 h-4" :stroke-width="2" />
@@ -180,7 +180,7 @@ onMounted(() => {
       </Transition>
 
       <!-- Error -->
-      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg px-4 py-2 mb-4">{{ error }}</div>
+      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-sm px-4 py-2 mb-4">{{ error }}</div>
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
@@ -197,7 +197,7 @@ onMounted(() => {
         <div
           v-for="item in items"
           :key="item.ingress_id"
-          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4"
+          class="bg-white dark:bg-gray-800 rounded-sm border border-gray-200 dark:border-gray-700 p-4"
         >
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
@@ -219,7 +219,7 @@ onMounted(() => {
             </div>
             <div v-if="item.url" class="flex items-center gap-2">
               <span class="font-medium">URL:</span>
-              <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs break-all">{{ item.url }}</code>
+              <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-sm text-xs break-all">{{ item.url }}</code>
               <button @click="copyToClipboard(item.url, 'url-' + item.ingress_id)" class="shrink-0 cursor-pointer">
                 <Check v-if="copiedId === 'url-' + item.ingress_id" class="w-3.5 h-3.5 text-green-500" />
                 <Copy v-else class="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />
@@ -227,7 +227,7 @@ onMounted(() => {
             </div>
             <div v-if="item.stream_key" class="flex items-center gap-2">
               <span class="font-medium">{{ t('ingress.streamKey') }}:</span>
-              <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded text-xs">{{ item.stream_key }}</code>
+              <code class="bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-sm text-xs">{{ item.stream_key }}</code>
               <button @click="copyToClipboard(item.stream_key, 'sk-' + item.ingress_id)" class="shrink-0 cursor-pointer">
                 <Check v-if="copiedId === 'sk-' + item.ingress_id" class="w-3.5 h-3.5 text-green-500" />
                 <Copy v-else class="w-3.5 h-3.5 text-gray-400 hover:text-gray-600" />

@@ -79,7 +79,7 @@ function isImageFile(name) {
 function renderMarkdown(text) {
   return text
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-600 px-1 rounded text-xs font-mono">$1</code>')
+    .replace(/`([^`]+)`/g, '<code class="bg-gray-200 dark:bg-gray-600 px-1 rounded-sm text-xs font-mono">$1</code>')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
     .replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="text-indigo-500 hover:underline">$1</a>')
@@ -316,7 +316,7 @@ onMounted(loadHistory)
           </div>
         </div>
         <div
-          class="relative max-w-[80%] rounded-xl px-3 py-1.5 transition-colors"
+          class="relative max-w-[80%] rounded-sm px-3 py-1.5 transition-colors"
           :class="msg.isLocal
             ? 'bg-indigo-600 text-white rounded-br-sm'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-sm'"
@@ -342,7 +342,7 @@ onMounted(loadHistory)
             <img
               :src="getFileDownloadURL(msg.fileId)"
               :alt="msg.fileName"
-              class="max-w-full max-h-48 rounded-lg object-contain cursor-pointer hover:opacity-90 transition-opacity"
+              class="max-w-full max-h-48 rounded-sm object-contain cursor-pointer hover:opacity-90 transition-opacity"
               loading="lazy"
               @click="lightbox = { src: getFileDownloadURL(msg.fileId), name: msg.fileName }"
             />
@@ -357,7 +357,7 @@ onMounted(loadHistory)
           <a v-else-if="msg.fileId"
             :href="getFileDownloadURL(msg.fileId)"
             target="_blank"
-            class="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-lg text-xs cursor-pointer no-underline"
+            class="flex items-center gap-2 mt-1 px-2 py-1.5 rounded-sm text-xs cursor-pointer no-underline"
             :class="msg.isLocal ? 'bg-indigo-500/30 text-indigo-100 hover:bg-indigo-500/50' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'"
           >
             <FileIcon class="w-4 h-4 shrink-0" :stroke-width="1.8" />
@@ -374,7 +374,7 @@ onMounted(loadHistory)
           <button
             type="button"
             @click="setReply(msg)"
-            class="absolute top-1 opacity-0 group-hover:opacity-100 transition-opacity rounded p-0.5 cursor-pointer"
+            class="absolute top-1 opacity-0 group-hover:opacity-100 transition-opacity rounded-sm p-0.5 cursor-pointer"
             :class="msg.isLocal
               ? 'left-1 bg-indigo-500 hover:bg-indigo-400 -translate-x-full -ml-1'
               : 'right-1 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'"
@@ -393,7 +393,7 @@ onMounted(loadHistory)
         <div
           v-if="showEmojiPicker"
           ref="emojiPickerRef"
-          class="absolute bottom-full left-0 right-0 mx-2 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-xl shadow-lg p-2 z-50"
+          class="absolute bottom-full left-0 right-0 mx-2 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-sm shadow-lg p-2 z-50"
         >
           <div class="grid grid-cols-10 gap-0.5">
             <button
@@ -401,7 +401,7 @@ onMounted(loadHistory)
               :key="emoji"
               type="button"
               @click="insertEmoji(emoji)"
-              class="w-8 h-8 flex items-center justify-center rounded-md text-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer select-none"
+              class="w-8 h-8 flex items-center justify-center rounded-sm text-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer select-none"
             >{{ emoji }}</button>
           </div>
         </div>
@@ -426,7 +426,7 @@ onMounted(loadHistory)
             type="button"
             :title="t('chat.emoji')"
             @click="toggleEmojiPicker"
-            class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer"
+            class="w-8 h-8 rounded-sm flex items-center justify-center transition-colors cursor-pointer"
             :class="showEmojiPicker
               ? 'bg-indigo-100 dark:bg-indigo-900/40 text-indigo-500'
               : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'"
@@ -438,7 +438,7 @@ onMounted(loadHistory)
             :title="t('chat.attachFile')"
             @click="fileInputRef?.click()"
             :disabled="uploading"
-            class="w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
+            class="w-8 h-8 rounded-sm flex items-center justify-center transition-colors cursor-pointer text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-40"
           >
             <Paperclip class="w-[18px] h-[18px]" :stroke-width="1.8" />
           </button>
@@ -448,13 +448,13 @@ onMounted(loadHistory)
           ref="chatInput"
           v-model="input"
           :placeholder="t('chat.placeholder')"
-          class="flex-1 min-w-0 bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-text"
+          class="flex-1 min-w-0 bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-text"
           maxlength="500"
         />
         <button
           type="submit"
           :disabled="!input.trim()"
-          class="w-8 h-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shrink-0"
+          class="w-8 h-8 rounded-sm bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center transition-colors cursor-pointer shrink-0"
         >
           <Send class="w-4 h-4 text-white" :stroke-width="2" />
         </button>
@@ -466,7 +466,7 @@ onMounted(loadHistory)
       <Transition name="lightbox-fade">
         <div v-if="lightbox" class="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm" @click.self="lightbox = null">
           <div class="relative max-w-[90vw] max-h-[90vh]">
-            <img :src="lightbox.src" :alt="lightbox.name" class="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" />
+            <img :src="lightbox.src" :alt="lightbox.name" class="max-w-full max-h-[85vh] object-contain rounded-sm shadow-2xl" />
             <div class="absolute top-2 right-2 flex gap-1.5">
               <a :href="lightbox.src" download class="w-8 h-8 rounded-full bg-black/50 hover:bg-black/70 flex items-center justify-center transition-colors cursor-pointer" :title="t('chat.download')">
                 <Download class="w-4 h-4 text-white" :stroke-width="2" />

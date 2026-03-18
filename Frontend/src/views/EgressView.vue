@@ -113,7 +113,7 @@ onMounted(() => {
         <select
           v-model="selectedRoom"
           @change="fetchEgress"
-          class="bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+          class="bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
         >
           <option value="">{{ t('egress.selectRoom') }}</option>
           <option v-for="r in rooms" :key="r.name" :value="r.name">{{ r.name }}</option>
@@ -121,7 +121,7 @@ onMounted(() => {
         <button
           @click="handleStart"
           :disabled="starting || !selectedRoom"
-          class="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+          class="flex items-center gap-1.5 px-4 py-2 bg-red-600 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
         >
           <Loader2 v-if="starting" class="w-4 h-4 animate-spin" />
           <Circle v-else class="w-4 h-4 fill-current" :stroke-width="0" />
@@ -130,7 +130,7 @@ onMounted(() => {
       </div>
 
       <!-- Error -->
-      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg px-4 py-2 mb-4">{{ error }}</div>
+      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-sm px-4 py-2 mb-4">{{ error }}</div>
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
@@ -148,7 +148,7 @@ onMounted(() => {
         <div
           v-for="item in items"
           :key="item.egress_id"
-          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between"
+          class="bg-white dark:bg-gray-800 rounded-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between"
         >
           <div>
             <div class="flex items-center gap-2 mb-1">
@@ -164,7 +164,7 @@ onMounted(() => {
           <button
             v-if="isStoppable(item.status)"
             @click="handleStop(item.egress_id)"
-            class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-xs font-medium rounded-lg transition-colors cursor-pointer"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 text-xs font-medium rounded-sm transition-colors cursor-pointer"
           >
             <Square class="w-3.5 h-3.5" :stroke-width="2" />
             {{ t('egress.stop') }}

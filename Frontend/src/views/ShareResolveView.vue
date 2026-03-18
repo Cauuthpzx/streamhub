@@ -33,7 +33,7 @@ onMounted(async () => {
       <p class="text-red-500 dark:text-red-400 mb-4">{{ error }}</p>
       <button
         @click="router.push('/home')"
-        class="px-4 py-2 text-sm text-white bg-gray-600 dark:bg-gray-700 rounded-lg hover:bg-gray-500 dark:hover:bg-gray-600 cursor-pointer"
+        class="px-4 py-2 text-sm text-white bg-gray-600 dark:bg-gray-700 rounded-sm hover:bg-gray-500 dark:hover:bg-gray-600 cursor-pointer"
       >{{ t('chat.backToRooms') }}</button>
     </div>
   </div>

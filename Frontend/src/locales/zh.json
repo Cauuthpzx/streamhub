@@ -335,5 +335,18 @@
     "grid": "网格",
     "tabs": "标签页",
     "spotlight": "聚焦"
+  },
+  "notification": {
+    "title": "通知",
+    "system": "系统",
+    "room": "房间",
+    "empty": "暂无通知",
+    "markAllRead": "全部标为已读",
+    "clearAll": "清除全部",
+    "justNow": "刚刚",
+    "minutesAgo": "{n}分钟前",
+    "hoursAgo": "{n}小时前",
+    "roomCreated": "已创建房间 \"{name}\"",
+    "roomDeleted": "已删除房间 \"{name}\""
   }
 }

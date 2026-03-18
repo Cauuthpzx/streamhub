@@ -183,7 +183,7 @@ onUnmounted(stopLobbyPoll)
       <div class="flex gap-2">
         <select
           v-model="moveDestination"
-          class="flex-1 text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          class="flex-1 text-xs rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         >
           <option value="" disabled>{{ t('participants.selectRoom') }}</option>
           <option v-for="r in availableRooms" :key="r.name" :value="r.name">{{ r.name }}</option>
@@ -191,7 +191,7 @@ onUnmounted(stopLobbyPoll)
         <button
           @click="handleMove"
           :disabled="!moveDestination"
-          class="text-xs px-2.5 py-1.5 bg-indigo-600 text-white rounded hover:bg-indigo-700 disabled:opacity-40 cursor-pointer transition-colors"
+          class="text-xs px-2.5 py-1.5 bg-indigo-600 text-white rounded-sm hover:bg-indigo-700 disabled:opacity-40 cursor-pointer transition-colors"
         >{{ t('participants.move') }}</button>
         <button
           @click="moveTarget = null"
@@ -217,12 +217,12 @@ onUnmounted(stopLobbyPoll)
         </div>
         <div class="flex items-center gap-1 shrink-0">
           <AppTooltip :content="t('participants.approve')" position="top">
-            <button @click="handleApprove(user)" class="w-7 h-7 rounded flex items-center justify-center text-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer transition-colors">
+            <button @click="handleApprove(user)" class="w-7 h-7 rounded-sm flex items-center justify-center text-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer transition-colors">
               <UserCheck class="w-3.5 h-3.5" :stroke-width="1.8" />
             </button>
           </AppTooltip>
           <AppTooltip :content="t('participants.reject')" position="top">
-            <button @click="handleReject(user)" class="w-7 h-7 rounded flex items-center justify-center text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors">
+            <button @click="handleReject(user)" class="w-7 h-7 rounded-sm flex items-center justify-center text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors">
               <UserMinus class="w-3.5 h-3.5" :stroke-width="1.8" />
             </button>
           </AppTooltip>
@@ -260,7 +260,7 @@ onUnmounted(stopLobbyPoll)
             <button
               v-if="!p.isLocal && p.audioTrackSid"
               @click="handleToggleMute(p.identity, p.audioTrackSid, p.audioMuted)"
-              class="w-7 h-7 rounded flex items-center justify-center cursor-pointer transition-colors"
+              class="w-7 h-7 rounded-sm flex items-center justify-center cursor-pointer transition-colors"
               :class="p.audioMuted ? 'text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30' : 'text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600'"
             >
               <MicOff v-if="p.audioMuted" class="w-3.5 h-3.5" :stroke-width="1.8" />
@@ -282,7 +282,7 @@ onUnmounted(stopLobbyPoll)
           <AppTooltip v-if="!p.isLocal" :content="t('participants.moveBtn')" position="top">
             <button
               @click="openMoveDialog(p.identity)"
-              class="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 cursor-pointer transition-colors"
+              class="w-7 h-7 rounded-sm flex items-center justify-center text-gray-400 hover:text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/30 cursor-pointer transition-colors"
             >
               <ArrowRightLeft class="w-3.5 h-3.5" :stroke-width="1.8" />
             </button>
@@ -292,7 +292,7 @@ onUnmounted(stopLobbyPoll)
           <AppTooltip v-if="!p.isLocal" :content="t('participants.kick')" position="top">
             <button
               @click="handleKick(p.identity)"
-              class="w-7 h-7 rounded flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors"
+              class="w-7 h-7 rounded-sm flex items-center justify-center text-gray-400 hover:text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors"
             >
               <UserX class="w-3.5 h-3.5" :stroke-width="1.8" />
             </button>
@@ -310,7 +310,7 @@ onUnmounted(stopLobbyPoll)
       <button
         v-if="isCreator"
         @click="showDeleteDialog = true"
-        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm transition-colors cursor-pointer"
       >
         <Trash2 class="w-4 h-4" :stroke-width="1.8" />
         {{ t('room.deleteRoom') }}
@@ -318,7 +318,7 @@ onUnmounted(stopLobbyPoll)
       <button
         v-else
         @click="handleLeaveRoom"
-        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors cursor-pointer"
+        class="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm transition-colors cursor-pointer"
       >
         <LogOut class="w-4 h-4" :stroke-width="1.8" />
         {{ t('room.leaveRoom') }}

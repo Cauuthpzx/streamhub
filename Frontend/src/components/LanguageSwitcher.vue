@@ -35,7 +35,7 @@ function onLeave() {
   <div class="relative" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Trigger -->
     <button
-      class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+      class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
     >
       <!-- Current flag -->
       <svg v-if="locale === 'en'" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 32 32" class="shrink-0 rounded-sm">
@@ -78,7 +78,7 @@ function onLeave() {
     >
       <div
         v-if="open"
-        class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-max z-50"
+        class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-sm shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-max z-50"
       >
         <button
           v-for="loc in locales"

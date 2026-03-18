@@ -36,9 +36,9 @@ async function handleDelete() {
     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
     @click.self="emit('close')"
   >
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+    <div class="bg-white dark:bg-gray-800 rounded-sm shadow-xl p-6 w-full max-w-sm mx-4">
       <div class="flex items-center gap-3 mb-4">
-        <div class="w-9 h-9 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center shrink-0">
+        <div class="w-9 h-9 bg-red-100 dark:bg-red-900/30 rounded-sm flex items-center justify-center shrink-0">
           <Trash2 class="w-4 h-4 text-red-500" :stroke-width="2" />
         </div>
         <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('room.deleteConfirmTitle') }}</h3>
@@ -51,12 +51,12 @@ async function handleDelete() {
         <button
           :disabled="loading"
           @click="emit('close')"
-          class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50"
+          class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50"
         >{{ t('room.cancel') }}</button>
         <button
           :disabled="loading"
           @click="handleDelete"
-          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-sm hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
         >
           <Trash2 v-if="!loading" class="w-3.5 h-3.5" :stroke-width="2" />
           <span v-if="loading" class="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin"></span>

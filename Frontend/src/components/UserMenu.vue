@@ -75,7 +75,7 @@ async function saveEdit() {
 <template>
   <div class="relative" @mouseenter="onEnter" @mouseleave="onLeave">
     <!-- Trigger button -->
-    <button class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
+    <button class="flex items-center gap-2 px-2.5 py-1.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer">
       <div v-if="avatar" class="w-6 h-6 rounded-full overflow-hidden shrink-0">
         <img
           :src="`/avatars/${avatar}.webp`"
@@ -100,7 +100,7 @@ async function saveEdit() {
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 -translate-y-1"
     >
-      <div v-if="open" class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-lg shadow-popup border border-gray-200 dark:border-gray-700 py-1 min-w-max z-50">
+      <div v-if="open" class="absolute right-0 top-full mt-1 bg-white dark:bg-gray-800 rounded-sm shadow-popup border border-gray-200 dark:border-gray-700 py-1 min-w-max z-50">
         <button @click="openDialog" class="w-full flex items-center gap-2.5 px-3 py-2 text-sm whitespace-nowrap text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer">
           <Pencil class="w-4 h-4" :stroke-width="1.8" />
           <span>{{ t('profile.edit') }}</span>
@@ -128,11 +128,11 @@ async function saveEdit() {
         <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" @click="closeDialog"></div>
 
         <!-- Dialog -->
-        <div class="relative bg-white dark:bg-gray-800 rounded-2xl shadow-popup border border-gray-200 dark:border-gray-700 w-[380px] max-w-[95vw] p-5 z-10">
+        <div class="relative bg-white dark:bg-gray-800 rounded-sm shadow-popup border border-gray-200 dark:border-gray-700 w-[380px] max-w-[95vw] p-5 z-10">
           <!-- Header -->
           <div class="flex items-center justify-between mb-4">
             <h3 class="text-base font-semibold text-gray-800 dark:text-gray-100">{{ t('profile.edit') }}</h3>
-            <button @click="closeDialog" class="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors">
+            <button @click="closeDialog" class="p-1.5 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer transition-colors">
               <X class="w-4 h-4 text-gray-400" :stroke-width="2" />
             </button>
           </div>
@@ -161,7 +161,7 @@ async function saveEdit() {
               <input
                 v-model="displayName"
                 :placeholder="username"
-                class="w-full px-3 py-2 text-sm rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-center"
+                class="w-full px-3 py-2 text-sm rounded-sm border border-gray-200 dark:border-gray-600 bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-center"
               />
             </div>
           </div>
@@ -178,7 +178,7 @@ async function saveEdit() {
             <button
               @click="closeDialog"
               :disabled="saving"
-              class="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-sm transition-colors cursor-pointer disabled:opacity-50"
             >
               <X class="w-4 h-4" :stroke-width="2" />
               {{ t('room.cancel') }}
@@ -186,7 +186,7 @@ async function saveEdit() {
             <button
               @click="saveEdit"
               :disabled="saving"
-              class="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+              class="flex-1 flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 rounded-sm transition-colors cursor-pointer disabled:opacity-50"
             >
               <Save class="w-4 h-4" :stroke-width="2" />
               {{ saving ? t('profile.saving') : t('profile.save') }}

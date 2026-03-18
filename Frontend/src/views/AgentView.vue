@@ -103,7 +103,7 @@ onMounted(fetchRooms)
         </div>
         <button
           @click="showCreate = !showCreate"
-          class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+          class="flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
         >
           <Plus class="w-4 h-4" :stroke-width="2" />
           {{ t('agent.dispatch') }}
@@ -119,21 +119,21 @@ onMounted(fetchRooms)
         leave-from-class="opacity-100 translate-y-0"
         leave-to-class="opacity-0 -translate-y-2"
       >
-        <form v-if="showCreate" @submit.prevent="handleCreate" class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-5 mb-6 space-y-4">
+        <form v-if="showCreate" @submit.prevent="handleCreate" class="bg-white dark:bg-gray-800 rounded-sm border border-gray-200 dark:border-gray-700 p-5 mb-6 space-y-4">
           <div class="grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('agent.agentName') }}</label>
               <input
                 v-model="form.agentName"
                 :placeholder="t('agent.agentNamePlaceholder')"
-                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none"
+                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none"
               />
             </div>
             <div>
               <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('agent.room') }}</label>
               <select
                 v-model="form.room"
-                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-pointer"
+                class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none cursor-pointer"
               >
                 <option value="" disabled>{{ t('ingress.selectRoom') }}</option>
                 <option v-for="r in rooms" :key="r.name" :value="r.name">{{ r.name }}</option>
@@ -145,13 +145,13 @@ onMounted(fetchRooms)
             <input
               v-model="form.metadata"
               :placeholder="t('agent.metadataPlaceholder')"
-              class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none"
+              class="w-full bg-gray-100 dark:bg-gray-700 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 focus:outline-none focus:ring-1 focus:ring-indigo-500 border-none"
             />
           </div>
           <button
             type="submit"
             :disabled="creating || !form.agentName || !form.room"
-            class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors cursor-pointer"
+            class="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-medium rounded-sm transition-colors cursor-pointer"
           >
             <Loader2 v-if="creating" class="w-4 h-4 animate-spin" />
             <Bot v-else class="w-4 h-4" :stroke-width="2" />
@@ -165,7 +165,7 @@ onMounted(fetchRooms)
         <select
           v-model="selectedRoom"
           @change="fetchDispatches"
-          class="bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white rounded-lg px-3 py-2 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
+          class="bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white rounded-sm px-3 py-2 border border-gray-200 dark:border-gray-700 focus:outline-none focus:ring-1 focus:ring-indigo-500 cursor-pointer"
         >
           <option value="">{{ t('agent.selectRoomFilter') }}</option>
           <option v-for="r in rooms" :key="r.name" :value="r.name">{{ r.name }}</option>
@@ -173,7 +173,7 @@ onMounted(fetchRooms)
       </div>
 
       <!-- Error -->
-      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-lg px-4 py-2 mb-4">{{ error }}</div>
+      <div v-if="error" class="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 text-sm rounded-sm px-4 py-2 mb-4">{{ error }}</div>
 
       <!-- Loading -->
       <div v-if="loading" class="flex items-center justify-center py-16">
@@ -191,7 +191,7 @@ onMounted(fetchRooms)
         <div
           v-for="item in items"
           :key="item.id"
-          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between"
+          class="bg-white dark:bg-gray-800 rounded-sm border border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between"
         >
           <div>
             <div class="flex items-center gap-2 mb-1">

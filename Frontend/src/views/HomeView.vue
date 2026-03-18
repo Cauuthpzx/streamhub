@@ -5,14 +5,17 @@ import { useI18n } from 'vue-i18n'
 import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, ShieldCheck, Crown } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom } from '../services/room'
+import { useNotifications } from '../composables/useNotifications'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import UserMenu from '../components/UserMenu.vue'
 import AppLogo from '../components/AppLogo.vue'
+import NotificationDropdown from '../components/NotificationDropdown.vue'
 
 const router = useRouter()
 const { t } = useI18n()
 const username = getUsername()
+const notif = useNotifications()
 
 const rooms = ref([])
 const loading = ref(false)
@@ -42,8 +45,9 @@ async function handleCreate() {
   if (!newRoomName.value.trim()) return
   creating.value = true
   error.value = ''
+  const name = newRoomName.value.trim()
   try {
-    await createRoom(newRoomName.value.trim(), {
+    await createRoom(name, {
       maxParticipants: parseInt(newRoomMaxParticipants.value) || 0,
       password: newRoomPassword.value,
       lobbyEnabled: newRoomLobby.value,
@@ -54,8 +58,10 @@ async function handleCreate() {
     newRoomLobby.value = false
     showCreate.value = false
     await fetchRooms()
+    notif.system.success(t('notification.roomCreated', { name }))
   } catch (e) {
     error.value = t(e.message)
+    notif.system.error(t(e.message))
   } finally {
     creating.value = false
   }
@@ -66,8 +72,10 @@ async function handleDelete(name) {
   try {
     await deleteRoom(name)
     await fetchRooms()
+    notif.system.success(t('notification.roomDeleted', { name }))
   } catch (e) {
     error.value = t(e.message)
+    notif.system.error(t(e.message))
   }
 }
 
@@ -134,6 +142,7 @@ onUnmounted(() => {
         <div class="flex items-center gap-3">
           <ThemeToggle />
           <LanguageSwitcher />
+          <NotificationDropdown />
           <UserMenu />
         </div>
       </div>
@@ -148,14 +157,14 @@ onUnmounted(() => {
           <button
             @click="fetchRooms"
             :disabled="loading"
-            class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer disabled:opacity-50"
           >
             <RefreshCw class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" :stroke-width="2" />
             {{ t('room.refresh') }}
           </button>
           <button
             @click="showCreate = !showCreate"
-            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+            class="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
           >
             <Plus class="w-3.5 h-3.5" :stroke-width="2.5" />
             {{ t('room.newRoom') }}
@@ -164,12 +173,12 @@ onUnmounted(() => {
       </div>
 
       <!-- Error -->
-      <div v-if="error" class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+      <div v-if="error" class="mb-4 rounded-sm bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
         {{ error }}
       </div>
 
       <!-- Create room form -->
-      <div v-if="showCreate" class="mb-4 bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card p-4">
+      <div v-if="showCreate" class="mb-4 bg-white dark:bg-gray-800 rounded-sm border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card p-4">
         <form @submit.prevent="handleCreate" class="space-y-3">
           <div class="flex gap-3">
             <div class="flex-1">
@@ -177,7 +186,7 @@ onUnmounted(() => {
               <input
                 v-model="newRoomName"
                 :placeholder="t('room.roomNamePlaceholder')"
-                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text"
+                class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text"
                 autofocus
               />
             </div>
@@ -188,7 +197,7 @@ onUnmounted(() => {
                 type="number"
                 min="0"
                 :placeholder="t('room.maxPeoplePlaceholder')"
-                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text"
+                class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text"
               />
             </div>
           </div>
@@ -198,11 +207,11 @@ onUnmounted(() => {
               v-model="newRoomPassword"
               type="password"
               :placeholder="t('room.passwordPlaceholder')"
-              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text"
+              class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text"
             />
           </div>
           <label class="flex items-center gap-2 cursor-pointer">
-            <input v-model="newRoomLobby" type="checkbox" class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+            <input v-model="newRoomLobby" type="checkbox" class="w-4 h-4 rounded-sm border-gray-300 dark:border-gray-600 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
             <span class="text-sm text-gray-700 dark:text-gray-300">{{ t('room.lobbyEnable') }}</span>
             <span class="text-3xs text-gray-400">({{ t('room.lobbyEnableHint') }})</span>
           </label>
@@ -210,7 +219,7 @@ onUnmounted(() => {
             <button
               type="submit"
               :disabled="creating || !newRoomName.trim()"
-              class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              class="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
             >
               <Loader2 v-if="creating" class="w-4 h-4 animate-spin" />
               <span v-else>{{ t('room.create') }}</span>
@@ -218,7 +227,7 @@ onUnmounted(() => {
             <button
               type="button"
               @click="showCreate = false"
-              class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+              class="px-3 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
             >
               {{ t('room.cancel') }}
             </button>
@@ -244,10 +253,10 @@ onUnmounted(() => {
         <div
           v-for="room in rooms"
           :key="room.sid"
-          class="bg-white dark:bg-gray-800 rounded-xl border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card px-4 py-3 flex items-center justify-between hover:shadow-popup dark:hover:shadow-popup transition-all"
+          class="bg-white dark:bg-gray-800 rounded-sm border border-gray-200/80 dark:border-white/[0.06] shadow-card dark:shadow-card px-4 py-3 flex items-center justify-between hover:shadow-popup dark:hover:shadow-popup transition-all"
         >
           <div class="flex items-center gap-3 min-w-0">
-            <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            <div class="w-9 h-9 rounded-sm flex items-center justify-center shrink-0"
               :class="room.num_participants > 0 ? 'bg-green-50 dark:bg-green-900/30' : 'bg-gray-100 dark:bg-gray-700/50'"
             >
               <Video class="w-4 h-4" :class="room.num_participants > 0 ? 'text-green-600 dark:text-green-400' : 'text-gray-400 dark:text-gray-500'" :stroke-width="1.8" />
@@ -277,7 +286,7 @@ onUnmounted(() => {
           <div class="flex items-center gap-1 shrink-0">
             <button
               @click="handleJoin(room)"
-              class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 transition-colors cursor-pointer"
+              class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
             >
               <LogIn class="w-3.5 h-3.5" :stroke-width="2" />
               {{ t('room.join') }}
@@ -285,7 +294,7 @@ onUnmounted(() => {
             <AppTooltip v-if="room.creator === username" :content="t('room.delete')" position="top">
               <button
                 @click="handleDelete(room.name)"
-                class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-colors cursor-pointer"
+                class="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-sm transition-colors cursor-pointer"
               >
                 <Trash2 class="w-4 h-4" :stroke-width="1.8" />
               </button>
@@ -298,7 +307,7 @@ onUnmounted(() => {
 
     <!-- Join password dialog -->
     <div v-if="showJoinDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showJoinDialog = false">
-      <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
+      <div class="bg-white dark:bg-gray-800 rounded-sm shadow-xl p-6 w-full max-w-sm mx-4">
         <div class="flex items-center gap-2 mb-4">
           <Lock class="w-5 h-5 text-amber-500" :stroke-width="2" />
           <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('room.passwordRequired') }}</h3>
@@ -311,20 +320,20 @@ onUnmounted(() => {
           v-model="joinPassword"
           type="password"
           :placeholder="t('room.enterPassword')"
-          class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text mb-4"
+          class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text mb-4"
           autofocus
           @keyup.enter="confirmJoin"
         />
         <div class="flex gap-2 justify-end">
           <button
             @click="showJoinDialog = false"
-            class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+            class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           >
             {{ t('room.cancel') }}
           </button>
           <button
             @click="confirmJoin"
-            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
           >
             {{ t('room.join') }}
           </button>

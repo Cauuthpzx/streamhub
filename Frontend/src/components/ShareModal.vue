@@ -54,7 +54,7 @@ onMounted(() => {
 <template>
   <Transition name="modal-fade">
     <div v-if="show" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" @click.self="emit('close')">
-      <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-popup w-[360px] max-w-[90vw] overflow-hidden">
+      <div class="bg-white dark:bg-gray-800 rounded-sm shadow-popup w-[360px] max-w-[90vw] overflow-hidden">
         <!-- Header -->
         <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 dark:border-gray-700">
           <h3 class="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
@@ -73,7 +73,7 @@ onMounted(() => {
           </div>
           <template v-else-if="qrDataURL">
             <!-- QR Code -->
-            <div class="bg-white p-2 rounded-xl shadow-card">
+            <div class="bg-white p-2 rounded-sm shadow-card">
               <img :src="qrDataURL" alt="QR Code" class="w-[200px] h-[200px]" />
             </div>
 
@@ -82,11 +82,11 @@ onMounted(() => {
               <input
                 :value="shareURL"
                 readonly
-                class="flex-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg px-3 py-2 border-none focus:outline-none cursor-text"
+                class="flex-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-sm px-3 py-2 border-none focus:outline-none cursor-text"
               />
               <button
                 @click="copyLink"
-                class="shrink-0 w-9 h-9 rounded-lg bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center transition-colors cursor-pointer"
+                class="shrink-0 w-9 h-9 rounded-sm bg-indigo-600 hover:bg-indigo-700 flex items-center justify-center transition-colors cursor-pointer"
               >
                 <Check v-if="copied" class="w-4 h-4 text-white" :stroke-width="2" />
                 <Copy v-else class="w-4 h-4 text-white" :stroke-width="2" />

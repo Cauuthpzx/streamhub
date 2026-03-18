@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Discord Livestream</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #1e1f22; font-family: 'gg sans', 'Noto Sans', sans-serif; overflow: hidden; }
+
+  .app { display: flex; height: 100vh; width: 100vw; color: #dcddde; font-size: 14px; }
+
+  /* ── Server sidebar ── */
+  .sidebar-server {
+    width: 72px; background: #1e1f22;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 0; gap: 8px; flex-shrink: 0;
+  }
+  .server-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: #5865f2; display: flex; align-items: center;
+    justify-content: center; font-weight: 700; font-size: 18px;
+    color: white; cursor: pointer; transition: border-radius 0.15s;
+    flex-shrink: 0; user-select: none;
+  }
+  .server-icon:hover { border-radius: 16px; filter: brightness(1.1); }
+  .server-icon.active { border-radius: 16px; }
+  .server-sep { width: 32px; height: 2px; background: #36393f; border-radius: 1px; }
+
+  /* ── Channel sidebar ── */
+  .sidebar-channels {
+    width: 240px; background: #2b2d31;
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .server-name {
+    padding: 16px; font-weight: 700; font-size: 15px; color: #f2f3f5;
+    border-bottom: 1px solid #1e1f22;
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer;
+  }
+  .server-name:hover { background: #35373c; }
+  .channel-list { flex: 1; overflow-y: auto; padding: 8px; }
+  .channel-group { margin-bottom: 4px; }
+  .channel-group-header {
+    font-size: 11px; font-weight: 700; color: #949ba4;
+    text-transform: uppercase; letter-spacing: 0.02em;
+    padding: 6px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;
+  }
+  .channel-group-header:hover { color: #dcddde; }
+  .channel-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 8px; border-radius: 4px; cursor: pointer;
+    color: #949ba4; font-size: 15px;
+  }
+  .channel-item:hover { background: #35373c; color: #dcddde; }
+  .channel-item.active { background: #404249; color: #f2f3f5; }
+  .channel-item.live { color: #3ba55c; }
+  .ch-icon { font-size: 16px; width: 20px; text-align: center; flex-shrink: 0; }
+  .live-badge {
+    background: #ed4245; color: white; font-size: 10px;
+    font-weight: 700; padding: 1px 5px; border-radius: 3px; margin-left: auto;
+  }
+  .user-count { font-size: 11px; color: #6d6f78; margin-left: auto; }
+
+  .user-panel {
+    padding: 8px; background: #232428;
+    display: flex; align-items: center; gap: 8px; margin-top: auto;
+  }
+  .user-avatar {
+    width: 32px; height: 32px; border-radius: 50%; background: #5865f2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; color: white;
+    flex-shrink: 0; position: relative; cursor: pointer;
+  }
+  .user-avatar:hover { filter: brightness(1.1); }
+  .status-dot {
+    width: 10px; height: 10px; border-radius: 50%; background: #3ba55c;
+    position: absolute; bottom: -1px; right: -1px; border: 2px solid #232428;
+  }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; font-weight: 600; color: #f2f3f5; }
+  .user-tag { font-size: 11px; color: #949ba4; }
+  .user-controls { display: flex; gap: 2px; }
+  .ctrl-btn {
+    width: 32px; height: 32px; border-radius: 4px; background: transparent;
+    border: none; color: #b5bac1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .ctrl-btn:hover { background: #35373c; color: #f2f3f5; }
+
+  /* ── Main area ── */
+  .main { flex: 1; display: flex; flex-direction: column; background: #313338; min-width: 0; }
+
+  /* Header */
+  .stream-header {
+    padding: 0 16px; height: 48px; border-bottom: 1px solid #1e1f22;
+    display: flex; align-items: center; gap: 10px;
+    background: #313338; flex-shrink: 0;
+  }
+  .stream-title-area { flex: 1; display: flex; align-items: center; gap: 8px; }
+  .stream-name { font-weight: 700; font-size: 16px; color: #f2f3f5; display: flex; align-items: center; gap: 8px; }
+  .viewer-count { font-size: 13px; color: #949ba4; }
+  .header-actions { display: flex; gap: 6px; }
+  .hdr-btn {
+    background: transparent; border: none; color: #b5bac1;
+    padding: 6px 8px; border-radius: 4px; cursor: pointer; font-size: 13px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .hdr-btn:hover { background: #35373c; color: #dcddde; }
+  .hdr-btn.primary { background: #5865f2; color: white; padding: 6px 12px; }
+  .hdr-btn.primary:hover { background: #4752c4; }
+
+  /* ── Video area (Discord-style) ── */
+  .stream-content { flex: 1; display: flex; flex-direction: column; min-height: 0; position: relative; background: #313338; }
+
+  /* Focused view wrapper */
+  .focus-root {
+    flex: 1; overflow: hidden;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 16px 16px 0;
+    gap: 10px;
+    transition: padding 0.25s ease;
+  }
+  .focus-root.fullscreen { padding: 0; justify-content: stretch; }
+
+  /* Main focused tile — 16:9, centered, max width */
+  .focused-tile {
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    background: #1e1f22; border-radius: 8px;
+    width: 100%; max-width: 1100px;
+    aspect-ratio: 16 / 9;
+    flex-shrink: 0;
+    transition: all 0.25s ease;
+  }
+  .focused-tile.expanded {
+    aspect-ratio: unset;
+    flex: 1;
+    max-width: 100%;
+    border-radius: 0;
+  }
+  .focused-tile .tile-bg {
+    position: absolute; inset: 0; border-radius: 8px;
+    background: linear-gradient(135deg, #1a1b1e 0%, #25262b 60%, #1e1f22 100%);
+  }
+  .focused-tile .tile-inner {
+    position: relative; z-index: 2;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%;
+  }
+  /* Avatar large */
+  .focus-avatar {
+    width: 96px; height: 96px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; font-weight: 700; color: white;
+  }
+
+  /* Overlay bottom-left: name bar */
+  .focus-namebar {
+    position: absolute; bottom: 12px; left: 12px; z-index: 4;
+    display: flex; align-items: center; gap: 8px;
+    background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+    padding: 5px 10px; border-radius: 20px;
+  }
+  .focus-namebar-avatar {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 700; color: white;
+  }
+  .focus-namebar-name { font-size: 13px; font-weight: 600; color: #fff; }
+
+  /* Mic mute icon top-left */
+  .focus-mute {
+    position: absolute; top: 10px; left: 10px; z-index: 4;
+    background: rgba(0,0,0,0.55); border-radius: 50%;
+    width: 28px; height: 28px; display: none;
+    align-items: center; justify-content: center; font-size: 13px;
+  }
+  .focus-mute.show { display: flex; }
+
+  /* LIVE badge top-right */
+  .focus-live {
+    position: absolute; top: 10px; right: 10px; z-index: 4;
+  }
+  .live-pill {
+    background: #ed4245; color: white; font-size: 11px;
+    font-weight: 800; padding: 3px 8px; border-radius: 12px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* Action row (toggle participants button) */
+  .action-row {
+    position: absolute; bottom: -20px; left: 50%; transform: translateX(-50%);
+    z-index: 10; transition: bottom 0.25s ease; white-space: nowrap;
+  }
+  .focused-tile:hover .action-row { bottom: 10px; }
+  .participants-toggle-btn {
+    background: rgba(30,31,34,0.85); backdrop-filter: blur(8px);
+    border: none; color: #b5bac1; cursor: pointer;
+    padding: 8px 16px; border-radius: 20px;
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; font-weight: 600; transition: background 0.15s;
+  }
+  .participants-toggle-btn:hover { background: rgba(50,52,56,0.95); color: #f2f3f5; }
+  .participants-toggle-btn svg { transition: transform 0.25s; }
+  .participants-toggle-btn.collapsed svg.caret { transform: rotate(180deg); }
+
+  /* ── Participant strip (slides up) ── */
+  .participants-wrapper {
+    width: 100%;
+    height: 130px; flex-shrink: 0;
+    overflow: hidden; transition: height 0.25s ease, opacity 0.25s ease;
+    opacity: 1;
+  }
+  .participants-wrapper.hidden { height: 0; opacity: 0; }
+
+  .participants-inner {
+    display: flex; gap: 8px; padding: 4px 12px 8px;
+    height: 100%; overflow-x: auto; overflow-y: hidden;
+    align-items: stretch;
+  }
+  .participants-inner::-webkit-scrollbar { height: 4px; }
+  .participants-inner::-webkit-scrollbar-thumb { background: #404249; border-radius: 2px; }
+
+  /* Participant tile */
+  .ptile {
+    flex: 1; min-width: 120px; max-width: 220px;
+    background: #1e1f22; border-radius: 8px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: 2px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .ptile:hover { border-color: #5865f2; }
+  .ptile.speaking { border-color: #3ba55c; }
+  .ptile.selected { border-color: #5865f2; }
+  .ptile.screen-ptile { border-color: #5865f2; background: #1a1b2e; }
+
+  .ptile-avatar {
+    width: 52px; height: 52px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 700; color: white;
+  }
+  .ptile-name {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.6); padding: 4px 6px;
+    font-size: 12px; color: #dcddde; font-weight: 500;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .ptile-name-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .ptile-mic { font-size: 11px; color: #ed4245; }
+
+  /* LIVE badge on ptile */
+  .ptile-live {
+    position: absolute; top: 6px; left: 6px;
+    background: #ed4245; color: white; font-size: 9px;
+    font-weight: 800; padding: 2px 6px; border-radius: 10px;
+    letter-spacing: 0.06em;
+  }
+
+  /* Options btn on ptile */
+  .ptile-opts {
+    position: absolute; top: 6px; right: 6px;
+    background: rgba(0,0,0,0.5); border: none; color: #dcddde;
+    border-radius: 4px; width: 24px; height: 24px;
+    display: none; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 14px;
+  }
+  .ptile:hover .ptile-opts { display: flex; }
+  .ptile-opts:hover { background: rgba(0,0,0,0.8); }
+
+  /* Selected phone icon */
+  .ptile-selected-icon {
+    position: absolute; bottom: 30px; right: 6px;
+    font-size: 16px; color: #5865f2; display: none;
+  }
+  .ptile.selected .ptile-selected-icon { display: block; }
+
+  /* ── Grid view ── */
+  .grid-root {
+    flex: 1; display: none;
+    padding: 20px; overflow: auto;
+    background: #313338;
+    align-items: center; justify-content: center;
+  }
+  .grid-root.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .grid-inner {
+    display: grid; grid-template-columns: repeat(3, 280px);
+    gap: 12px;
+  }
+
+  .gtile {
+    background: #1e1f22; border-radius: 8px;
+    position: relative; overflow: hidden; aspect-ratio: 16/9;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: 2px solid transparent;
+    transition: border-color 0.15s;
+  }
+  .gtile:hover { border-color: #5865f2; }
+  .gtile.speaking { border-color: #3ba55c; }
+  .gtile.screen-gtile { border-color: #5865f2; background: #1a1b2e; }
+
+  .gtile-avatar {
+    width: 64px; height: 64px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: white;
+  }
+  .gtile-namebar {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.6); padding: 5px 8px;
+    font-size: 12px; color: #dcddde; font-weight: 500;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .gtile-live {
+    position: absolute; top: 8px; left: 8px;
+    background: #ed4245; color: white; font-size: 9px;
+    font-weight: 800; padding: 2px 7px; border-radius: 10px; letter-spacing: 0.06em;
+  }
+  .gtile-badge {
+    position: absolute; top: 8px; right: 8px;
+    background: #3ba55c; color: white; font-size: 9px;
+    font-weight: 700; padding: 2px 7px; border-radius: 10px;
+  }
+  .gtile-opts {
+    position: absolute; top: 8px; right: 8px;
+    background: rgba(0,0,0,0.5); border: none; color: #dcddde;
+    border-radius: 4px; width: 26px; height: 26px;
+    display: none; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 15px;
+  }
+  .gtile:hover .gtile-opts { display: flex; }
+
+  /* ── Controls bar ── */
+  .controls-bar {
+    padding: 0 16px; height: 48px; background: #2b2d31;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-shrink: 0; border-top: 1px solid #1e1f22;
+  }
+  .ctrl-group { display: flex; gap: 4px; align-items: center; }
+
+  .ctrl-big {
+    width: 32px; height: 32px; border-radius: 50%;
+    border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; transition: all 0.15s; flex-shrink: 0;
+    position: relative;
+  }
+  .ctrl-big.state-on { background: #4f545c; color: #f2f3f5; }
+  .ctrl-big.state-on:hover { background: #5d6269; }
+  .ctrl-big.state-off { background: #ed4245; color: white; }
+  .ctrl-big.state-off:hover { background: #c03537; }
+  .ctrl-big.state-neutral { background: #4f545c; color: #b5bac1; }
+  .ctrl-big.state-neutral:hover { background: #5d6269; color: #f2f3f5; }
+  .ctrl-big.state-active { background: #5865f2; color: white; }
+  .ctrl-big.state-active:hover { background: #4752c4; }
+
+  /* Tooltip */
+  .ctrl-big[data-tip]:hover::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 8px); left: 50%; transform: translateX(-50%);
+    background: #18191c; color: #dcddde; font-size: 12px; font-weight: 600;
+    padding: 5px 10px; border-radius: 5px; white-space: nowrap; pointer-events: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+  }
+
+  .end-call-btn {
+    background: #ed4245; color: white; border: none;
+    padding: 6px 12px; border-radius: 4px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    display: flex; align-items: center; gap: 6px; white-space: nowrap;
+  }
+  .end-call-btn:hover { background: #c03537; }
+  .duration { font-size: 12px; color: #949ba4; font-variant-numeric: tabular-nums; min-width: 54px; }
+
+  /* ── Toast ── */
+  #toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: #18191c; color: #f2f3f5; padding: 10px 18px; border-radius: 8px;
+    font-size: 13px; font-weight: 600; opacity: 0; transition: opacity 0.25s;
+    pointer-events: none; z-index: 9999; white-space: nowrap;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+  }
+
+  /* ── Leave modal ── */
+  .modal-backdrop {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.75); z-index: 10000;
+    align-items: center; justify-content: center;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal-box {
+    background: #313338; border-radius: 8px; padding: 28px 24px;
+    width: 360px; text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+  }
+  .modal-title { font-size: 20px; font-weight: 700; color: #f2f3f5; margin-bottom: 8px; }
+  .modal-body { font-size: 14px; color: #949ba4; margin-bottom: 24px; line-height: 1.5; }
+  .modal-actions { display: flex; gap: 12px; justify-content: center; }
+  .modal-btn {
+    padding: 10px 28px; border-radius: 4px; border: none;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+  }
+  .modal-btn.cancel { background: #4f545c; color: #f2f3f5; }
+  .modal-btn.cancel:hover { background: #5d6269; }
+  .modal-btn.confirm { background: #ed4245; color: white; }
+  .modal-btn.confirm:hover { background: #c03537; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Server sidebar -->
+  <div class="sidebar-server">
+    <div class="server-icon active" title="Dev Community">D</div>
+    <div class="server-sep"></div>
+    <div class="server-icon" style="background:#3ba55c;font-size:13px;border-radius:16px" title="GameFi">GF</div>
+    <div class="server-icon" style="background:#e67e22;font-size:13px;border-radius:16px" title="ArtHub">ART</div>
+    <div class="server-icon" style="background:#ed4245;font-size:13px;border-radius:16px" title="LOL">LOL</div>
+    <div class="server-sep"></div>
+    <div class="server-icon" style="background:#36393f;color:#3ba55c;font-size:26px" title="Thêm server">+</div>
+  </div>
+
+  <!-- Channel sidebar -->
+  <div class="sidebar-channels">
+    <div class="server-name">
+      <span>Dev Community</span>
+      <span style="font-size:20px;font-weight:300">⌄</span>
+    </div>
+    <div class="channel-list">
+      <div class="channel-group">
+        <div class="channel-group-header">▾ Text Channels</div>
+        <div class="channel-item"><span class="ch-icon">#</span>general</div>
+        <div class="channel-item"><span class="ch-icon">#</span>announcements</div>
+        <div class="channel-item active"><span class="ch-icon">#</span>live-chat <span class="live-badge">LIVE</span></div>
+        <div class="channel-item"><span class="ch-icon">#</span>resources</div>
+      </div>
+      <div class="channel-group">
+        <div class="channel-group-header">▾ Voice Channels</div>
+        <div class="channel-item live">
+          <span class="ch-icon" style="font-size:11px">▶</span>
+          <span style="flex:1">stream-room-1</span>
+          <span class="user-count">6/10</span>
+        </div>
+        <div class="channel-item">
+          <span class="ch-icon">🔊</span>
+          <span style="flex:1">Lounge</span>
+          <span class="user-count">2/10</span>
+        </div>
+        <div class="channel-item">
+          <span class="ch-icon">🔊</span>
+          <span style="flex:1">Gaming</span>
+          <span class="user-count">0/10</span>
+        </div>
+      </div>
+    </div>
+    <div class="user-panel">
+      <div class="user-avatar">H<div class="status-dot"></div></div>
+      <div class="user-info">
+        <div class="user-name">hiep.dev</div>
+        <div class="user-tag">#2847</div>
+      </div>
+      <div class="user-controls">
+        <button class="ctrl-btn" id="panelMic" onclick="togglePanelMic()" title="Mic">🎙</button>
+        <button class="ctrl-btn" title="Headset">🎧</button>
+        <button class="ctrl-btn" title="Cài đặt">⚙</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+
+    <!-- Header -->
+    <div class="stream-header">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" style="color:#dcddde"><path fill="currentColor" d="M2 12a10 10 0 1 0 20 0A10 10 0 0 0 2 12Zm8-3.5 6 3.5-6 3.5v-7Z"/></svg>
+      <div class="stream-title-area">
+        <div class="stream-name">stream-room-1</div>
+        <div class="viewer-count" id="viewerCount">247 đang xem</div>
+      </div>
+      <div class="header-actions">
+        <button class="hdr-btn" title="Mời">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M19 14a1 1 0 0 1 1 1v3h3a1 1 0 0 1 0 2h-3v3a1 1 0 0 1-2 0v-3h-3a1 1 0 0 1 0-2h3v-3a1 1 0 0 1 1-1ZM9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-4 9a1 1 0 0 1-1-1 5 5 0 0 1 10 0 1 1 0 0 1-1 1H5Z"/></svg>
+          Mời
+        </button>
+        <button class="hdr-btn" title="Threads">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2ZM6.5 9h11a.5.5 0 0 1 0 1H9l3 3-3 3h8.5a.5.5 0 0 1 0 1H6.5a.5.5 0 0 1-.35-.85l3.5-3.5-3.5-3.5A.5.5 0 0 1 6.5 9Z"/></svg>
+          Threads
+        </button>
+        <button class="hdr-btn primary" onclick="toggleScreenShare()" id="btnShareHeader">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v2h2a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h2v-2H4a2 2 0 0 1-2-2V4Z"/></svg>
+          Chia sẻ màn hình
+        </button>
+        <button class="hdr-btn" onclick="toggleGridView()" id="btnGridHeader" title="Xem dạng lưới">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h5v7H2V4Zm0 7h7v11H4a2 2 0 0 1-2-2v-9Zm9 0h11v9a2 2 0 0 1-2 2h-9V11Zm0-9h9a2 2 0 0 1 2 2v5h-11V2Z"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- Stream content -->
+    <div class="stream-content">
+
+      <!-- Focus view (default) -->
+      <div class="focus-root" id="focusRoot">
+
+        <!-- Main stage -->
+        <div class="focused-tile" id="focusedTile">
+          <div class="tile-bg"></div>
+          <div class="tile-inner" id="focusInner">
+            <!-- default: screen share -->
+            <div style="text-align:center">
+              <svg width="72" height="72" fill="none" viewBox="0 0 24 24" style="color:#404249"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v2h2a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h2v-2H4a2 2 0 0 1-2-2V4Z"/></svg>
+              <div style="color:#5d6169;font-size:14px;margin-top:10px">NamDev đang chia sẻ màn hình</div>
+              <div style="color:#5865f2;font-weight:600;font-size:13px;margin-top:4px">VS Code — livestream_demo.py</div>
+            </div>
+          </div>
+          <!-- mute icon -->
+          <div class="focus-mute" id="focusMute">🔇</div>
+          <!-- LIVE badge -->
+          <div class="focus-live"><span class="live-pill">Trực Tiếp</span></div>
+          <!-- Name bar -->
+          <div class="focus-namebar" id="focusNamebar">
+            <div class="focus-namebar-avatar" id="focusNBAvatar" style="background:#5865f2">N</div>
+            <span class="focus-namebar-name" id="focusNBName">NamDev</span>
+          </div>
+          <!-- action row -->
+          <div class="action-row" id="actionRow">
+            <button class="participants-toggle-btn" id="toggleParticipantsBtn" onclick="toggleParticipants()">
+              <svg class="caret" width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M5.3 9.3a1 1 0 0 1 1.4 0l5.3 5.29 5.3-5.3a1 1 0 1 1 1.4 1.42l-6 6a1 1 0 0 1-1.4 0l-6-6a1 1 0 0 1 0-1.42Z"/></svg>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M14.5 8a3 3 0 1 0-2.7-4.3c-.2.4.06.86.44 1.12a5 5 0 0 1 2.14 3.08c.01.06.06.1.12.1ZM18.44 17.27c.15.43.54.73 1 .73h1.06c.83 0 1.5-.67 1.5-1.5a7.5 7.5 0 0 0-6.5-7.43c-.55-.08-.99.38-1.1.92-.06.3-.15.6-.26.87-.23.58-.05 1.3.47 1.63a9.53 9.53 0 0 1 3.83 4.78ZM12.5 9a3 3 0 1 1-6 0 3 3 0 0 1 6 0ZM2 20.5a7.5 7.5 0 0 1 15 0c0 .83-.67 1.5-1.5 1.5a.2.2 0 0 1-.2-.16c-.2-.96-.56-1.87-.88-2.54-.1-.23-.42-.15-.42.1v2.1a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-2.1c0-.25-.31-.33-.42-.1-.32.67-.67 1.58-.88 2.54a.2.2 0 0 1-.2.16A1.5 1.5 0 0 1 2 20.5Z"/></svg>
+              <span id="toggleParticipantsLabel">Ẩn thành viên</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Participant strip -->
+        <div class="participants-wrapper" id="participantsWrapper">
+          <div class="participants-inner" id="participantsInner">
+
+            <!-- NamDev screen share tile -->
+            <div class="ptile screen-ptile selected" id="pt-screen"
+                 onclick="selectTile(this)"
+                 data-name="NamDev" data-color="#5865f2" data-init="N" data-screen="true" data-mute="false">
+              <div style="text-align:center">
+                <svg width="28" height="28" fill="none" viewBox="0 0 24 24" style="color:#5865f2"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v2h2a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h2v-2H4a2 2 0 0 1-2-2V4Z"/></svg>
+                <div style="font-size:10px;color:#5865f2;font-weight:700;margin-top:4px">Màn hình</div>
+              </div>
+              <div class="ptile-live">Trực Tiếp</div>
+              <div class="ptile-name">
+                <span class="ptile-name-text">NamDev</span>
+              </div>
+              <div class="ptile-selected-icon">📞</div>
+              <button class="ptile-opts">•••</button>
+            </div>
+
+            <!-- NamDev camera tile -->
+            <div class="ptile speaking" id="pt-namdev"
+                 onclick="selectTile(this)"
+                 data-name="NamDev" data-color="#5865f2" data-init="ND" data-screen="false" data-mute="false">
+              <div class="ptile-avatar" style="background:#5865f2">ND</div>
+              <div class="ptile-name">
+                <span class="ptile-name-text">NamDev</span>
+                <span style="color:#3ba55c;font-size:12px">🎙</span>
+              </div>
+              <button class="ptile-opts">•••</button>
+            </div>
+
+            <!-- hiep.dev -->
+            <div class="ptile" id="pt-hiep"
+                 onclick="selectTile(this)"
+                 data-name="hiep.dev" data-color="#e67e22" data-init="HT" data-screen="false" data-mute="false">
+              <div class="ptile-avatar" style="background:#e67e22">HT</div>
+              <div class="ptile-name">
+                <span class="ptile-name-text">hiep.dev</span>
+              </div>
+              <button class="ptile-opts">•••</button>
+            </div>
+
+            <!-- Minh_K -->
+            <div class="ptile" id="pt-minh"
+                 onclick="selectTile(this)"
+                 data-name="Minh_K" data-color="#9b59b6" data-init="MK" data-screen="false" data-mute="true">
+              <div class="ptile-avatar" style="background:#9b59b6">MK</div>
+              <div class="ptile-name">
+                <span class="ptile-name-text">Minh_K</span>
+                <span class="ptile-mic">🔇</span>
+              </div>
+              <button class="ptile-opts">•••</button>
+            </div>
+
+            <!-- TuanLe -->
+            <div class="ptile" id="pt-tuan"
+                 onclick="selectTile(this)"
+                 data-name="TuanLe" data-color="#1abc9c" data-init="TL" data-screen="false" data-mute="false">
+              <div class="ptile-avatar" style="background:#1abc9c">TL</div>
+              <div class="ptile-name">
+                <span class="ptile-name-text">TuanLe</span>
+              </div>
+              <button class="ptile-opts">•••</button>
+            </div>
+
+            <!-- PhuongH -->
+            <div class="ptile" id="pt-phuong"
+                 onclick="selectTile(this)"
+                 data-name="PhuongH" data-color="#e74c3c" data-init="PH" data-screen="false" data-mute="true">
+              <div class="ptile-avatar" style="background:#e74c3c">PH</div>
+              <div class="ptile-name">
+                <span class="ptile-name-text">PhuongH</span>
+                <span class="ptile-mic">🔇</span>
+              </div>
+              <button class="ptile-opts">•••</button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid view -->
+      <div class="grid-root" id="gridRoot">
+      <div class="grid-inner">
+        <div class="gtile screen-gtile" onclick="selectFromGrid(this)" data-name="NamDev" data-color="#5865f2" data-init="N" data-screen="true" data-mute="false">
+          <svg width="36" height="36" fill="none" viewBox="0 0 24 24" style="color:#5865f2"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v2h2a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h2v-2H4a2 2 0 0 1-2-2V4Z"/></svg>
+          <div class="gtile-live">Trực Tiếp</div>
+          <div class="gtile-namebar">
+            <svg width="12" height="12" fill="none" viewBox="0 0 24 24" style="color:#5865f2"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v2h2a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h2v-2H4a2 2 0 0 1-2-2V4Z"/></svg>
+            NamDev · Màn hình
+          </div>
+          <button class="gtile-opts">•••</button>
+        </div>
+        <div class="gtile speaking" onclick="selectFromGrid(this)" data-name="NamDev" data-color="#5865f2" data-init="ND" data-screen="false" data-mute="false">
+          <div class="gtile-avatar" style="background:#5865f2">ND</div>
+          <div class="gtile-badge">Đang nói</div>
+          <div class="gtile-namebar">🎙 NamDev</div>
+          <button class="gtile-opts">•••</button>
+        </div>
+        <div class="gtile" onclick="selectFromGrid(this)" data-name="hiep.dev" data-color="#e67e22" data-init="HT" data-screen="false" data-mute="false">
+          <div class="gtile-avatar" style="background:#e67e22">HT</div>
+          <div class="gtile-namebar">🎙 hiep.dev</div>
+          <button class="gtile-opts">•••</button>
+        </div>
+        <div class="gtile" onclick="selectFromGrid(this)" data-name="Minh_K" data-color="#9b59b6" data-init="MK" data-screen="false" data-mute="true">
+          <div class="gtile-avatar" style="background:#9b59b6">MK</div>
+          <div class="gtile-namebar">🔇 Minh_K</div>
+          <button class="gtile-opts">•••</button>
+        </div>
+        <div class="gtile" onclick="selectFromGrid(this)" data-name="TuanLe" data-color="#1abc9c" data-init="TL" data-screen="false" data-mute="false">
+          <div class="gtile-avatar" style="background:#1abc9c">TL</div>
+          <div class="gtile-namebar">🎙 TuanLe</div>
+          <button class="gtile-opts">•••</button>
+        </div>
+        <div class="gtile" onclick="selectFromGrid(this)" data-name="PhuongH" data-color="#e74c3c" data-init="PH" data-screen="false" data-mute="true">
+          <div class="gtile-avatar" style="background:#e74c3c">PH</div>
+          <div class="gtile-namebar">🔇 PhuongH</div>
+          <button class="gtile-opts">•••</button>
+        </div>
+      </div><!-- /grid-inner -->
+      </div><!-- /grid-root -->
+
+    </div><!-- /stream-content -->
+
+    <!-- Controls bar -->
+    <div class="controls-bar">
+      <div class="ctrl-group">
+        <span class="duration" id="duration">02:34:17</span>
+        <span style="font-size:11px;color:#6d6f78">stream-room-1</span>
+      </div>
+      <div class="ctrl-group">
+        <button class="ctrl-big state-on" id="btnMic" data-tip="Tắt Mic" onclick="toggleMic()">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M12 2a4 4 0 0 0-4 4v6a4 4 0 0 0 8 0V6a4 4 0 0 0-4-4ZM6 11a1 1 0 0 0-2 0 8 8 0 0 0 7 7.93V21H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.07A8 8 0 0 0 20 11a1 1 0 0 0-2 0 6 6 0 0 1-12 0Z"/></svg>
+        </button>
+        <button class="ctrl-big state-off" id="btnCam" data-tip="Bật Camera" onclick="toggleCam()">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="m2.7 22.7 20-20a1 1 0 0 0-1.4-1.4l-20 20a1 1 0 1 0 1.4 1.4ZM10.8 17.32c-.21.21-.1.58.2.62V20H9a1 1 0 1 0 0 2h6a1 1 0 1 0 0-2h-2v-2.06A8 8 0 0 0 20 10a1 1 0 0 0-2 0c0 1.45-.52 2.79-1.38 3.83l-.02.02A5.99 5.99 0 0 1 12.32 16a.52.52 0 0 0-.34.15l-1.18 1.18Z"/></svg>
+        </button>
+        <button class="ctrl-big state-on" id="btnSpk" data-tip="Tắt Âm thanh" onclick="toggleSpk()">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M12 3a1 1 0 0 0-1.56-.83L5.84 5H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h2.84l4.6 2.83A1 1 0 0 0 12 21V3ZM17.1 7.1a1 1 0 0 1 1.42 0 8 8 0 0 1 0 11.32 1 1 0 1 1-1.42-1.42 6 6 0 0 0 0-8.48 1 1 0 0 1 0-1.42Zm-2.83 2.83a1 1 0 0 1 1.42 0 4 4 0 0 1 0 5.66 1 1 0 0 1-1.42-1.42 2 2 0 0 0 0-2.82 1 1 0 0 1 0-1.42Z"/></svg>
+        </button>
+        <button class="ctrl-big state-neutral" id="btnScreen" data-tip="Chia sẻ màn hình" onclick="toggleScreenShare()">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v2h2a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h2v-2H4a2 2 0 0 1-2-2V4Z"/></svg>
+        </button>
+        <button class="ctrl-big state-neutral" id="btnGrid" data-tip="Xem dạng lưới" onclick="toggleGridView()">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h5v7H2V4Zm0 7h7v11H4a2 2 0 0 1-2-2v-9Zm9 0h11v9a2 2 0 0 1-2 2h-9V11Zm0-9h9a2 2 0 0 1 2 2v5h-11V2Z"/></svg>
+        </button>
+        <button class="ctrl-big state-neutral" data-tip="Thêm">
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M4 14a2 2 0 1 0 0-4 2 2 0 0 0 0 4Zm10-2a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm8 0a2 2 0 1 1-4 0 2 2 0 0 1 4 0Z" clip-rule="evenodd"/></svg>
+        </button>
+      </div>
+      <div class="ctrl-group">
+        <button class="end-call-btn" onclick="confirmLeave()">
+          <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><path fill="currentColor" d="M4.28 19.72a1 1 0 0 0 1.42 0L12 13.41l6.3 6.31a1 1 0 1 0 1.4-1.42L13.41 12l6.3-6.3a1 1 0 0 0-1.42-1.42L12 10.59 5.7 4.28a1 1 0 0 0-1.42 1.42L10.59 12l-6.3 6.3a1 1 0 0 0 0 1.42Z"/></svg>
+          Rời khỏi
+        </button>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Leave modal -->
+<div class="modal-backdrop" id="leaveModal">
+  <div class="modal-box">
+    <div class="modal-title">Rời khỏi phòng?</div>
+    <div class="modal-body">Bạn có chắc muốn rời khỏi <strong>stream-room-1</strong>?<br>Bạn luôn có thể quay lại sau.</div>
+    <div class="modal-actions">
+      <button class="modal-btn cancel" onclick="closeModal()">Huỷ bỏ</button>
+      <button class="modal-btn confirm" onclick="leaveRoom()">Rời khỏi</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ── Timer ── */
+  let secs = 2*3600 + 34*60 + 17;
+  setInterval(() => {
+    secs++;
+    const h = String(Math.floor(secs/3600)).padStart(2,'0');
+    const m = String(Math.floor((secs%3600)/60)).padStart(2,'0');
+    const s = String(secs%60).padStart(2,'0');
+    document.getElementById('duration').textContent = h+':'+m+':'+s;
+  }, 1000);
+
+  /* ── Toast ── */
+  function toast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg; el.style.opacity = '1';
+    clearTimeout(el._t);
+    el._t = setTimeout(() => el.style.opacity = '0', 2200);
+  }
+
+  /* ── Select tile from strip ── */
+  let currentTile = document.getElementById('pt-screen');
+
+  function selectTile(tile) {
+    // deselect all
+    document.querySelectorAll('.ptile').forEach(t => t.classList.remove('selected'));
+    tile.classList.add('selected');
+    currentTile = tile;
+    updateFocusedView(tile.dataset);
+  }
+
+  function updateFocusedView(d) {
+    const inner = document.getElementById('focusInner');
+    const muteEl = document.getElementById('focusMute');
+    const nbAvatar = document.getElementById('focusNBAvatar');
+    const nbName = document.getElementById('focusNBName');
+
+    nbAvatar.style.background = d.color;
+    nbAvatar.textContent = d.init[0];
+    nbName.textContent = d.name;
+    muteEl.classList.toggle('show', d.mute === 'true');
+
+    if (d.screen === 'true') {
+      inner.innerHTML = `<div style="text-align:center">
+        <svg width="72" height="72" fill="none" viewBox="0 0 24 24" style="color:#404249"><path fill="currentColor" d="M2 4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-6v2h2a1 1 0 1 1 0 2H8a1 1 0 1 1 0-2h2v-2H4a2 2 0 0 1-2-2V4Z"/></svg>
+        <div style="color:#5d6169;font-size:14px;margin-top:10px">${d.name} đang chia sẻ màn hình</div>
+        <div style="color:#5865f2;font-weight:600;font-size:13px;margin-top:4px">VS Code — livestream_demo.py</div>
+      </div>`;
+    } else {
+      inner.innerHTML = `<div style="text-align:center">
+        <div style="width:96px;height:96px;border-radius:50%;background:${d.color};display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700;color:white;margin:0 auto 14px">${d.init}</div>
+        <div style="color:#f2f3f5;font-size:18px;font-weight:700">${d.name}</div>
+        <div style="color:#6d6f78;font-size:13px;margin-top:6px">${d.mute === 'true' ? '🔇 Micro đang tắt' : '🎙 Đang phát sóng'}</div>
+      </div>`;
+    }
+    toast('Đang xem ' + d.name);
+  }
+
+  /* ── Select from grid → switch to focus view ── */
+  function selectFromGrid(gtile) {
+    const d = gtile.dataset;
+    // find matching ptile
+    const ptiles = document.querySelectorAll('.ptile');
+    let match = null;
+    ptiles.forEach(pt => {
+      if (pt.dataset.name === d.name && pt.dataset.screen === d.screen) match = pt;
+    });
+    exitGridView();
+    if (match) {
+      document.querySelectorAll('.ptile').forEach(t => t.classList.remove('selected'));
+      match.classList.add('selected');
+      currentTile = match;
+    }
+    updateFocusedView(d);
+  }
+
+  /* ── Toggle participants strip ── */
+  let participantsVisible = true;
+  function toggleParticipants() {
+    participantsVisible = !participantsVisible;
+    const wrapper = document.getElementById('participantsWrapper');
+    const tile = document.getElementById('focusedTile');
+    const btn = document.getElementById('toggleParticipantsBtn');
+    const label = document.getElementById('toggleParticipantsLabel');
+    wrapper.classList.toggle('hidden', !participantsVisible);
+    tile.classList.toggle('expanded', !participantsVisible);
+    document.getElementById('focusRoot').classList.toggle('fullscreen', !participantsVisible);
+    btn.classList.toggle('collapsed', !participantsVisible);
+    label.textContent = participantsVisible ? 'Ẩn thành viên' : 'Hiện thành viên';
+  }
+
+  /* ── Grid view toggle ── */
+  let isGridView = false;
+  function toggleGridView() {
+    isGridView ? exitGridView() : enterGridView();
+  }
+  function enterGridView() {
+    isGridView = true;
+    document.getElementById('focusRoot').style.display = 'none';
+    document.getElementById('gridRoot').classList.add('active');
+    document.getElementById('btnGrid').classList.replace('state-neutral', 'state-active');
+    document.getElementById('btnGridHeader').style.background = '#4752c4';
+    toast('Chế độ xem lưới');
+  }
+  function exitGridView() {
+    isGridView = false;
+    document.getElementById('focusRoot').style.display = 'flex';
+    document.getElementById('gridRoot').classList.remove('active');
+    document.getElementById('btnGrid').classList.replace('state-active', 'state-neutral');
+    document.getElementById('btnGridHeader').style.background = '';
+    toast('Chế độ xem tập trung');
+  }
+
+  /* ── Controls ── */
+  let micOn = true, camOn = false, spkOn = true, screenOn = false;
+
+  function toggleMic() {
+    micOn = !micOn;
+    const btn = document.getElementById('btnMic');
+    btn.classList.replace(micOn ? 'state-off' : 'state-on', micOn ? 'state-on' : 'state-off');
+    btn.dataset.tip = micOn ? 'Tắt Mic' : 'Bật Mic';
+    toast(micOn ? 'Mic bật' : 'Mic tắt');
+    // update panel mic btn
+    document.getElementById('panelMic').textContent = micOn ? '🎙' : '🔇';
+  }
+
+  function toggleCam() {
+    camOn = !camOn;
+    const btn = document.getElementById('btnCam');
+    btn.classList.replace(camOn ? 'state-off' : 'state-on', camOn ? 'state-on' : 'state-off');
+    btn.dataset.tip = camOn ? 'Tắt Camera' : 'Bật Camera';
+    toast(camOn ? 'Camera bật' : 'Camera tắt');
+  }
+
+  function toggleSpk() {
+    spkOn = !spkOn;
+    const btn = document.getElementById('btnSpk');
+    btn.classList.replace(spkOn ? 'state-off' : 'state-on', spkOn ? 'state-on' : 'state-off');
+    btn.dataset.tip = spkOn ? 'Tắt Âm thanh' : 'Bật Âm thanh';
+    toast(spkOn ? 'Âm thanh bật' : 'Âm thanh tắt');
+  }
+
+  function toggleScreenShare() {
+    screenOn = !screenOn;
+    const btn = document.getElementById('btnScreen');
+    btn.classList.replace(screenOn ? 'state-neutral' : 'state-active', screenOn ? 'state-active' : 'state-neutral');
+    btn.dataset.tip = screenOn ? 'Dừng chia sẻ' : 'Chia sẻ màn hình';
+    const hdrBtn = document.getElementById('btnShareHeader');
+    hdrBtn.style.background = screenOn ? '#4752c4' : '';
+    toast(screenOn ? 'Đang chia sẻ màn hình' : 'Đã dừng chia sẻ');
+  }
+
+  function togglePanelMic() {
+    micOn = !micOn;
+    const btn = document.getElementById('btnMic');
+    btn.classList.replace(micOn ? 'state-off' : 'state-on', micOn ? 'state-on' : 'state-off');
+    document.getElementById('panelMic').textContent = micOn ? '🎙' : '🔇';
+    toast(micOn ? 'Mic bật' : 'Mic tắt');
+  }
+
+  /* ── Leave modal ── */
+  function confirmLeave() { document.getElementById('leaveModal').classList.add('show'); }
+  function closeModal() { document.getElementById('leaveModal').classList.remove('show'); }
+  function leaveRoom() {
+    closeModal();
+    toast('Đã rời khỏi phòng');
+    setTimeout(() => {
+      document.querySelector('.main').style.opacity = '0.25';
+      document.querySelector('.main').style.pointerEvents = 'none';
+    }, 400);
+  }
+
+  // close modal on backdrop click
+  document.getElementById('leaveModal').addEventListener('click', function(e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+</body>
+</html>

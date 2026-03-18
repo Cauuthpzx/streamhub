@@ -92,12 +92,12 @@ onUnmounted(stopPreview)
 
 <template>
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 w-full max-w-lg mx-4">
+    <div class="bg-white dark:bg-gray-800 rounded-sm shadow-xl p-8 w-full max-w-lg mx-4">
       <h2 class="text-lg font-semibold text-gray-900 dark:text-white text-center mb-1">{{ t('prejoin.title') }}</h2>
       <p class="text-sm text-gray-500 dark:text-gray-400 text-center mb-6">{{ props.roomName }}</p>
 
       <!-- Video preview -->
-      <div class="relative bg-gray-200 dark:bg-gray-700 rounded-xl overflow-hidden aspect-video mb-5">
+      <div class="relative bg-gray-200 dark:bg-gray-700 rounded-sm overflow-hidden aspect-video mb-5">
         <video ref="videoEl" autoplay muted playsinline class="w-full h-full object-cover" :class="camOn ? '' : 'hidden'" :style="{ transform: 'scaleX(-1)' }"></video>
         <div v-if="!camOn" class="absolute inset-0 flex flex-col items-center justify-center gap-2">
           <div v-if="hasAvatar" class="w-20 h-20 rounded-full overflow-hidden">
@@ -143,13 +143,13 @@ onUnmounted(stopPreview)
       <div class="space-y-3 mb-6">
         <div v-if="audioInputs.length">
           <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('devices.microphone') }}</label>
-          <select v-model="selectedAudioInput" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select v-model="selectedAudioInput" class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option v-for="d in audioInputs" :key="d.deviceId" :value="d.deviceId">{{ d.label || t('devices.unknownDevice') }}</option>
           </select>
         </div>
         <div v-if="videoInputs.length">
           <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('devices.camera') }}</label>
-          <select v-model="selectedVideoInput" @change="showPreview" class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select v-model="selectedVideoInput" @change="showPreview" class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
             <option v-for="d in videoInputs" :key="d.deviceId" :value="d.deviceId">{{ d.label || t('devices.unknownDevice') }}</option>
           </select>
         </div>
@@ -159,11 +159,11 @@ onUnmounted(stopPreview)
       <div class="flex gap-3">
         <button
           @click="handleCancel"
-          class="flex-1 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+          class="flex-1 px-4 py-2.5 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
         >{{ t('room.cancel') }}</button>
         <button
           @click="handleJoin"
-          class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors cursor-pointer"
+          class="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
         >
           <LogIn class="w-4 h-4" :stroke-width="2" />
           {{ t('prejoin.joinNow') }}

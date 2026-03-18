@@ -116,13 +116,13 @@ const emit = defineEmits([
         <Transition name="fade">
           <div
             v-if="showReactionPicker"
-            class="absolute bottom-11 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-xl border border-gray-200/80 dark:border-white/[0.08] shadow-popup dark:shadow-popup px-2 py-1.5 flex gap-1 z-50"
+            class="absolute bottom-11 left-1/2 -translate-x-1/2 bg-white dark:bg-gray-700 rounded-sm border border-gray-200/80 dark:border-white/[0.08] shadow-popup dark:shadow-popup px-2 py-1.5 flex gap-1 z-50"
           >
             <button
               v-for="emoji in REACTIONS"
               :key="emoji"
               @click="emit('pickReaction', emoji)"
-              class="w-8 h-8 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-center text-lg cursor-pointer transition-colors"
+              class="w-8 h-8 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center justify-center text-lg cursor-pointer transition-colors"
             >{{ emoji }}</button>
           </div>
         </Transition>

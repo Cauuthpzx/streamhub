@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Users, MessageSquare } from 'lucide-vue-next'
@@ -8,6 +8,7 @@ import { getUsername } from '../services/auth'
 import AppLogo from '../components/AppLogo.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import NotificationDropdown from '../components/NotificationDropdown.vue'
 import UserMenu from '../components/UserMenu.vue'
 import DeviceSettings from '../components/DeviceSettings.vue'
 import VideoGrid from '../components/VideoGrid.vue'
@@ -22,6 +23,7 @@ import { useReactions } from '../composables/useReactions'
 import { useRecording } from '../composables/useRecording'
 import { useScreenshot } from '../composables/useScreenshot'
 import { useRoom } from '../composables/useRoom'
+import { useNotifications } from '../composables/useNotifications'
 
 const showShareModal = ref(false)
 
@@ -56,6 +58,18 @@ const recordingCtx = useRecording(room, roomName, t)
 deps.tracks = tracks
 deps.reactions = reactionCtx
 deps.recording = recordingCtx
+
+const notif = useNotifications()
+const roomNotif = notif.room(roomName)
+
+watch(recordingCtx.recordingError, (err) => {
+  if (err) roomNotif.error(err)
+})
+watch(recordingCtx.downloadUrl, (url) => {
+  if (url) roomNotif.success(t('egress.downloadReady'), {
+    action: { label: t('egress.download'), handler: recordingCtx.triggerDownload },
+  })
+})
 </script>
 
 <template>
@@ -74,6 +88,7 @@ deps.recording = recordingCtx
           <div class="flex items-center gap-3">
             <ThemeToggle />
             <LanguageSwitcher />
+            <NotificationDropdown />
             <UserMenu />
           </div>
         </div>
@@ -97,7 +112,7 @@ deps.recording = recordingCtx
           <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">{{ t('room.lobbyWaitingDesc') }}</p>
           <button
             @click="$router.push('/home')"
-            class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+            class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
           >{{ t('room.cancel') }}</button>
         </div>
       </div>
@@ -108,7 +123,7 @@ deps.recording = recordingCtx
           <p class="text-red-500 dark:text-red-400 mb-4">{{ error }}</p>
           <button
             @click="$router.push('/home')"
-            class="px-4 py-2 text-sm text-white bg-gray-600 dark:bg-gray-700 rounded-lg hover:bg-gray-500 dark:hover:bg-gray-600 cursor-pointer"
+            class="px-4 py-2 text-sm text-white bg-gray-600 dark:bg-gray-700 rounded-sm hover:bg-gray-500 dark:hover:bg-gray-600 cursor-pointer"
           >{{ t('chat.backToRooms') }}</button>
         </div>
       </div>
@@ -129,14 +144,14 @@ deps.recording = recordingCtx
 
         <!-- Recording toast -->
         <Transition name="fade">
-          <div v-if="recordingCtx.recordingError.value" class="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-600 text-white text-sm rounded-lg shadow-lg">
+          <div v-if="recordingCtx.recordingError.value" class="absolute top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2 bg-red-600 text-white text-sm rounded-sm shadow-lg">
             {{ recordingCtx.recordingError.value }}
           </div>
         </Transition>
 
         <!-- REC indicator -->
         <Transition name="fade">
-          <div v-if="recordingCtx.recording.value" class="absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg">
+          <div v-if="recordingCtx.recording.value" class="absolute top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-2 bg-black/70 backdrop-blur-sm rounded-sm px-3 py-1.5 shadow-lg">
             <span class="relative flex items-center gap-1.5">
               <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
               <span class="text-red-400 text-xs font-bold uppercase tracking-wider">REC</span>
@@ -147,9 +162,9 @@ deps.recording = recordingCtx
 
         <!-- Download banner -->
         <Transition name="fade">
-          <div v-if="recordingCtx.downloadUrl.value" class="absolute top-3 right-3 z-50 flex items-center gap-3 bg-green-600/90 backdrop-blur-sm rounded-lg px-4 py-2 shadow-lg">
+          <div v-if="recordingCtx.downloadUrl.value" class="absolute top-3 right-3 z-50 flex items-center gap-3 bg-green-600/90 backdrop-blur-sm rounded-sm px-4 py-2 shadow-lg">
             <span class="text-white text-sm">{{ t('egress.downloadReady') }}</span>
-            <button @click="recordingCtx.triggerDownload()" class="px-3 py-1 bg-white text-green-700 text-sm font-semibold rounded-md hover:bg-green-50 cursor-pointer transition-colors">
+            <button @click="recordingCtx.triggerDownload()" class="px-3 py-1 bg-white text-green-700 text-sm font-semibold rounded-sm hover:bg-green-50 cursor-pointer transition-colors">
               {{ t('egress.download') }}
             </button>
             <button @click="recordingCtx.clearDownload()" class="text-white/70 hover:text-white cursor-pointer text-lg leading-none">&times;</button>
@@ -166,8 +181,6 @@ deps.recording = recordingCtx
           :pinned-sid="pinnedSid"
           :focused-sid="focusedSid"
           :fullscreen-sid="fullscreenSid"
-          :mic-enabled="micEnabled"
-          :cam-enabled="camEnabled"
           :username="username"
           @focus="toggleFocus"
           @pin="togglePin"

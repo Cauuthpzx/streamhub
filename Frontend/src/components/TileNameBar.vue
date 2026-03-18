@@ -1,25 +1,17 @@
 <script setup>
-import { computed } from 'vue'
-import { MicOff, VideoOff, MonitorUp, MonitorOff } from 'lucide-vue-next'
-
+import { MicOff, Mic, VideoOff, Video, MonitorUp, MonitorOff } from 'lucide-vue-next'
 import ConnectionBars from './ConnectionBars.vue'
 
-const props = defineProps({
+defineProps({
   participant: { type: Object, required: true },
   isLocal: { type: Boolean, default: false },
-  micEnabled: { type: Boolean, default: true },
-  camEnabled: { type: Boolean, default: true },
-  isSharing: { type: Boolean, default: false },
+  // plain reactive values từ participants entry — không đọc participant object trực tiếp
+  isMicOn: { type: Boolean, default: true },
+  isCamOn: { type: Boolean, default: true },
+  isScreenOn: { type: Boolean, default: false },
   raisedHand: { type: Boolean, default: false },
   quality: { type: String, default: null },
 })
-
-const isMicOff = computed(() =>
-  props.isLocal ? !props.micEnabled : !props.participant.isMicrophoneEnabled
-)
-const isCamOff = computed(() =>
-  props.isLocal ? !props.camEnabled : !props.participant.isCameraEnabled
-)
 
 function getDisplayName(participant) {
   try {
@@ -30,13 +22,15 @@ function getDisplayName(participant) {
 </script>
 
 <template>
-  <div class="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 bg-black/60 rounded px-2 py-0.5 text-xs text-white max-w-[calc(100%-1rem)] truncate">
+  <div class="absolute bottom-2 left-2 z-20 flex items-center gap-1.5 bg-black/60 rounded-sm px-2 py-0.5 text-xs text-white max-w-[calc(100%-1rem)] truncate">
     <span v-if="raisedHand" class="animate-wave shrink-0">✋</span>
     <span class="truncate font-medium">{{ getDisplayName(participant) }}</span>
     <ConnectionBars :quality="quality || 'unknown'" class="shrink-0" />
-    <MonitorUp v-if="isSharing" class="w-3 h-3 text-green-400 shrink-0" :stroke-width="2" />
+    <MonitorUp v-if="isScreenOn" class="w-3 h-3 text-green-400 shrink-0" :stroke-width="2" />
     <MonitorOff v-else class="w-3 h-3 text-red-400 shrink-0" :stroke-width="2" />
-    <MicOff v-if="isMicOff" class="w-3 h-3 text-red-400 shrink-0" :stroke-width="2" />
-    <VideoOff v-if="isCamOff" class="w-3 h-3 text-red-400 shrink-0" :stroke-width="2" />
+    <Mic v-if="isMicOn" class="w-3 h-3 text-green-400 shrink-0" :stroke-width="2" />
+    <MicOff v-else class="w-3 h-3 text-red-400 shrink-0" :stroke-width="2" />
+    <Video v-if="isCamOn" class="w-3 h-3 text-green-400 shrink-0" :stroke-width="2" />
+    <VideoOff v-else class="w-3 h-3 text-red-400 shrink-0" :stroke-width="2" />
   </div>
 </template>

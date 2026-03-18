@@ -335,5 +335,18 @@
     "grid": "Grid",
     "tabs": "Tabs",
     "spotlight": "Spotlight"
+  },
+  "notification": {
+    "title": "Notifications",
+    "system": "System",
+    "room": "Room",
+    "empty": "No notifications",
+    "markAllRead": "Mark all as read",
+    "clearAll": "Clear all",
+    "justNow": "Just now",
+    "minutesAgo": "{n}m ago",
+    "hoursAgo": "{n}h ago",
+    "roomCreated": "Room \"{name}\" created",
+    "roomDeleted": "Room \"{name}\" deleted"
   }
 }

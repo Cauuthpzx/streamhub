@@ -61,13 +61,22 @@ export function useRoom(roomName, username, deps) {
     return `${proto}://${window.location.host}`
   }
 
+  function participantEntry(p, isLocal) {
+    return {
+      participant: p,
+      isLocal,
+      // snapshot trạng thái tại thời điểm gọi — plain values, Vue track được
+      isMicOn: p.isMicrophoneEnabled,
+      isCamOn: p.isCameraEnabled,
+      isScreenOn: p.isScreenShareEnabled,
+    }
+  }
+
   function updateParticipants() {
     if (!room.value) return
     const r = toRaw(room.value)
-    const list = [{ participant: r.localParticipant, isLocal: true }]
-    r.remoteParticipants.forEach((p) => {
-      list.push({ participant: p, isLocal: false })
-    })
+    const list = [participantEntry(r.localParticipant, true)]
+    r.remoteParticipants.forEach((p) => list.push(participantEntry(p, false)))
     participants.value = list
   }
 

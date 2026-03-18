@@ -1,5 +1,8 @@
 use tauri::Manager;
 
+mod screen_capture;
+use screen_capture::get_screen_sources;
+
 #[tauri::command]
 fn get_app_version(app: tauri::AppHandle) -> String {
     app.package_info().version.to_string()
@@ -9,7 +12,6 @@ fn get_app_version(app: tauri::AppHandle) -> String {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            // Khi mở instance thứ 2 → focus window hiện tại
             if let Some(window) = app.get_webview_window("main") {
                 let _ = window.show();
                 let _ = window.set_focus();
@@ -33,7 +35,7 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![get_app_version])
+        .invoke_handler(tauri::generate_handler![get_app_version, get_screen_sources])
         .run(tauri::generate_context!())
         .expect("error while running Stream HUB desktop");
 }

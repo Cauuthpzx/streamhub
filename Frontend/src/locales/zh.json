@@ -1,4 +1,10 @@
 {
+  "screen": {
+    "choosePicker": "选择共享内容",
+    "fullScreen": "全屏",
+    "window": "窗口",
+    "primary": "主屏"
+  },
   "app": {
     "name": "Stream HUB",
     "tagline": "基于WebRTC的实时视频流媒体平台。无缝连接、分享和协作。"

@@ -17,6 +17,7 @@ import RoomBar from '../components/RoomBar.vue'
 import RoomChat from '../components/RoomChat.vue'
 import RoomParticipants from '../components/RoomParticipants.vue'
 import ShareModal from '../components/ShareModal.vue'
+import ScreenPickerDialog from '../components/ScreenPickerDialog.vue'
 
 import { useSounds } from '../composables/useSounds'
 import { useTracks } from '../composables/useTracks'
@@ -27,8 +28,35 @@ import { useRoom } from '../composables/useRoom'
 import { useNotifications, setRoomFilter } from '../composables/useNotifications'
 import { useNotificationSettings } from '../composables/useNotificationSettings'
 import { useTauri } from '../composables/useTauri'
+import { installTauriScreenShareOverride } from '../composables/useTauriScreenShare'
 
 const showShareModal = ref(false)
+
+// Screen picker state (Tauri only — shows when multiple screens detected)
+const showScreenPicker = ref(false)
+const screenPickerSources = ref([])
+let _screenPickerResolve = null
+
+function showScreenPickerFn(sources) {
+  return new Promise((resolve) => {
+    screenPickerSources.value = sources
+    showScreenPicker.value = true
+    _screenPickerResolve = resolve
+  })
+}
+function onPickScreen(src) {
+  showScreenPicker.value = false
+  _screenPickerResolve?.(src)
+  _screenPickerResolve = null
+}
+function onCancelScreenPicker() {
+  showScreenPicker.value = false
+  _screenPickerResolve?.(null)
+  _screenPickerResolve = null
+}
+
+// Reinstall override with picker UI wired in
+installTauriScreenShareOverride(showScreenPickerFn)
 
 const route = useRoute()
 const { t } = useI18n()
@@ -304,5 +332,6 @@ watch(recordingCtx.downloadUrl, (url) => {
 
       <DeviceSettings v-if="showDeviceSettings" :room="room" @close="showDeviceSettings = false" />
       <ShareModal :room-name="roomName" :show="showShareModal" @close="showShareModal = false" />
+      <ScreenPickerDialog :show="showScreenPicker" :sources="screenPickerSources" @pick="onPickScreen" @cancel="onCancelScreenPicker" />
   </div>
 </template>

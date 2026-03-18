@@ -1,4 +1,10 @@
 {
+  "screen": {
+    "choosePicker": "Choose what to share",
+    "fullScreen": "Full screen",
+    "window": "Window",
+    "primary": "Primary"
+  },
   "app": {
     "name": "Stream HUB",
     "tagline": "Real-time video streaming platform powered by WebRTC. Connect, share, and collaborate seamlessly."

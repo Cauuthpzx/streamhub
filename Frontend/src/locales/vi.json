@@ -1,4 +1,10 @@
 {
+  "screen": {
+    "choosePicker": "Chọn nội dung chia sẻ",
+    "fullScreen": "Toàn màn hình",
+    "window": "Cửa sổ",
+    "primary": "Chính"
+  },
   "app": {
     "name": "Stream HUB",
     "tagline": "Nền tảng phát trực tuyến video thời gian thực bằng WebRTC. Kết nối, chia sẻ và cộng tác liền mạch."

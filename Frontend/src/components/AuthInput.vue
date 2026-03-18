@@ -11,7 +11,6 @@ const props = defineProps({
 
 defineEmits(['update:modelValue'])
 
-const icons = { user: User, lock: Lock }
 const focused = ref(false)
 const showPassword = ref(false)
 
@@ -25,7 +24,7 @@ const isPassword = props.type === 'password'
     </label>
     <div class="ai-wrap" :class="{ 'ai-wrap--focus': focused, 'ai-wrap--error': error }">
       <div v-if="icon" class="ai-icon">
-        <component :is="icons[icon]" class="w-4 h-4" :stroke-width="1.8" />
+        <SvgIcon :name="icon" :size="16" :stroke-width="1.8" />
       </div>
       <input
         :type="isPassword && !showPassword ? 'password' : 'text'"

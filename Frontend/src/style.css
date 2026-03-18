@@ -212,9 +212,17 @@ html {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR',
                'Noto Sans SC', 'Noto Sans', sans-serif;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+  text-rendering: geometricPrecision;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* SVG icon crisp rendering */
+svg {
+  shape-rendering: geometricPrecision;
+  vector-effect: non-scaling-stroke;
 }
 
 /* ── Hidden scrollbar — still scrollable ── */

@@ -1,9 +1,10 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Users, MessageSquare } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
+import { listRooms } from '../services/room'
 
 import AppLogo from '../components/AppLogo.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
@@ -23,7 +24,8 @@ import { useReactions } from '../composables/useReactions'
 import { useRecording } from '../composables/useRecording'
 import { useScreenshot } from '../composables/useScreenshot'
 import { useRoom } from '../composables/useRoom'
-import { useNotifications } from '../composables/useNotifications'
+import { useNotifications, setRoomFilter } from '../composables/useNotifications'
+import { useNotificationSettings } from '../composables/useNotificationSettings'
 
 const showShareModal = ref(false)
 
@@ -62,6 +64,19 @@ deps.recording = recordingCtx
 const notif = useNotifications()
 const roomNotif = notif.room(roomName)
 
+// Notification settings + creator check
+const { settings: notifSettings } = useNotificationSettings(roomName)
+setRoomFilter(roomName, notifSettings)
+
+const isCreator = ref(false)
+onMounted(async () => {
+  try {
+    const rooms = await listRooms()
+    const found = rooms.find(r => r.name === roomName)
+    if (found) isCreator.value = found.creator === username
+  } catch (_) { /* non-critical */ }
+})
+
 watch(recordingCtx.recordingError, (err) => {
   if (err) roomNotif.error(err)
 })
@@ -88,7 +103,7 @@ watch(recordingCtx.downloadUrl, (url) => {
           <div class="flex items-center gap-3">
             <ThemeToggle />
             <LanguageSwitcher />
-            <NotificationDropdown />
+            <NotificationDropdown :is-creator="isCreator" :room-name="roomName" />
             <UserMenu />
           </div>
         </div>

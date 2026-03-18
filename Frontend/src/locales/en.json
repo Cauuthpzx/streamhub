@@ -358,8 +358,22 @@
     "youScreenShareStopped": "You stopped screen sharing",
     "camEnabled": "{name} turned on camera",
     "camDisabled": "{name} turned off camera",
-    "micEnabled": "{name} unmuted",
-    "micDisabled": "{name} muted",
-    "more": "more"
+    "micEnabled": "{name} unmuted microphone",
+    "micDisabled": "{name} muted microphone",
+    "youCamEnabled": "You turned on camera",
+    "youCamDisabled": "You turned off camera",
+    "youMicEnabled": "You unmuted microphone",
+    "youMicDisabled": "You muted microphone",
+    "participantDuplicate": "{name} joined from another device",
+    "more": "more",
+    "settings": "Notification settings",
+    "settingsJoin": "Member joined",
+    "settingsLeave": "Member left",
+    "settingsKick": "Member kicked",
+    "settingsDisconnect": "Connection lost",
+    "settingsScreenShare": "Screen sharing",
+    "settingsCam": "Camera",
+    "settingsMic": "Microphone",
+    "settingsReset": "Reset to default"
   }
 }

@@ -358,8 +358,22 @@
     "youScreenShareStopped": "您已停止共享屏幕",
     "camEnabled": "{name} 开启了摄像头",
     "camDisabled": "{name} 关闭了摄像头",
-    "micEnabled": "{name} 取消静音",
-    "micDisabled": "{name} 已静音",
-    "more": "展开"
+    "micEnabled": "{name} 取消麦克风静音",
+    "micDisabled": "{name} 麦克风已静音",
+    "youCamEnabled": "您已开启摄像头",
+    "youCamDisabled": "您已关闭摄像头",
+    "youMicEnabled": "您已取消静音",
+    "youMicDisabled": "您已静音",
+    "participantDuplicate": "{name} 从其他设备加入",
+    "more": "展开",
+    "settings": "通知设置",
+    "settingsJoin": "成员加入",
+    "settingsLeave": "成员离开",
+    "settingsKick": "成员被踢",
+    "settingsDisconnect": "连接断开",
+    "settingsScreenShare": "屏幕共享",
+    "settingsCam": "摄像头",
+    "settingsMic": "麦克风",
+    "settingsReset": "重置默认"
   }
 }

@@ -358,8 +358,22 @@
     "youScreenShareStopped": "Bạn đã dừng chia sẻ màn hình",
     "camEnabled": "{name} đã bật camera",
     "camDisabled": "{name} đã tắt camera",
-    "micEnabled": "{name} đã bật mic",
-    "micDisabled": "{name} đã tắt mic",
-    "more": "xem thêm"
+    "micEnabled": "{name} đã bật micro",
+    "micDisabled": "{name} đã tắt micro",
+    "youCamEnabled": "Bạn đã bật camera",
+    "youCamDisabled": "Bạn đã tắt camera",
+    "youMicEnabled": "Bạn đã bật micro",
+    "youMicDisabled": "Bạn đã tắt micro",
+    "participantDuplicate": "{name} đã tham gia từ thiết bị khác",
+    "more": "xem thêm",
+    "settings": "Cài đặt thông báo",
+    "settingsJoin": "Thành viên tham gia",
+    "settingsLeave": "Thành viên rời phòng",
+    "settingsKick": "Thành viên bị kích",
+    "settingsDisconnect": "Mất kết nối",
+    "settingsScreenShare": "Chia sẻ màn hình",
+    "settingsCam": "Camera",
+    "settingsMic": "Microphone",
+    "settingsReset": "Đặt lại mặc định"
   }
 }

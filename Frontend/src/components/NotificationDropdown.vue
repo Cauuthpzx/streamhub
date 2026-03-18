@@ -1,13 +1,20 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Bell, CheckCheck, Trash2, X, CheckCircle, XCircle, AlertTriangle, Info } from 'lucide-vue-next'
+import { Bell, CheckCheck, Trash2, X, CheckCircle, XCircle, AlertTriangle, Info, Settings } from 'lucide-vue-next'
 import { useNotifications } from '../composables/useNotifications'
+import NotificationSettingsPanel from './NotificationSettingsPanel.vue'
+
+const props = defineProps({
+  isCreator: { type: Boolean, default: false },
+  roomName:  { type: String,  default: null },
+})
 
 const { t } = useI18n()
 const { notifications, unreadCount, markAllRead, remove, clearAll } = useNotifications()
 
 const open = ref(false)
+const showSettings = ref(false)
 const expanded = ref(new Set())
 const triggerRef = ref(null)
 const dropdownRef = ref(null)
@@ -15,6 +22,7 @@ const dropdownRef = ref(null)
 function toggle() {
   open.value = !open.value
   if (open.value) markAllRead()
+  if (!open.value) showSettings.value = false
 }
 
 function toggleExpand(id) {
@@ -30,6 +38,7 @@ function handleOutsideClick(e) {
     dropdownRef.value && !dropdownRef.value.contains(e.target)
   ) {
     open.value = false
+    showSettings.value = false
   }
 }
 
@@ -56,7 +65,7 @@ const TYPE_DOT = {
 }
 
 function sourceLabel(n) {
-  if (n.source === 'room' && n.roomName) return n.roomName.toUpperCase()
+  if (n.source === 'room' && n.roomName) return `${t('notification.room')} ${n.roomName}`.toUpperCase()
   return t('notification.system').toUpperCase()
 }
 
@@ -117,19 +126,39 @@ function highlightName(msg) {
           <span class="text-xs font-semibold text-gray-900 dark:text-white tracking-wide uppercase">
             {{ t('notification.title') }}
           </span>
-          <div v-if="notifications.length > 0" class="flex items-center gap-0.5">
+          <div class="flex items-center gap-0.5">
+            <template v-if="notifications.length > 0">
+              <button
+                @click="markAllRead"
+                class="p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                :title="t('notification.markAllRead')"
+              ><CheckCheck class="w-3.5 h-3.5" :stroke-width="2" /></button>
+              <button
+                @click="clearAll"
+                class="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+                :title="t('notification.clearAll')"
+              ><Trash2 class="w-3.5 h-3.5" :stroke-width="2" /></button>
+            </template>
+            <!-- Settings button — creator only -->
             <button
-              @click="markAllRead"
-              class="p-1.5 text-gray-400 hover:text-indigo-500 dark:hover:text-indigo-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-              :title="t('notification.markAllRead')"
-            ><CheckCheck class="w-3.5 h-3.5" :stroke-width="2" /></button>
-            <button
-              @click="clearAll"
-              class="p-1.5 text-gray-400 hover:text-red-500 dark:hover:text-red-400 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
-              :title="t('notification.clearAll')"
-            ><Trash2 class="w-3.5 h-3.5" :stroke-width="2" /></button>
+              v-if="isCreator && roomName"
+              @click="showSettings = !showSettings"
+              class="p-1.5 rounded-sm hover:bg-gray-100 dark:hover:bg-white/[0.06] transition-colors cursor-pointer"
+              :class="showSettings
+                ? 'text-indigo-500 dark:text-indigo-400 bg-gray-100 dark:bg-white/[0.06]'
+                : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'"
+              :title="t('notification.settings')"
+            ><Settings class="w-3.5 h-3.5" :stroke-width="2" /></button>
           </div>
         </div>
+
+        <!-- Settings panel — inline below header -->
+        <Transition name="settings-panel">
+          <NotificationSettingsPanel
+            v-if="showSettings && isCreator && roomName"
+            :room-name="roomName"
+          />
+        </Transition>
 
         <!-- List -->
         <div class="overflow-y-auto max-h-[440px] notif-scroll">
@@ -144,7 +173,7 @@ function highlightName(msg) {
             <div
               v-for="n in notifications"
               :key="n.id"
-              class="group relative flex items-start gap-2.5 px-4 py-2 border-b border-dashed border-gray-200 dark:border-white/[0.08] last:border-0"
+              class="group relative flex items-center gap-3 px-4 py-2.5 border-b border-dashed border-gray-200 dark:border-white/[0.08] last:border-0"
               :class="n.read ? '' : 'bg-indigo-50/25 dark:bg-indigo-500/[0.05]'"
             >
               <!-- unread dot -->
@@ -155,7 +184,7 @@ function highlightName(msg) {
               />
 
               <!-- type icon -->
-              <component :is="TYPE_ICON[n.type]" class="w-3.5 h-3.5 shrink-0 mt-[3px]" :class="TYPE_COLOR[n.type]" :stroke-width="2.2" />
+              <component :is="TYPE_ICON[n.type]" class="w-[18px] h-[18px] shrink-0" :class="TYPE_COLOR[n.type]" :stroke-width="2" />
 
               <!-- content -->
               <div class="flex-1 min-w-0">
@@ -211,6 +240,11 @@ function highlightName(msg) {
 .notif-item-enter-from   { opacity: 0; transform: translateX(6px); }
 .notif-item-leave-to     { opacity: 0; transform: translateX(6px); }
 
+.settings-panel-enter-active { transition: all 0.16s ease; }
+.settings-panel-leave-active { transition: all 0.12s ease; }
+.settings-panel-enter-from   { opacity: 0; transform: translateY(-4px); }
+.settings-panel-leave-to     { opacity: 0; transform: translateY(-4px); }
+
 .notif-scroll { scrollbar-width: none; -ms-overflow-style: none; }
 .notif-scroll::-webkit-scrollbar { display: none; }
 
@@ -218,6 +252,9 @@ p :deep(.name) {
   font-size: 13px;
   font-weight: 600;
   color: #dc2626;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
 }
 .dark p :deep(.name) {
   color: #f87171;

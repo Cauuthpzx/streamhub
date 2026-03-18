@@ -1,11 +1,12 @@
 <script setup>
 import { ref, toRaw, watch, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft, UserCheck, UserMinus, LogOut, Trash2 } from 'lucide-vue-next'
+import { Mic, MicOff, VideoIcon, VideoOff, UserX, ArrowRightLeft, LogOut, Trash2 } from 'lucide-vue-next'
 import { Track } from 'livekit-client'
 import { removeParticipant, muteTrack, moveParticipant, listRooms, getLobbyPending, approveLobbyUser, rejectLobbyUser, leaveRoom } from '../services/room'
 import AppTooltip from './AppTooltip.vue'
 import DeleteRoomDialog from './DeleteRoomDialog.vue'
+import LobbyPendingList from './LobbyPendingList.vue'
 
 const { t } = useI18n()
 
@@ -88,7 +89,10 @@ function buildEntry(p, isLocal) {
     }
   })
 
-  const avatarMeta = parseMeta(p.metadata)
+  const meta = parseParticipantMeta(p)
+  const avatarMeta = meta.avatar
+    ? { avatar: meta.avatar, x: meta.avatar_x ?? 0.5, y: meta.avatar_y ?? 0.5, s: meta.avatar_scale ?? 1, displayName: meta.display_name || '' }
+    : meta.display_name ? { avatar: '', displayName: meta.display_name } : null
   return { identity: p.identity, sid: p.sid, isLocal, audioMuted, videoMuted, audioTrackSid, avatarMeta }
 }
 
@@ -155,14 +159,6 @@ async function handleLeaveRoom() {
   }
 }
 
-function parseMeta(raw) {
-  try {
-    const m = JSON.parse(raw || '{}')
-    if (m.avatar) return { avatar: m.avatar, x: m.avatar_x ?? 0.5, y: m.avatar_y ?? 0.5, s: m.avatar_scale ?? 1, displayName: m.display_name || '' }
-    if (m.display_name) return { avatar: '', displayName: m.display_name }
-  } catch { /* ignore */ }
-  return null
-}
 
 onMounted(startLobbyPoll)
 onUnmounted(stopLobbyPoll)
@@ -202,33 +198,12 @@ onUnmounted(stopLobbyPoll)
     </div>
 
     <!-- Lobby pending -->
-    <div v-if="lobbyPending.length > 0" class="border-b border-gray-200 dark:border-gray-700">
-      <p class="px-3 pt-2 pb-1 text-xs font-medium text-amber-500 uppercase tracking-wider">{{ t('participants.lobbyPending') }} ({{ lobbyPending.length }})</p>
-      <div
-        v-for="user in lobbyPending"
-        :key="'lobby-' + user"
-        class="flex items-center justify-between px-3 py-1.5 bg-amber-50 dark:bg-amber-900/10"
-      >
-        <div class="flex items-center gap-2 min-w-0">
-          <div class="w-6 h-6 bg-amber-200 dark:bg-amber-800 rounded-full flex items-center justify-center text-2xs font-semibold text-amber-700 dark:text-amber-300 shrink-0">
-            {{ (user || '?')[0].toUpperCase() }}
-          </div>
-          <span class="text-sm text-gray-800 dark:text-gray-200 truncate">{{ user }}</span>
-        </div>
-        <div class="flex items-center gap-1 shrink-0">
-          <AppTooltip :content="t('participants.approve')" position="top">
-            <button @click="handleApprove(user)" class="w-7 h-7 rounded-sm flex items-center justify-center text-green-500 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer transition-colors">
-              <UserCheck class="w-3.5 h-3.5" :stroke-width="1.8" />
-            </button>
-          </AppTooltip>
-          <AppTooltip :content="t('participants.reject')" position="top">
-            <button @click="handleReject(user)" class="w-7 h-7 rounded-sm flex items-center justify-center text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 cursor-pointer transition-colors">
-              <UserMinus class="w-3.5 h-3.5" :stroke-width="1.8" />
-            </button>
-          </AppTooltip>
-        </div>
-      </div>
-    </div>
+    <LobbyPendingList
+      :pending="lobbyPending"
+      :room-name="roomName"
+      @approve="handleApprove"
+      @reject="handleReject"
+    />
 
     <!-- List -->
     <div class="flex-1 overflow-y-auto">

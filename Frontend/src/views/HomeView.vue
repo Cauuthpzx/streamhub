@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, LockOpen, ShieldCheck, Crown } from 'lucide-vue-next'
+import { Video, Plus, Trash2, Users, Loader2, RefreshCw, DoorOpen, LogIn, Lock, ShieldCheck, Crown } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
 import { listRooms, createRoom, deleteRoom } from '../services/room'
 import { useNotifications } from '../composables/useNotifications'
@@ -12,6 +12,9 @@ import UserMenu from '../components/UserMenu.vue'
 import AppLogo from '../components/AppLogo.vue'
 import NotificationDropdown from '../components/NotificationDropdown.vue'
 import AppTooltip from '../components/AppTooltip.vue'
+import BaseDialog from '../components/BaseDialog.vue'
+import RoomCreateForm from '../components/RoomCreateForm.vue'
+import RoomJoinDialog from '../components/RoomJoinDialog.vue'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -24,11 +27,10 @@ const creating = ref(false)
 const error = ref('')
 const showCreate = ref(false)
 
-// create form
-const newRoomName = ref('')
-const newRoomMaxParticipants = ref(0)
-const newRoomPassword = ref('')
-const newRoomLobby = ref(false)
+const createFormRef = ref(null)
+const joinDialogRef = ref(null)
+const showJoinDialog = ref(false)
+const joinTarget = ref(null)
 
 async function fetchRooms() {
   loading.value = true
@@ -42,22 +44,13 @@ async function fetchRooms() {
   }
 }
 
-async function handleCreate() {
-  if (!newRoomName.value.trim()) return
+async function handleCreate({ name, maxParticipants, password, lobbyEnabled }) {
   creating.value = true
   error.value = ''
-  const name = newRoomName.value.trim()
   try {
-    await createRoom(name, {
-      maxParticipants: parseInt(newRoomMaxParticipants.value) || 0,
-      password: newRoomPassword.value,
-      lobbyEnabled: newRoomLobby.value,
-    })
-    newRoomName.value = ''
-    newRoomMaxParticipants.value = 0
-    newRoomPassword.value = ''
-    newRoomLobby.value = false
+    await createRoom(name, { maxParticipants, password, lobbyEnabled })
     showCreate.value = false
+    createFormRef.value?.reset()
     await fetchRooms()
     notif.system.success(t('notification.roomCreated', { name }))
   } catch (e) {
@@ -83,26 +76,15 @@ async function handleDelete(name) {
 function handleJoin(room) {
   if (room.has_password) {
     joinTarget.value = room
-    joinPassword.value = ''
-    joinError.value = ''
+    joinDialogRef.value?.reset()
     showJoinDialog.value = true
   } else {
     router.push(`/room/${room.name}`)
   }
 }
 
-// join password dialog
-const showJoinDialog = ref(false)
-const joinTarget = ref(null)
-const joinPassword = ref('')
-const joinError = ref('')
-
-function confirmJoin() {
-  if (!joinPassword.value) {
-    joinError.value = t('room.passwordIsRequired')
-    return
-  }
-  sessionStorage.setItem(`room_password:${joinTarget.value.name}`, joinPassword.value)
+function confirmJoin(password) {
+  sessionStorage.setItem(`room_password:${joinTarget.value.name}`, password)
   showJoinDialog.value = false
   router.push(`/room/${joinTarget.value.name}`)
 }
@@ -310,39 +292,37 @@ onUnmounted(() => {
     </main>
 
     <!-- Join password dialog -->
-    <div v-if="showJoinDialog" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" @click.self="showJoinDialog = false">
-      <div class="bg-white dark:bg-gray-800 rounded-sm shadow-xl p-6 w-full max-w-sm mx-4">
-        <div class="flex items-center gap-2 mb-4">
-          <Lock class="w-5 h-5 text-amber-500" :stroke-width="2" />
-          <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('room.passwordRequired') }}</h3>
-        </div>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-          {{ t('room.passwordRequiredDesc', { name: joinTarget?.name }) }}
-        </p>
-        <div v-if="joinError" class="mb-3 text-sm text-red-600 dark:text-red-400">{{ joinError }}</div>
-        <input
-          v-model="joinPassword"
-          type="password"
-          :placeholder="t('room.enterPassword')"
-          class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text mb-4"
-          autofocus
-          @keyup.enter="confirmJoin"
-        />
-        <div class="flex gap-2 justify-end">
-          <button
-            @click="showJoinDialog = false"
-            class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-          >
-            {{ t('room.cancel') }}
-          </button>
-          <button
-            @click="confirmJoin"
-            class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
-          >
-            {{ t('room.join') }}
-          </button>
-        </div>
+    <BaseDialog :show="showJoinDialog" max-width="max-w-sm" @close="showJoinDialog = false">
+      <div class="flex items-center gap-2 mb-4">
+        <Lock class="w-5 h-5 text-amber-500" :stroke-width="2" />
+        <h3 class="text-base font-semibold text-gray-900 dark:text-white">{{ t('room.passwordRequired') }}</h3>
       </div>
-    </div>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        {{ t('room.passwordRequiredDesc', { name: joinTarget?.name }) }}
+      </p>
+      <div v-if="joinError" class="mb-3 text-sm text-red-600 dark:text-red-400">{{ joinError }}</div>
+      <input
+        v-model="joinPassword"
+        type="password"
+        :placeholder="t('room.enterPassword')"
+        class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 placeholder:text-gray-400 dark:placeholder:text-gray-500 cursor-text mb-4"
+        autofocus
+        @keyup.enter="confirmJoin"
+      />
+      <div class="flex gap-2 justify-end">
+        <button
+          @click="showJoinDialog = false"
+          class="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+        >
+          {{ t('room.cancel') }}
+        </button>
+        <button
+          @click="confirmJoin"
+          class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-sm hover:bg-indigo-700 transition-colors cursor-pointer"
+        >
+          {{ t('room.join') }}
+        </button>
+      </div>
+    </BaseDialog>
   </div>
 </template>

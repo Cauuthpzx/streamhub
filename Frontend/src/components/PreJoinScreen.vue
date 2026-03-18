@@ -3,6 +3,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { Mic, MicOff, VideoIcon, VideoOff, LogIn } from 'lucide-vue-next'
 import { getProfile } from '../services/auth'
+import { getAvatarStyle } from '../composables/useParticipantMeta'
 
 const { t } = useI18n()
 
@@ -103,7 +104,7 @@ onUnmounted(stopPreview)
           <div v-if="hasAvatar" class="w-20 h-20 rounded-full overflow-hidden">
             <img
               :src="`/avatars/${profile.avatar}.webp`"
-              :style="{ objectPosition: `${(profile.avatar_x ?? 0.5) * 100}% ${(profile.avatar_y ?? 0.5) * 100}%`, transform: `scale(${profile.avatar_scale ?? 1})` }"
+              :style="getAvatarStyle(profile)"
               class="w-full h-full object-cover"
               :alt="profile.display_name || username"
             />
@@ -143,13 +144,13 @@ onUnmounted(stopPreview)
       <div class="space-y-3 mb-6">
         <div v-if="audioInputs.length">
           <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('devices.microphone') }}</label>
-          <select v-model="selectedAudioInput" class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select v-model="selectedAudioInput" class="sh-select">
             <option v-for="d in audioInputs" :key="d.deviceId" :value="d.deviceId">{{ d.label || t('devices.unknownDevice') }}</option>
           </select>
         </div>
         <div v-if="videoInputs.length">
           <label class="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">{{ t('devices.camera') }}</label>
-          <select v-model="selectedVideoInput" @change="showPreview" class="w-full rounded-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <select v-model="selectedVideoInput" @change="showPreview" class="sh-select">
             <option v-for="d in videoInputs" :key="d.deviceId" :value="d.deviceId">{{ d.label || t('devices.unknownDevice') }}</option>
           </select>
         </div>

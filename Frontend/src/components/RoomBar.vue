@@ -1,9 +1,8 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
 import {
-  Mic, MicOff, VideoIcon, VideoOff, Home, MonitorUp, MonitorOff,
+  Mic, MicOff, VideoIcon, VideoOff, LogOut, MonitorUp, MonitorOff,
   MessageSquare, Hand, Smile, Settings, Circle, Square, Camera, Share2,
-  LayoutGrid,
 } from 'lucide-vue-next'
 import AppTooltip from './AppTooltip.vue'
 
@@ -21,14 +20,12 @@ defineProps({
   showReactionPicker: { type: Boolean, default: false },
   panelOpen: { type: Boolean, default: false },
   unreadCount: { type: Number, default: 0 },
-  hasScreenShares: { type: Boolean, default: false },
-  screenLayout: { type: String, default: 'spotlight' },
 })
 
 const emit = defineEmits([
   'toggleMic', 'toggleCam', 'toggleScreen', 'toggleRecording',
   'screenshot', 'toggleHand', 'toggleReactionPicker', 'pickReaction',
-  'togglePanel', 'openSettings', 'openShare', 'goHome', 'setLayout',
+  'togglePanel', 'openSettings', 'openShare', 'leave',
 ])
 </script>
 
@@ -68,16 +65,6 @@ const emit = defineEmits([
         >
           <MonitorUp v-if="!screenEnabled" class="w-4 h-4" :stroke-width="1.8" />
           <MonitorOff v-else class="w-4 h-4" :stroke-width="1.8" />
-        </button>
-      </AppTooltip>
-
-      <!-- Screen layout (only visible when sharing) -->
-      <AppTooltip v-if="hasScreenShares" :content="t('screenLayout.title')" position="top">
-        <button
-          @click="emit('setLayout')"
-          class="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white"
-        >
-          <LayoutGrid class="w-4 h-4" :stroke-width="1.8" />
         </button>
       </AppTooltip>
 
@@ -176,13 +163,13 @@ const emit = defineEmits([
         </button>
       </AppTooltip>
 
-      <!-- Go Home -->
-      <AppTooltip :content="t('room.goHome')" position="top">
+      <!-- Leave -->
+      <AppTooltip :content="t('chat.leave')" position="top">
         <button
-          @click="emit('goHome')"
-          class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-white flex items-center justify-center transition-colors cursor-pointer"
+          @click="emit('leave')"
+          class="w-8 h-8 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-colors cursor-pointer"
         >
-          <Home class="w-4 h-4" :stroke-width="1.8" />
+          <LogOut class="w-4 h-4" :stroke-width="1.8" />
         </button>
       </AppTooltip>
     </div>

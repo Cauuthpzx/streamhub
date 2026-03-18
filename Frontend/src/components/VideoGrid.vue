@@ -1,23 +1,15 @@
 <script setup>
 import { useI18n } from 'vue-i18n'
-import { MicOff, VideoOff, Pin, Maximize, Minimize } from 'lucide-vue-next'
+import { Mic, MicOff, VideoOff, MonitorUp, Pin, Maximize, Minimize } from 'lucide-vue-next'
 import ConnectionBars from './ConnectionBars.vue'
 import AppTooltip from './AppTooltip.vue'
 import ParticipantAvatar from './ParticipantAvatar.vue'
-import ScreenShareGrid from './ScreenShareGrid.vue'
-import ScreenShareTabs from './ScreenShareTabs.vue'
-import ScreenShareSpotlight from './ScreenShareSpotlight.vue'
-import ScreenLayoutPicker from './ScreenLayoutPicker.vue'
 
 const { t } = useI18n()
 
 defineProps({
   participants: { type: Array, required: true },
-  hasScreenShares: { type: Boolean, default: false },
-  screenLayout: { type: String, default: 'spotlight' },
-  screenShareList: { type: Array, default: () => [] },
-  activeScreenIdx: { type: Number, default: 0 },
-  spotlightIdentity: { type: String, default: null },
+  screenShares: { type: Array, default: () => [] },
   activeSpeakers: { type: Set, required: true },
   raisedHands: { type: Set, required: true },
   connectionQualities: { type: Object, required: true },
@@ -28,7 +20,7 @@ defineProps({
   username: { type: String, required: true },
 })
 
-const emit = defineEmits(['pin', 'fullscreen', 'setLayout', 'setActiveScreen', 'setSpotlight'])
+const emit = defineEmits(['pin', 'fullscreen'])
 
 function getDisplayName(participant) {
   try {
@@ -40,58 +32,48 @@ function getDisplayName(participant) {
 
 <template>
   <div class="flex-1 p-4 overflow-auto flex flex-col gap-3 bg-gray-100 dark:bg-gray-900">
-    <!-- Screen share mode: multi-layout -->
-    <div v-if="hasScreenShares" class="flex-1 flex flex-col gap-2 relative">
-      <!-- Layout picker — floating top-right -->
-      <div class="absolute top-3 right-3 z-40">
-        <ScreenLayoutPicker
-          :screen-layout="screenLayout"
-          @set-layout="emit('setLayout', $event)"
-        />
-      </div>
+    <!-- Screen share mode: one tile per sharer, PiP cameras bottom-right -->
+    <template v-if="screenShares.length > 0">
+      <div
+        v-for="share in screenShares"
+        :key="'ss-' + share.identity"
+        class="relative bg-gray-900 dark:bg-black rounded-lg overflow-hidden flex-1 min-h-0"
+      >
+        <div :id="`screen-share-${share.identity}`" class="absolute inset-0 z-0"></div>
 
-      <ScreenShareGrid
-        v-if="screenLayout === 'grid'"
-        :screen-share-list="screenShareList"
-        :participants="participants"
-        :active-speakers="activeSpeakers"
-        :raised-hands="raisedHands"
-        :connection-qualities="connectionQualities"
-        :pinned-sid="pinnedSid"
-        :fullscreen-sid="fullscreenSid"
-        :mic-enabled="micEnabled"
-        :cam-enabled="camEnabled"
-        :username="username"
-        @pin="emit('pin', $event)"
-        @fullscreen="emit('fullscreen', $event)"
-      />
-      <ScreenShareTabs
-        v-else-if="screenLayout === 'tabs'"
-        :screen-share-list="screenShareList"
-        :active-screen-idx="activeScreenIdx"
-        :participants="participants"
-        :active-speakers="activeSpeakers"
-        :raised-hands="raisedHands"
-        :connection-qualities="connectionQualities"
-        :mic-enabled="micEnabled"
-        :cam-enabled="camEnabled"
-        :username="username"
-        @set-active-screen="emit('setActiveScreen', $event)"
-      />
-      <ScreenShareSpotlight
-        v-else
-        :screen-share-list="screenShareList"
-        :spotlight-identity="spotlightIdentity"
-        :participants="participants"
-        :active-speakers="activeSpeakers"
-        :raised-hands="raisedHands"
-        :connection-qualities="connectionQualities"
-        :mic-enabled="micEnabled"
-        :cam-enabled="camEnabled"
-        :username="username"
-        @set-spotlight="emit('setSpotlight', $event)"
-      />
-    </div>
+        <!-- PiP camera tiles — only on first screen share tile to avoid duplicate DOM IDs -->
+        <div v-if="share.identity === screenShares[0].identity" class="absolute bottom-3 right-3 z-30 flex gap-2">
+          <div
+            v-for="{ participant, isLocal } in participants"
+            :key="'pip-' + participant.sid"
+            class="relative w-pip-w h-pip-h bg-gray-800 rounded-lg overflow-hidden shadow-xl transition-all hover:scale-105"
+            :class="activeSpeakers.has(participant.identity) ? 'ring-2 ring-green-400 shadow-glow-speaker' : 'border border-gray-700/50'"
+          >
+            <div :id="`video-${participant.sid}`" class="absolute inset-0 z-10"></div>
+            <div class="absolute inset-0 flex items-center justify-center z-0">
+              <ParticipantAvatar :participant="participant" size="sm" />
+            </div>
+            <div class="absolute bottom-1 left-1 bg-black/70 rounded px-1.5 py-0.5 text-2xs text-white z-20 flex items-center gap-1">
+              <span v-if="raisedHands.has(participant.identity)" class="animate-wave">✋</span>
+              {{ getDisplayName(participant) }}
+              <span v-if="isLocal" class="text-indigo-400">({{ t('chat.you') }})</span>
+              <ConnectionBars :quality="connectionQualities[participant.identity]" />
+            </div>
+            <div class="absolute top-1 right-1 flex items-center gap-0.5 z-20">
+              <span v-if="isLocal && !micEnabled" class="bg-red-500/80 rounded p-0.5">
+                <MicOff class="w-2.5 h-2.5 text-white" :stroke-width="2" />
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Screen share label -->
+        <div class="absolute top-3 left-3 bg-black/60 rounded-lg px-2.5 py-1 text-xs text-white flex items-center gap-1.5 z-20">
+          <MonitorUp class="w-3.5 h-3.5 text-green-400" :stroke-width="2" />
+          {{ share.identity }} — {{ t('chat.shareScreen') }}
+        </div>
+      </div>
+    </template>
 
     <!-- Normal mode: pinned spotlight or camera grid -->
     <template v-else>

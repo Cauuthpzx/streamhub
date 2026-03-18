@@ -23,7 +23,11 @@ export function useTracks(room) {
   }
 
   function attachRemoteTrack(track, participant) {
-    if (track.source === Track.Source.ScreenShare || track.source === Track.Source.ScreenShareAudio) return
+    if (track.source === Track.Source.ScreenShareAudio) return
+    if (track.source === Track.Source.ScreenShare) {
+      attachScreenShare(track, participant.identity)
+      return
+    }
 
     if (track.kind === Track.Kind.Video || track.kind === Track.Kind.Audio) {
       const container = document.getElementById(`video-${participant.sid}`)
@@ -48,7 +52,7 @@ export function useTracks(room) {
     }
   }
 
-  function attachScreenShareByIdentity(track, identity) {
+  function attachScreenShare(track, identity) {
     const container = document.getElementById(`screen-share-${identity}`)
     if (!container) return
     container.innerHTML = ''
@@ -73,5 +77,5 @@ export function useTracks(room) {
     })
   }
 
-  return { attachLocalVideo, attachRemoteTrack, attachScreenShareByIdentity, reattachAll }
+  return { attachLocalVideo, attachRemoteTrack, attachScreenShare, reattachAll }
 }

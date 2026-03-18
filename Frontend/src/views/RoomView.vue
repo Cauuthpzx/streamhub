@@ -1,16 +1,14 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { Users, MessageSquare } from 'lucide-vue-next'
 import { getUsername } from '../services/auth'
-import { getRoomMembers } from '../services/room'
 
 import AppLogo from '../components/AppLogo.vue'
 import ThemeToggle from '../components/ThemeToggle.vue'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import UserMenu from '../components/UserMenu.vue'
-import PreJoinScreen from '../components/PreJoinScreen.vue'
 import DeviceSettings from '../components/DeviceSettings.vue'
 import VideoGrid from '../components/VideoGrid.vue'
 import RoomBar from '../components/RoomBar.vue'
@@ -23,11 +21,9 @@ import { useTracks } from '../composables/useTracks'
 import { useReactions } from '../composables/useReactions'
 import { useRecording } from '../composables/useRecording'
 import { useScreenshot } from '../composables/useScreenshot'
-import { useScreenShares } from '../composables/useScreenShares'
 import { useRoom } from '../composables/useRoom'
 
 const showShareModal = ref(false)
-const isCreator = ref(false)
 
 const route = useRoute()
 const { t } = useI18n()
@@ -40,16 +36,15 @@ const { takeScreenshot } = useScreenshot(roomName)
 
 // useRoom needs tracks/reactions/recording — but tracks needs room ref from useRoom
 // Solution: create a mutable deps object, pass it in, then fill after useRoom returns
-const deps = { tracks: null, sounds, reactions: null, recording: null, screenshot: takeScreenshot, screenShares: null }
+const deps = { tracks: null, sounds, reactions: null, recording: null, screenshot: takeScreenshot }
 
 const {
-  room, showPreJoin, connected, connecting, lobbyWaiting, lobbyRejected, error,
-  participants, micEnabled, camEnabled,
-  panelOpen, panelTab, unreadCount,
+  room, connected, connecting, lobbyWaiting, lobbyRejected, error,
+  participants, micEnabled, camEnabled, screenEnabled,
+  panelOpen, panelTab, unreadCount, screenShares,
   activeSpeakers, pinnedSid, fullscreenSid, connectionQualities,
   showReactionPicker, showDeviceSettings,
-  handlePreJoin, handlePreJoinCancel,
-  toggleMic, toggleCam, togglePin, toggleFullscreen,
+  toggleMic, toggleCam, toggleScreen, togglePin, toggleFullscreen,
   togglePanel, switchTab, leaveRoom,
 } = useRoom(roomName, username, deps)
 
@@ -57,35 +52,14 @@ const {
 const tracks = useTracks(room)
 const reactionCtx = useReactions(room, username)
 const recordingCtx = useRecording(room, roomName, t)
-const screenSharesCtx = useScreenShares(username, { tracks })
 
 deps.tracks = tracks
 deps.reactions = reactionCtx
 deps.recording = recordingCtx
-deps.screenShares = screenSharesCtx
-
-// fetch creator status once connected
-watch(connected, async (val) => {
-  if (!val) return
-  try {
-    const members = await getRoomMembers(roomName)
-    isCreator.value = members.some((m) => m.username === username && m.role === 'creator')
-  } catch (_) { /* non-critical */ }
-})
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100 dark:bg-gray-900 flex flex-col">
-    <!-- Pre-join -->
-    <PreJoinScreen
-      v-if="showPreJoin"
-      :room-name="roomName"
-      :username="username"
-      @join="handlePreJoin"
-      @cancel="handlePreJoinCancel"
-    />
-
-    <template v-else>
       <!-- Header -->
       <header class="bg-white dark:bg-gray-800 border-b border-gray-200/70 dark:border-gray-700 shadow-bar-top dark:shadow-bar-top">
         <div class="px-4 h-bar flex items-center justify-between">
@@ -185,11 +159,7 @@ watch(connected, async (val) => {
         <!-- Video grid -->
         <VideoGrid
           :participants="participants"
-          :has-screen-shares="screenSharesCtx.hasScreenShares.value"
-          :screen-layout="screenSharesCtx.screenLayout.value"
-          :screen-share-list="screenSharesCtx.screenShareList.value"
-          :active-screen-idx="screenSharesCtx.activeScreenIdx.value"
-          :spotlight-identity="screenSharesCtx.spotlightIdentity.value"
+          :screen-shares="screenShares"
           :active-speakers="activeSpeakers"
           :raised-hands="reactionCtx.raisedHands.value"
           :connection-qualities="connectionQualities"
@@ -200,9 +170,6 @@ watch(connected, async (val) => {
           :username="username"
           @pin="togglePin"
           @fullscreen="toggleFullscreen"
-          @set-layout="screenSharesCtx.setLayout($event)"
-          @set-active-screen="screenSharesCtx.setActiveScreen($event)"
-          @set-spotlight="screenSharesCtx.setSpotlight($event)"
         />
 
         <!-- Side panel -->
@@ -253,10 +220,7 @@ watch(connected, async (val) => {
               :room="room"
               :room-name="roomName"
               :local-identity="username"
-              :is-creator="isCreator"
               class="flex-1 min-h-0"
-              @leave-room="leaveRoom"
-              @room-deleted="leaveRoom"
             />
           </div>
         </Transition>
@@ -267,9 +231,7 @@ watch(connected, async (val) => {
         v-if="connected"
         :mic-enabled="micEnabled"
         :cam-enabled="camEnabled"
-        :screen-enabled="screenSharesCtx.screenEnabled.value"
-        :has-screen-shares="screenSharesCtx.hasScreenShares.value"
-        :screen-layout="screenSharesCtx.screenLayout.value"
+        :screen-enabled="screenEnabled"
         :recording="recordingCtx.recording.value"
         :recording-loading="recordingCtx.recordingLoading.value"
         :hand-raised="reactionCtx.raisedHands.value.has(username)"
@@ -278,8 +240,7 @@ watch(connected, async (val) => {
         :unread-count="unreadCount"
         @toggle-mic="toggleMic"
         @toggle-cam="toggleCam"
-        @toggle-screen="screenSharesCtx.toggleLocalScreen(room)"
-        @set-layout="screenSharesCtx.cycleLayout()"
+        @toggle-screen="toggleScreen"
         @toggle-recording="recordingCtx.toggleRecording()"
         @screenshot="takeScreenshot"
         @toggle-hand="reactionCtx.toggleHand()"
@@ -288,11 +249,10 @@ watch(connected, async (val) => {
         @toggle-panel="togglePanel"
         @open-settings="showDeviceSettings = true"
         @open-share="showShareModal = true"
-        @go-home="leaveRoom"
+        @leave="leaveRoom"
       />
 
       <DeviceSettings v-if="showDeviceSettings" :room="room" @close="showDeviceSettings = false" />
       <ShareModal :room-name="roomName" :show="showShareModal" @close="showShareModal = false" />
-    </template>
   </div>
 </template>

@@ -194,6 +194,12 @@ textarea,
 .fade-enter-active, .fade-leave-active { transition: opacity 0.15s ease; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
+/* Slide panel transition (chat/participants side panel) */
+.slide-panel-enter-active { transition: width 0.22s ease, opacity 0.22s ease; overflow: hidden; }
+.slide-panel-leave-active { transition: width 0.18s ease, opacity 0.15s ease; overflow: hidden; }
+.slide-panel-enter-from  { width: 0; opacity: 0; }
+.slide-panel-leave-to    { width: 0; opacity: 0; }
+
 /* Reaction float transition group */
 .reaction-float-enter-active { transition: all 0.2s ease-out; }
 .reaction-float-leave-active { transition: all 0.3s ease-in; }

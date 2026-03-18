@@ -26,9 +26,11 @@ export function useRoom(roomName, username, deps) {
   const participants = ref([])
   const micEnabled = ref(true)
   const camEnabled = ref(true)
+  const screenEnabled = ref(false)
   const panelOpen = ref(false)
   const panelTab = ref('chat')
   const unreadCount = ref(0)
+  const screenShares = ref([]) // [{ track, identity, sid }]
   const activeSpeakers = ref(new Set())
   const pinnedSid = ref(null)
   const fullscreenSid = ref(null)
@@ -53,11 +55,7 @@ export function useRoom(roomName, username, deps) {
   }
 
   // event handlers
-  function handleParticipantUpdate() {
-    updateParticipants()
-    // Safety: cleanup stale screen shares from disconnected participants
-    if (deps.screenShares) deps.screenShares.cleanupStaleShares(participants.value)
-  }
+  function handleParticipantUpdate() { updateParticipants() }
 
   function handleActiveSpeakers(speakers) {
     activeSpeakers.value = new Set(speakers.map((s) => s.identity))
@@ -73,42 +71,35 @@ export function useRoom(roomName, username, deps) {
     connectionQualities.value = { ...connectionQualities.value, [participant.identity]: map[quality] || 'unknown' }
   }
 
-  function handleTrackSubscribed(track, _publication, participant) {
+  function handleTrackSubscribed(track, publication, participant) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
-      deps.screenShares.addScreenShare(track, participant.identity, track.sid)
-      nextTick(() => {
-        deps.tracks.attachScreenShareByIdentity(track, participant.identity)
-        deps.tracks.reattachAll()
-      })
+      screenShares.value = [...screenShares.value, { track, identity: participant.identity, sid: publication.trackSid }]
+      nextTick(() => deps.tracks.attachScreenShare(track, participant.identity))
     } else {
       nextTick(() => deps.tracks.attachRemoteTrack(track, participant))
     }
   }
 
-  function handleTrackUnsubscribed(track, _publication, participant) {
+  function handleTrackUnsubscribed(track, publication, participant) {
     updateParticipants()
     if (track.source === Track.Source.ScreenShare) {
-      deps.screenShares.removeScreenShare(participant.identity)
-      nextTick(() => deps.tracks.reattachAll())
+      screenShares.value = screenShares.value.filter(s => s.identity !== participant.identity)
+      const container = document.getElementById(`screen-share-${participant.identity}`)
+      if (container) container.innerHTML = ''
     }
     const el = document.getElementById(`track-${track.sid}`)
     if (el) el.remove()
   }
 
+  // sessionStorage key for this room — survives reload within same tab
+  const SESSION_KEY = `prejoin:${roomName}`
+
   function handleDisconnect() {
+    sessionStorage.removeItem(SESSION_KEY)
     connected.value = false
     router.push('/home')
   }
-
-  // connection
-  function handlePreJoin(settings) {
-    preJoinSettings.value = settings
-    showPreJoin.value = false
-    connectRoom()
-  }
-
-  function handlePreJoinCancel() { router.push('/home') }
 
   async function connectRoom() {
     const { getLivekitToken } = await import('../services/auth')
@@ -155,19 +146,8 @@ export function useRoom(roomName, username, deps) {
       r.on(RoomEvent.ParticipantDisconnected, handleParticipantUpdate)
       r.on(RoomEvent.TrackSubscribed, handleTrackSubscribed)
       r.on(RoomEvent.TrackUnsubscribed, handleTrackUnsubscribed)
-      r.on(RoomEvent.LocalTrackPublished, (pub) => {
-        handleParticipantUpdate()
-        if (pub.track && pub.track.source === Track.Source.ScreenShare) {
-          deps.screenShares.addScreenShare(pub.track, username, pub.track.sid)
-          nextTick(() => deps.tracks.attachScreenShareByIdentity(pub.track, username))
-        }
-      })
-      r.on(RoomEvent.LocalTrackUnpublished, (pub) => {
-        handleParticipantUpdate()
-        if (pub.track && pub.track.source === Track.Source.ScreenShare) {
-          deps.screenShares.removeScreenShare(username)
-        }
-      })
+      r.on(RoomEvent.LocalTrackPublished, handleParticipantUpdate)
+      r.on(RoomEvent.LocalTrackUnpublished, handleParticipantUpdate)
       r.on(RoomEvent.Disconnected, handleDisconnect)
       r.on(RoomEvent.ActiveSpeakersChanged, handleActiveSpeakers)
       r.on(RoomEvent.ConnectionQualityChanged, handleConnectionQuality)
@@ -254,6 +234,31 @@ export function useRoom(roomName, username, deps) {
     if (camEnabled.value) deps.tracks.attachLocalVideo()
   }
 
+  async function toggleScreen() {
+    if (!room.value) return
+    try {
+      const r = toRaw(room.value)
+      await r.localParticipant.setScreenShareEnabled(!screenEnabled.value)
+      screenEnabled.value = !screenEnabled.value
+
+      if (screenEnabled.value) {
+        await nextTick()
+        r.localParticipant.videoTrackPublications.forEach((pub) => {
+          if (pub.track && pub.track.source === Track.Source.ScreenShare) {
+            screenShares.value = [...screenShares.value.filter(s => s.identity !== username), { track: pub.track, identity: username, sid: pub.trackSid }]
+            nextTick(() => deps.tracks.attachScreenShare(pub.track, username))
+          }
+        })
+      } else {
+        screenShares.value = screenShares.value.filter(s => s.identity !== username)
+        const container = document.getElementById(`screen-share-${username}`)
+        if (container) container.innerHTML = ''
+      }
+    } catch (_) {
+      // user cancelled
+    }
+  }
+
   function togglePin(sid) {
     pinnedSid.value = pinnedSid.value === sid ? null : sid
     nextTick(() => deps.tracks.reattachAll())
@@ -285,6 +290,7 @@ export function useRoom(roomName, username, deps) {
   }
 
   async function leaveRoom() {
+    sessionStorage.removeItem(SESSION_KEY)
     if (room.value) await toRaw(room.value).disconnect()
     router.push('/home')
   }
@@ -296,7 +302,7 @@ export function useRoom(roomName, username, deps) {
     switch (e.key.toLowerCase()) {
       case 'm': toggleMic(); break
       case 'v': toggleCam(); break
-      case 's': deps.screenShares.toggleLocalScreen(room); break
+      case 's': toggleScreen(); break
       case 'h': deps.reactions.toggleHand(); break
       case 'r': deps.recording.toggleRecording(); break
       case 'p': deps.screenshot?.() ; break
@@ -327,6 +333,17 @@ export function useRoom(roomName, username, deps) {
     document.addEventListener('fullscreenchange', onFullscreenChange)
     document.addEventListener('keydown', handleKeyboard)
     window.addEventListener('profile-updated', handleProfileUpdate)
+
+    // auto-join immediately (restore session on reload or create new)
+    const saved = sessionStorage.getItem(SESSION_KEY)
+    if (saved) {
+      try { preJoinSettings.value = JSON.parse(saved) } catch (_) {}
+    } else {
+      preJoinSettings.value = { micOn: true, camOn: true }
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(preJoinSettings.value))
+    }
+    showPreJoin.value = false
+    connectRoom()
   })
 
   onUnmounted(() => {
@@ -340,7 +357,6 @@ export function useRoom(roomName, username, deps) {
 
   return {
     room,
-    showPreJoin,
     connected,
     connecting,
     lobbyWaiting,
@@ -349,19 +365,20 @@ export function useRoom(roomName, username, deps) {
     participants,
     micEnabled,
     camEnabled,
+    screenEnabled,
     panelOpen,
     panelTab,
     unreadCount,
+    screenShares,
     activeSpeakers,
     pinnedSid,
     fullscreenSid,
     connectionQualities,
     showReactionPicker,
     showDeviceSettings,
-    handlePreJoin,
-    handlePreJoinCancel,
     toggleMic,
     toggleCam,
+    toggleScreen,
     togglePin,
     toggleFullscreen,
     togglePanel,

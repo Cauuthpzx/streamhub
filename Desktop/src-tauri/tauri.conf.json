@@ -58,9 +58,6 @@
       "dialog": true,
       "pubkey": "",
       "endpoints": []
-    },
-    "window-state": {
-      "stateFlags": 31
     }
   }
 }

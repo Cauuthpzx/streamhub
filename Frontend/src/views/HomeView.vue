@@ -94,23 +94,28 @@ let _reconnectTimer = null
 function connectEventWS() {
   if (!_wsMounted || ws) return
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
-  ws = new WebSocket(`${proto}://${window.location.host}/auth/ws/events`)
-  ws.onmessage = (e) => {
-    try {
-      const evt = JSON.parse(e.data)
-      const room = rooms.value.find(r => r.name === evt.room)
-      if (room) room.num_participants = evt.count
-    } catch (_) {}
-  }
-  ws.onclose = () => {
-    ws = null
-    if (_wsMounted && !_reconnectTimer) {
-      _reconnectTimer = setTimeout(() => {
-        _reconnectTimer = null
-        connectEventWS()
-      }, 3000)
+  try {
+    const sock = new WebSocket(`${proto}://${window.location.host}/auth/ws/events`)
+    ws = sock
+    sock.onopen = () => { if (!_wsMounted) sock.close() }
+    sock.onmessage = (e) => {
+      try {
+        const evt = JSON.parse(e.data)
+        const room = rooms.value.find(r => r.name === evt.room)
+        if (room) room.num_participants = evt.count
+      } catch (_) {}
     }
-  }
+    sock.onclose = () => {
+      if (ws === sock) ws = null
+      if (_wsMounted && !_reconnectTimer) {
+        _reconnectTimer = setTimeout(() => {
+          _reconnectTimer = null
+          connectEventWS()
+        }, 3000)
+      }
+    }
+    sock.onerror = () => { /* suppress console error — onclose handles reconnect */ }
+  } catch (_) {}
 }
 
 onMounted(() => {

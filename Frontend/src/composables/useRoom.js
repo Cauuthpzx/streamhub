@@ -479,7 +479,7 @@ export function useRoom(roomName, username, deps) {
       case 's': toggleScreen(); break
       case 'h': deps.reactions.toggleHand(); break
       case 'r': deps.recording.toggleRecording(); break
-      case 'p': deps.screenshot?.() ; break
+      case 'p': deps.screenshot?.takeScreenshot?.() ; break
       case 'l': leaveRoom(); break
     }
   }
@@ -521,6 +521,7 @@ export function useRoom(roomName, username, deps) {
   })
 
   onUnmounted(() => {
+    if (_lobbyPollInterval) { clearInterval(_lobbyPollInterval); _lobbyPollInterval = null }
     document.removeEventListener('fullscreenchange', onFullscreenChange)
     document.removeEventListener('keydown', handleKeyboard)
     window.removeEventListener('profile-updated', handleProfileUpdate)

@@ -14,7 +14,7 @@ export function useTracks(room) {
       p.videoTrackPublications.forEach((pub) => {
         if (pub.track && pub.track.source === Track.Source.ScreenShare) {
           const el = pub.track.attach()
-          el.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:0.5rem;'
+          el.style.cssText = 'width:100%;height:100%;object-fit:contain;'
           ssContainer.appendChild(el)
         }
       })
@@ -27,7 +27,7 @@ export function useTracks(room) {
     p.videoTrackPublications.forEach((pub) => {
       if (pub.track && pub.track.source === Track.Source.Camera) {
         const el = pub.track.attach()
-        el.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:0.5rem;transform:scaleX(-1);'
+        el.style.cssText = 'width:100%;height:100%;object-fit:cover;transform:scaleX(-1);'
         camContainer.appendChild(el)
       }
     })
@@ -41,7 +41,7 @@ export function useTracks(room) {
       if (!container) return
       container.innerHTML = ''
       const el = track.attach()
-      el.style.cssText = 'width:100%;height:100%;object-fit:contain;border-radius:0.5rem;'
+      el.style.cssText = 'width:100%;height:100%;object-fit:contain;'
       container.appendChild(el)
       return
     }
@@ -53,7 +53,7 @@ export function useTracks(room) {
       if (existing) existing.remove()
       const el = track.attach()
       el.id = `track-${track.sid}`
-      el.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:0.5rem;'
+      el.style.cssText = 'width:100%;height:100%;object-fit:cover;'
       container.appendChild(el)
     } else if (track.kind === Track.Kind.Audio) {
       const container = document.getElementById(`video-${participant.sid}`)
